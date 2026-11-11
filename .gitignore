@@ -1,0 +1,19 @@
+.DS_Store
+
+# Raw ESMR data (5.6 GB, too large for GitHub)
+ESMR_colocated_filtered/
+*.nc
+
+# Small land masks needed by the resampling example
+!provided/resampling_example/*.nc
+
+# Large reference books (copies on Google Drive)
+docs/literature/
+
+# Python / Jupyter
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+
+# Generated results (re-creatable)
+output/
