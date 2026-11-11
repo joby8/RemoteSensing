@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Arbeitsblatt ESMR-Projekt</title>
+<style>
+@page { size: A4; margin: 13mm 14mm 14mm 14mm; }
+* { box-sizing: border-box; }
+html, body { background: #fff; color: #000; }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9.6pt; line-height: 1.38; margin: 0; }
+h1 { font-size: 17pt; margin: 0 0 2mm; letter-spacing: -0.2px; }
+h2 { font-size: 12.5pt; margin: 0 0 2.5mm; padding: 1.2mm 0 1.2mm; border-top: 2.2pt solid #000; border-bottom: 0.6pt solid #000; }
+h2 .ref { float: right; margin-top: 1.2mm; font-size: 8.5pt; font-weight: normal; font-style: italic; }
+h3 { font-size: 10.2pt; margin: 3.5mm 0 1.2mm; }
+p { margin: 0 0 1.8mm; }
+.page { page-break-after: always; }
+.page:last-child { page-break-after: auto; }
+.sub { font-size: 9pt; font-style: italic; margin-bottom: 3mm; }
+.box { border: 0.8pt solid #000; padding: 2mm 2.5mm; margin: 2mm 0; break-inside: avoid; }
+.box.dash { border-style: dashed; }
+.box.thick { border-width: 1.8pt; }
+.lbl { font-size: 7.8pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 1mm; display: block; }
+.lines { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 6.6mm, #888 6.6mm, #888 6.85mm); }
+.l2 { height: 14mm; } .l3 { height: 21mm; } .l4 { height: 27.5mm; } .l5 { height: 34mm; } .l6 { height: 41mm; }
+.blank { display: inline-block; border-bottom: 0.7pt solid #000; min-width: 22mm; height: 4.2mm; vertical-align: bottom; }
+.blank.w { min-width: 40mm; } .blank.s { min-width: 12mm; }
+table { border-collapse: collapse; width: 100%; margin: 1.5mm 0; break-inside: avoid; }
+th, td { border: 0.6pt solid #000; padding: 1.3mm 1.6mm; text-align: left; vertical-align: top; }
+th { font-size: 8.4pt; background: #fff; border-bottom: 1.4pt solid #000; }
+td.e { height: 8.5mm; }
+td.c, th.c { text-align: center; }
+.eq { font-family: "Times New Roman", Times, serif; font-size: 11pt; text-align: center; margin: 2mm 0; }
+.eq i { font-style: italic; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.two > * { min-width: 0; }
+ol, ul { margin: 0 0 1.5mm; padding-left: 5mm; }
+li { margin-bottom: 0.7mm; }
+.chk { list-style: none; padding-left: 0; }
+.chk li { padding-left: 5.5mm; position: relative; }
+.chk li::before { content: ""; position: absolute; left: 0; top: 0.6mm; width: 3.2mm; height: 3.2mm; border: 0.8pt solid #000; }
+.q { font-weight: bold; }
+.small { font-size: 8.3pt; }
+.trap { border-left: 2.4pt solid #000; padding: 1mm 0 1mm 2.5mm; margin: 2mm 0; break-inside: avoid; }
+.trap b:first-child { text-transform: uppercase; font-size: 8pt; letter-spacing: 0.5px; }
+svg { display: block; }
+svg text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+.foot { font-size: 7.5pt; text-align: right; margin-top: 2mm; }
+.key { font-size: 8.6pt; }
+.key h3 { margin-top: 2.5mm; }
+</style>
+</head>
+<body>
+
+<!-- ============ SEITE 1 ============ -->
+<section class="page">
+<h1>Arbeitsblatt: Regionale Rauschreduktion von NIMBUS-5-ESMR-Daten</h1>
+<div class="sub">30350 Remote Sensing · Projekt 1 · Betreuer R. Tonboe · zum Lesen neben Kolbe et al. (2024), Abschnitt 4.1 (S. 1251–1254) · Bleistift benutzen</div>
+
+<div class="box thick">
+<span class="lbl">Forschungsfrage</span>
+<p style="font-size:11pt;margin:0"><b>Wie wirksam ist die regionale Rauschreduktion von NIMBUS-5-ESMR-Daten über offenem Wasser?</b></p>
+</div>
+
+<div class="two">
+<div class="box">
+<span class="lbl">Termine</span>
+<table style="margin:0">
+<tr><td>Seminarvortrag</td><td><b>4. Dez</b></td><td class="small">Länge: <span class="blank s"></span></td></tr>
+<tr><td>Report-Abgabe</td><td><b>6. Dez</b>, 24:00</td><td></td></tr>
+<tr><td>Verteidigung (mündl.)</td><td><b>15. Dez</b></td><td class="small">5 min, ⅓ der Note</td></tr>
+</table>
+</div>
+<div class="box">
+<span class="lbl">Die vier Aufgaben (read_me.txt)</span>
+<ol class="small" style="margin:0">
+<li>Mittelwert und Std der SIC über offenem Wasser, <b>unkorrigiert</b> vs. <b>korrigiert</b> (Mittel ≈ 0).</li>
+<li>Durch <b>Weglassen</b> testen: welche ERA5-Größen zählen am meisten?</li>
+<li>Std der SIC über dem <b>Einfallswinkel θ</b>: welche Winkel meiden?</li>
+<li><b>Empfehlung</b> für eine ESMR-Korrekturstrategie.</li>
+</ol>
+</div>
+</div>
+
+<h3>1 · Die Idee in einem Satz (erst selbst schreiben, dann S. 1251 rechts prüfen)</h3>
+<div class="box"><span class="lbl">Rauschreduktion heißt …</span><div class="lines l2"></div></div>
+
+<h3>2 · Die Prozesskette: Lücken füllen</h3>
+<p class="small">Trage in jedes leere Feld die Größe oder Gleichung ein. Rechts steht, in welchem Schritt (PROGRESS.md) das passiert.</p>
+<svg viewBox="0 0 680 330" width="100%">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+<g font-size="11" fill="none" stroke="#000" stroke-width="1">
+ <!-- left column: satellite -->
+ <rect x="10" y="10" width="190" height="42"/>
+ <rect x="10" y="80" width="190" height="42" stroke-dasharray="4 3"/>
+ <rect x="10" y="150" width="190" height="42" stroke-dasharray="4 3"/>
+ <rect x="10" y="220" width="190" height="42"/>
+ <!-- right column: ERA5 -->
+ <rect x="440" y="10" width="190" height="42"/>
+ <rect x="440" y="80" width="190" height="42" stroke-dasharray="4 3"/>
+ <rect x="440" y="150" width="190" height="42"/>
+ <!-- middle -->
+ <rect x="235" y="150" width="170" height="42" stroke-dasharray="4 3"/>
+ <rect x="235" y="220" width="170" height="42" stroke-dasharray="4 3"/>
+ <rect x="235" y="280" width="170" height="42" stroke-width="2"/>
+ <rect x="10" y="280" width="190" height="42" stroke-width="2"/>
+ <!-- arrows -->
+ <path d="M105,52 V78" marker-end="url(#ar)"/>
+ <path d="M105,122 V148" marker-end="url(#ar)"/>
+ <path d="M105,192 V218" marker-end="url(#ar)"/>
+ <path d="M105,262 V278" marker-end="url(#ar)"/>
+ <path d="M535,52 V78" marker-end="url(#ar)"/>
+ <path d="M535,122 V148" marker-end="url(#ar)"/>
+ <path d="M440,171 H407" marker-end="url(#ar)"/>
+ <path d="M200,171 H233" marker-end="url(#ar)"/>
+ <path d="M320,192 V218" marker-end="url(#ar)"/>
+ <path d="M320,262 V278" marker-end="url(#ar)"/>
+ <path d="M200,241 C215,241 225,250 233,250" marker-end="url(#ar)"/>
+</g>
+<g font-size="10.5" fill="#000">
+ <text x="20" y="27" font-weight="bold">ESMR-Swath (NetCDF)</text>
+ <text x="20" y="43">T_B gemessen, lat, lon, Scanpos.</text>
+ <text x="20" y="96" font-weight="bold">Filter (A3):</text>
+ <text x="20" y="114" font-size="9.5">Gl. ___ und Scanpos. ___ / ___</text>
+ <text x="20" y="166" font-weight="bold">Maske offenes Wasser (A4):</text>
+ <text x="20" y="184" font-size="9.5">Tab. ___ · |lat| ≥ ___ °</text>
+ <text x="20" y="236" font-weight="bold">SIC unkorrigiert (A5)</text>
+ <text x="20" y="253" font-size="9.5">Gl. ___ mit T_p,water und T_p,ice</text>
+ <text x="20" y="298" font-weight="bold">Aufgabe 1a:</text>
+ <text x="20" y="314" font-size="9.5">Mittel ______  Std ______</text>
+
+ <text x="450" y="27" font-weight="bold">ERA5 (im selben File)</text>
+ <text x="450" y="43" font-size="9.5">u10, v10, tcwv, tcw, sst, t2m, siconc</text>
+ <text x="450" y="96" font-weight="bold">RTM-Eingaben (A2):</text>
+ <text x="450" y="114" font-size="9.5">V  W  L  Ts  Ti  c_ice  θ</text>
+ <text x="450" y="166" font-weight="bold">Tagesmittel über Maske</text>
+ <text x="450" y="184" font-size="9.5">V̄, W̄, L̄, T̄s, T̄i</text>
+
+ <text x="245" y="166" font-weight="bold">ΔT_B (A6): Gl. ___</text>
+ <text x="245" y="184" font-size="9.5">RTM(__) − RTM(__)</text>
+ <text x="245" y="236" font-weight="bold">T_B korrigiert: Gl. ___</text>
+ <text x="245" y="253" font-size="9.5">neue Tie-Points!</text>
+ <text x="245" y="298" font-weight="bold">Aufgabe 1b:</text>
+ <text x="245" y="314" font-size="9.5">Mittel ______  Std ______</text>
+
+ <text x="440" y="230" font-size="9.5" font-style="italic">gestrichelt = du füllst aus</text>
+ <text x="440" y="246" font-size="9.5" font-style="italic">dick = Ergebnis für Aufgabe 1</text>
+</g>
+</svg>
+
+<div class="box dash"><span class="lbl">Bevor du weiterliest: was ist dein Bauchgefühl?</span>
+Wird die Std der SIC durch die Korrektur <b>kleiner / gleich / größer</b>? Um etwa wie viel Prozent? <span class="blank w"></span>  Warum? <span class="blank w"></span></div>
+<div class="foot">1 / 10</div>
+</section>
+
+<!-- ============ SEITE 2 ============ -->
+<section class="page">
+<h2>A · Was misst ESMR eigentlich? <span class="ref">Kolbe Abschn. 2–3, S. 1249–1250</span></h2>
+
+<div class="two">
+<div>
+<table>
+<tr><th>Steckbrief</th><th>eintragen</th></tr>
+<tr><td>Frequenz</td><td class="e"></td></tr>
+<tr><td>Polarisation</td><td class="e"></td></tr>
+<tr><td>Kanäle</td><td class="e"></td></tr>
+<tr><td>Scanpositionen pro Zeile</td><td class="e"></td></tr>
+<tr><td>Einfallswinkel θ (Bereich)</td><td class="e"></td></tr>
+<tr><td>Unsere Daten (Zeitraum)</td><td class="e"></td></tr>
+</table>
+<div class="trap"><b>Denkfrage.</b> ESMR hat nur <i>einen</i> Kanal. Was folgt daraus für die SIC-Bestimmung im Vergleich zu SSM/I mit mehreren Kanälen? (Tipp: S. 1253 links unten.)<div class="lines l3"></div></div>
+</div>
+<div>
+<p class="q">Skizze: Beschrifte die Strahlungsbeiträge</p>
+<p class="small">Setze ein: T_BU, T_BD, T_BC, τ, E·T_s, (1−E)·… . Welcher Pfeil wird an der Oberfläche reflektiert?</p>
+<svg viewBox="0 0 320 250" width="100%">
+<defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+<g fill="none" stroke="#000" stroke-width="1">
+ <rect x="250" y="8" width="44" height="22"/>
+ <path d="M10,60 H310" stroke-dasharray="5 3"/>
+ <path d="M10,170 H310" stroke-dasharray="5 3"/>
+ <path d="M10,215 H310" stroke-width="2"/>
+ <path d="M10,215 q15,-8 30,0 t30,0 t30,0 t30,0 t30,0" stroke-width="1"/>
+ <path d="M60,40 L120,210" marker-end="url(#ar2)"/>
+ <path d="M120,210 L180,40" marker-end="url(#ar2)" stroke-dasharray="2 2"/>
+ <path d="M150,130 L120,208" marker-end="url(#ar2)"/>
+ <path d="M200,212 L260,36" marker-end="url(#ar2)" stroke-width="1.6"/>
+ <path d="M230,120 L262,36" marker-end="url(#ar2)"/>
+</g>
+<g font-size="9.5" fill="#000">
+ <text x="255" y="23">ESMR</text>
+ <text x="14" y="54">Weltraum (2,7 K)</text>
+ <text x="14" y="160">Atmosphäre: V, L, T</text>
+ <text x="14" y="236">Ozean: T_s, W, ε(T_s)</text>
+ <text x="20" y="100">①</text><text x="150" y="122">②</text><text x="190" y="80">③</text>
+ <text x="210" y="150">④</text><text x="238" y="112">⑤</text>
+</g>
+</svg>
+<table class="small">
+<tr><td style="width:8mm" class="c">①</td><td></td><td style="width:8mm" class="c">④</td><td></td></tr>
+<tr><td class="c">②</td><td></td><td class="c">⑤</td><td></td></tr>
+<tr><td class="c">③</td><td></td><td colspan="2" class="small">Gl. 12, S. 1250</td></tr>
+</table>
+</div>
+</div>
+
+<h3>Die RTM-Eingaben: woher kommt was, und wie wirkt es?</h3>
+<p class="small">Spalte „Richtung“: steigt T_B über offenem Wasser, wenn die Größe steigt (↑ / ↓ / 0)? Erst raten, später mit dem RTM prüfen (Seite 3).</p>
+<table>
+<tr><th style="width:9%">Größe</th><th style="width:13%">Einheit</th><th style="width:25%">Aus welcher NetCDF-Variable?</th><th style="width:31%">Physik: warum ändert das T_B?</th><th class="c" style="width:11%">Richtung (geraten)</th><th class="c" style="width:11%">Richtung (RTM)</th></tr>
+<tr><td><b>V</b></td><td></td><td class="e"></td><td></td><td></td><td></td></tr>
+<tr><td><b>W</b></td><td></td><td class="e"></td><td></td><td></td><td></td></tr>
+<tr><td><b>L</b></td><td></td><td class="e"></td><td></td><td></td><td></td></tr>
+<tr><td><b>T<sub>s</sub></b></td><td></td><td class="e"></td><td></td><td></td><td></td></tr>
+<tr><td><b>T<sub>i</sub></b></td><td></td><td class="e"></td><td></td><td></td><td></td></tr>
+<tr><td><b>c<sub>ice</sub></b></td><td></td><td class="e"></td><td></td><td></td><td></td></tr>
+<tr><td><b>θ</b></td><td>°</td><td class="e"></td><td></td><td></td><td></td></tr>
+</table>
+<div class="trap"><b>Achtung.</b> Für L gibt es keine Variable im File. Tonboe (Treffen 10.11.): L ≈ <span class="blank"></span> − <span class="blank"></span>. Und für T<sub>i</sub> gilt Gl. 15: T<sub>i</sub> = <span class="blank w"></span>. Was bedeutet die feste Zahl 272 K physikalisch?<div class="lines l2"></div></div>
+<div class="foot">2 / 10</div>
+</section>
+
+<!-- ============ SEITE 3 ============ -->
+<section class="page">
+<h2>B · Sensitivitätsstudie des RTM <span class="ref">Tonboe: „wie stark ändert sich die Ausgabe pro Eingabe?“</span></h2>
+<p>Lass <code>esmr_rtm</code> mit einem Referenzzustand laufen und erhöhe <b>eine</b> Größe um den angegebenen Schritt. Trage ΔT_B in K ein. Referenz-Vorschlag: V = 5 mm, W = 8 m/s, L = 0,1 mm, T<sub>s</sub> = 280 K, T<sub>i</sub> = 260 K, c<sub>ice</sub> = 0.</p>
+<table>
+<tr><th>Schritt</th><th class="c">θ = 0°</th><th class="c">θ = 30°</th><th class="c">θ = 50°</th><th>Was fällt auf?</th></tr>
+<tr><td>T_B Referenz (K)</td><td style="height:7mm"></td><td></td><td></td><td></td></tr>
+<tr><td>V + 1 mm</td><td style="height:7mm"></td><td></td><td></td><td></td></tr>
+<tr><td>W + 1 m/s</td><td style="height:7mm"></td><td></td><td></td><td></td></tr>
+<tr><td>L + 0,1 mm</td><td style="height:7mm"></td><td></td><td></td><td></td></tr>
+<tr><td>T<sub>s</sub> + 1 K</td><td style="height:7mm"></td><td></td><td></td><td></td></tr>
+<tr><td>T<sub>i</sub> + 1 K (c<sub>ice</sub> = 0)</td><td style="height:7mm"></td><td></td><td></td><td></td></tr>
+<tr><td>T<sub>i</sub> + 1 K (c<sub>ice</sub> = 1)</td><td style="height:7mm"></td><td></td><td></td><td></td></tr>
+</table>
+
+<div class="two">
+<div class="box"><span class="lbl">Denkfrage 1</span>Warum wird fast jeder Effekt mit größerem θ stärker? (Stichwort: Weglänge, Gl. 19 im Code: <i>τ = exp(−A / cos θ)</i>)<div class="lines l2"></div></div>
+<div class="box"><span class="lbl">Denkfrage 2</span>T<sub>i</sub> hat über offenem Wasser den Effekt <span class="blank s"></span>. Was heißt das für Aufgabe 2 („T<sub>i</sub> weglassen“)? Wo wirkt T<sub>i</sub> dann überhaupt?<div class="lines l2"></div></div>
+</div>
+<div class="box"><span class="lbl">Denkfrage 3 · Größenordnung</span>
+Typische <i>Tagesschwankung</i> über der Maske (aus deinen Daten, Std): σ<sub>V</sub> ≈ <span class="blank s"></span> mm, σ<sub>W</sub> ≈ <span class="blank s"></span> m/s, σ<sub>Ts</sub> ≈ <span class="blank s"></span> K.
+Multipliziere mit der Sensitivität (θ = 30°): Beitrag zur T_B-Std ≈ V: <span class="blank s"></span> K, W: <span class="blank s"></span> K, T<sub>s</sub>: <span class="blank s"></span> K.
+<b>→ Vorhersage für Aufgabe 2:</b> die wichtigste Größe ist <span class="blank"></span>.</div>
+
+<h2 style="margin-top:4mm">C · Warum eine <i>Differenz</i> von zwei RTM-Läufen? <span class="ref">Gl. 13–14, S. 1251–1252</span></h2>
+<div class="eq">T<sub>B,korr</sub> = T<sub>B,gemessen</sub> + ΔT<sub>B,sim</sub> &nbsp;&nbsp;&nbsp; ΔT<sub>B,sim</sub> = RTM( V̄, W̄, L̄, T̄<sub>s</sub>, T̄<sub>i</sub>, c<sub>ice</sub>, θ ) − RTM( V, W, L̄, T<sub>s</sub>, T<sub>i</sub>, c<sub>ice</sub>, θ )</div>
+<div class="two">
+<div class="box"><span class="lbl">Gedankenexperiment: Bias</span>Das RTM liegt überall um +5 K zu hoch. Was passiert mit ΔT_B? <div class="lines" style="height:7.5mm"></div>Und was, wenn man direkt T_B,gemessen − RTM(V,W,…) nehmen würde?<div class="lines" style="height:7.5mm"></div></div>
+<div class="box"><span class="lbl">Vorzeichen durchspielen</span>
+Ein Pixel hat V = 12 mm, Tagesmittel V̄ = 6 mm.<br>
+RTM(aktuell) ist <b>höher / niedriger</b> als RTM(Mittel).<br>
+→ ΔT_B ist <b>positiv / negativ</b><br>
+→ T_B,korr ist <b>kleiner / größer</b> als gemessen.<br>
+In Worten: die Korrektur rechnet das Pixel auf eine „<span class="blank"></span>“ Atmosphäre um.</div>
+</div>
+<div class="trap"><b>Falle.</b> L steht in <i>beiden</i> Läufen als Mittel L̄ (S. 1251 unten rechts). Warum ist L dann trotzdem nicht egal? Welche Rolle spielt L̄ noch?<div class="lines l2"></div></div>
+<div class="foot">3 / 10</div>
+</section>
+
+<!-- ============ SEITE 4 ============ -->
+<section class="page">
+<h2>D · Von T_B zur Eiskonzentration <span class="ref">Gl. 16, S. 1253 · Tab. 2, S. 1252</span></h2>
+<div class="eq" style="font-size:13pt">c<sub>ice</sub> = ( T<sub>B</sub> − T<sub>p,water</sub> ) / ( T<sub>p,ice</sub> − T<sub>p,water</sub> )</div>
+
+<div class="two">
+<div>
+<p class="q">Zeichne Gl. 16 als Gerade</p>
+<svg viewBox="0 0 300 200" width="100%">
+<defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+<g stroke="#000" fill="none">
+ <g stroke="#bbb" stroke-width="0.6">
+  <path d="M40,180 H285"/><path d="M40,120 H285"/><path d="M40,90 H285"/><path d="M40,60 H285"/><path d="M40,30 H285"/>
+  <path d="M90,185 V15"/><path d="M140,185 V15"/><path d="M190,185 V15"/><path d="M240,185 V15"/>
+ </g>
+ <path d="M40,150 H290" marker-end="url(#ar3)" stroke-width="1.2"/>
+ <path d="M40,185 V10" marker-end="url(#ar3)"/>
+</g>
+<g font-size="9" fill="#000">
+ <text x="250" y="165">T_B (K)</text>
+ <text x="44" y="14">c_ice</text>
+ <text x="27" y="153">0</text><text x="18" y="93">0,5</text><text x="27" y="33">1</text><text x="10" y="183">−0,25</text>
+ <text x="80" y="197">100</text><text x="130" y="197">150</text><text x="180" y="197">200</text><text x="230" y="197">250</text>
+</g>
+</svg>
+<p class="small">Markiere T<sub>p,water</sub>, T<sub>p,ice</sub> und die Pixel, die ins Negative bzw. über 1 laufen.</p>
+</div>
+<div>
+<div class="box"><span class="lbl">Rechnen von Hand</span>
+Angenommen T<sub>p,water</sub> = 125 K, T<sub>p,ice</sub> = 240 K.<br>
+• T_B = 131 K → c<sub>ice</sub> = <span class="blank"></span> %<br>
+• T_B = 120 K → c<sub>ice</sub> = <span class="blank"></span> %<br>
+• 1 K Fehler in T_B ≙ <span class="blank"></span> % SIC<br>
+• Std(T_B) = 4 K → Std(SIC) ≈ <span class="blank"></span> %</div>
+<div class="box"><span class="lbl">Merksatz, selbst formulieren</span>Std(SIC) hängt mit Std(T_B) zusammen über …<div class="lines l2"></div></div>
+</div>
+</div>
+
+<div class="trap"><b>Falle: nicht abschneiden!</b> Im Paper wird c<sub>ice</sub> auf [0, 1] begrenzt und alles &lt; 15 % auf 0 gesetzt (S. 1254, Schritt 1). Für Aufgabe 1 rechnen wir Mittel und Std auf der <b>rohen</b> SIC. Was würde mit dem Mittelwert und der Std passieren, wenn man abschneidet?<div class="lines l3"></div></div>
+
+<h3>Tie-Points: Bedingungen aus Tabelle 2 (+ Treffen mit Tonboe)</h3>
+<table>
+<tr><th style="width:24%">Bedingung</th><th style="width:38%">Ocean (offenes Wasser)</th><th style="width:38%">Ice</th></tr>
+<tr><td>Breite Arktis / Antarktis</td><td class="e"></td><td></td></tr>
+<tr><td>ERA5 SIC</td><td class="e"></td><td></td></tr>
+<tr><td>5×5-Box (optional)</td><td class="e"></td><td></td></tr>
+<tr><td>T_B-Bereich</td><td class="e"></td><td></td></tr>
+<tr><td>SST</td><td class="e"></td><td>—</td></tr>
+<tr><td>Unsere Abweichung</td><td class="e small">|lat| ≥ 50°</td><td class="small">SIC ≥ 95 % als 100 % behandeln</td></tr>
+<tr><td>Wie oft berechnen?</td><td colspan="2" class="e"></td></tr>
+<tr><td>Hemisphären</td><td colspan="2" class="e"></td></tr>
+</table>
+<div class="foot">4 / 10</div>
+</section>
+
+<!-- ============ SEITE 5 ============ -->
+<section class="page">
+<h2>Aufgabe 1 · Mittelwert und Std der SIC über offenem Wasser</h2>
+<div class="box dash"><span class="lbl">Hypothese (vor dem Rechnen)</span><div class="lines l2"></div></div>
+<table>
+<tr><th>Orbit / Tag</th><th>Hemisph.</th><th class="c">N Pixel</th><th class="c">T<sub>p,water</sub></th><th class="c">T<sub>p,ice</sub></th><th class="c">Mittel unkorr.</th><th class="c">Std unkorr.</th><th class="c">Mittel korr.</th><th class="c">Std korr.</th><th class="c">Δ Std (%)</th></tr>
+<tr><td class="e"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td class="e"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td class="e"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td class="e"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td class="e"><b>Feb 1973</b></td><td>NH</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td class="e"><b>Feb 1973</b></td><td>SH</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+</table>
+<ul class="chk small">
+<li>Mittel korrigiert ≈ 0? Wenn nicht: welcher Tie-Point ist falsch?</li>
+<li>Gefiltert mit <code>brightness_temperature_filtered</code> und Scanpos. 1–4 / 75–78 entfernt?</li>
+<li>Pixel mit NaN in SST (Land) ausgeschlossen? Pixel außerhalb −5…25 °C (RTM-Tabelle) behandelt?</li>
+<li>Tie-Points pro <b>Tag</b> und pro <b>Hemisphäre</b>, nicht pro Orbit.</li>
+</ul>
+<div class="box"><span class="lbl">Interpretation: um wie viel wird es besser, und ist das „wirksam“?</span><div class="lines l5"></div></div>
+<div class="two">
+<div class="box"><span class="lbl">Denkfrage</span>Warum <b>SST &gt; 278 K</b> für Wasser, obwohl wir eigentlich Wasser nahe am Eis wollen? Was stört bei zu kaltem Wasser?<div class="lines l3"></div></div>
+<div class="box"><span class="lbl">Denkfrage</span>Nach der Korrektur ändern sich auch die Tie-Points. Warum muss T<sub>p,water</sub> aus den <i>korrigierten</i> T_B neu berechnet werden – was wäre sonst mit dem Mittelwert der SIC?<div class="lines l3"></div></div>
+</div>
+
+<div class="foot">5 / 10</div>
+</section>
+
+<section class="page">
+<h2>Aufgabe 2 · Welche ERA5-Größe zählt? (Ausschlusstest)</h2>
+<p class="small">Wiederhole die Korrektur, aber setze jeweils <b>eine</b> Größe im „aktuellen“ Lauf auf ihr Mittel (dann korrigiert das RTM für sie nichts mehr). Je stärker die Std steigt, desto wichtiger ist die Größe.</p>
+<table>
+<tr><th>Lauf</th><th class="c">Std SIC NH</th><th class="c">Std SIC SH</th><th class="c">Anstieg ggü. „alle“</th><th class="c">Rang</th><th>Passt zur Vorhersage (S. 3)?</th></tr>
+<tr><td>keine Korrektur</td><td class="e"></td><td></td><td></td><td class="c">—</td><td></td></tr>
+<tr><td>alle (V, W, T<sub>s</sub>, T<sub>i</sub>)</td><td class="e"></td><td></td><td class="c">0</td><td class="c">—</td><td></td></tr>
+<tr><td>ohne V</td><td class="e"></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ohne W</td><td class="e"></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ohne T<sub>s</sub></td><td class="e"></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ohne T<sub>i</sub></td><td class="e"></td><td></td><td></td><td></td><td></td></tr>
+</table>
+<div class="two">
+<div class="box"><span class="lbl">Denkfrage</span>Die Anstiege addieren sich nicht zur Gesamtwirkung. Warum? (Stichwort: Std addiert sich quadratisch, Korrelation V–T<sub>s</sub>.)<div class="lines l3"></div></div>
+<div class="box"><span class="lbl">Denkfrage</span>Kann eine Korrektur die Std auch <i>erhöhen</i>? Wann? (Stichwort: ERA5-Fehler 1973, kaum Satellitendaten assimiliert.)<div class="lines l3"></div></div>
+</div>
+<div class="box"><span class="lbl">Interpretation: welche Größe dominiert, und passt das zur Physik?</span><div class="lines l4"></div></div>
+<h3>Sanity-Checks: notiere die Zahl, wenn du sie hast</h3>
+<table>
+<tr><th>Größe</th><th class="c">Erwartung (raten)</th><th class="c">gemessen</th><th>ok? Warum (nicht)?</th></tr>
+<tr><td>Anteil Pixel in der Wassermaske</td><td class="e"></td><td></td><td></td></tr>
+<tr><td>mittlere T_B über Wasser (K)</td><td class="e"></td><td></td><td></td></tr>
+<tr><td>mittlere T_B über Eis (K)</td><td class="e"></td><td></td><td></td></tr>
+<tr><td>Kontrast T<sub>p,ice</sub> − T<sub>p,water</sub> (K)</td><td class="e"></td><td></td><td></td></tr>
+<tr><td>Spannweite ΔT_B,sim (K)</td><td class="e"></td><td></td><td></td></tr>
+<tr><td>Laufzeit RTM für einen Orbit</td><td class="e"></td><td></td><td></td></tr>
+</table>
+<div class="foot">6 / 10</div>
+</section>
+
+<!-- ============ SEITE 6 ============ -->
+<section class="page">
+<h2>Aufgabe 3 · Std der SIC über dem Einfallswinkel <span class="ref">vgl. Fig. 5, S. 1254 (dort in K, Jan 1974)</span></h2>
+<div class="two">
+<div>
+<p class="q">① Skizze: deine Erwartung (vor dem Rechnen)</p>
+<svg viewBox="0 0 300 200" width="100%">
+<defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+<g stroke="#000" fill="none"><path d="M35,175 H290" marker-end="url(#ar4)"/><path d="M162,178 V172"/><path d="M35,175 V10" marker-end="url(#ar4)"/>
+<g stroke="#bbb" stroke-width="0.6"><path d="M35,135 H285"/><path d="M35,95 H285"/><path d="M35,55 H285"/><path d="M60,175 V15"/><path d="M265,175 V15"/></g>
+<path d="M45,175 V15 M280,175 V15" stroke-dasharray="3 3"/></g>
+<g font-size="9" fill="#000"><text x="40" y="190">−64°</text><text x="155" y="190">0°</text><text x="262" y="190">+64°</text><text x="235" y="168">θ</text><text x="2" y="14">Std SIC (%)</text>
+<text x="48" y="28" font-size="8">gestrichelt: hier wird</text><text x="48" y="38" font-size="8">abgeschnitten (Pos. 1–4/75–78)</text></g>
+</svg>
+</div>
+<div>
+<p class="q">② Skizze: dein Ergebnis (unkorr. — , korr. - - -)</p>
+<svg viewBox="0 0 300 200" width="100%">
+<g stroke="#000" fill="none"><path d="M35,175 H290" marker-end="url(#ar4)"/><path d="M162,178 V172"/><path d="M35,175 V10" marker-end="url(#ar4)"/>
+<g stroke="#bbb" stroke-width="0.6"><path d="M35,135 H285"/><path d="M35,95 H285"/><path d="M35,55 H285"/><path d="M60,175 V15"/><path d="M265,175 V15"/></g>
+<path d="M45,175 V15 M280,175 V15" stroke-dasharray="3 3"/></g>
+<g font-size="9" fill="#000"><text x="40" y="190">−64°</text><text x="155" y="190">0°</text><text x="262" y="190">+64°</text><text x="235" y="168">θ</text><text x="2" y="14">Std SIC (%)</text></g>
+</svg>
+</div>
+</div>
+<table class="small">
+<tr><th>θ-Bin</th><th class="c">0–10°</th><th class="c">10–20°</th><th class="c">20–30°</th><th class="c">30–40°</th><th class="c">40–50°</th><th class="c">50–56°</th><th class="c">56–64°*</th></tr>
+<tr><td>Std unkorr.</td><td class="e"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>Std korr.</td><td class="e"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>N Pixel</td><td class="e"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+</table>
+<p class="small">* nur zum Vergleich, falls du die Ränder testweise drin lässt. Links und rechts (±θ) getrennt oder zusammen? Entscheidung: <span class="blank w"></span></p>
+
+<div class="two">
+<div class="box"><span class="lbl">Denkfrage</span>Woher kommt mehr Rauschen am Rand? Zähle zwei Gründe auf: einen <i>atmosphärischen</i> und einen <i>instrumentellen</i> (S. 1249 unten, „Veng 2021“).<div class="lines l3"></div></div>
+<div class="box"><span class="lbl">Denkfrage</span>Fig. 5 zeigt Std in <b>K</b>, wir in <b>% SIC</b>. Wie rechnest du um, und warum sind unsere Zahlen (Feb 1973) nicht direkt vergleichbar?<div class="lines l3"></div></div>
+</div>
+<div class="box"><span class="lbl">Ab welchem θ würdest du abschneiden? Begründung mit deiner Kurve</span><div class="lines l4"></div></div>
+
+<div class="foot">7 / 10</div>
+</section>
+
+<section class="page">
+<h2>Aufgabe 4 · Empfehlung für eine Korrekturstrategie</h2>
+<p class="small">Pro Punkt: Empfehlung + <b>Beleg aus deinen eigenen Ergebnissen</b> (Tabelle / Abbildung).</p>
+<table>
+<tr><th style="width:24%">Frage</th><th style="width:40%">Empfehlung</th><th style="width:36%">Beleg</th></tr>
+<tr><td>Winkel-Cut-off</td><td class="e" style="height:16mm"></td><td></td></tr>
+<tr><td>Welche ERA5-Größen korrigieren?</td><td class="e" style="height:16mm"></td><td></td></tr>
+<tr><td>Wolken (L)</td><td class="e" style="height:16mm"></td><td></td></tr>
+<tr><td>Eisseite / T<sub>i</sub> (Gl. 15, 272 K)</td><td class="e" style="height:16mm"></td><td></td></tr>
+<tr><td>Tie-Points (Takt, Hemisph.)</td><td class="e" style="height:16mm"></td><td></td></tr>
+</table>
+<div class="box"><span class="lbl">Die Antwort auf die Forschungsfrage in drei Sätzen</span><div class="lines l4"></div></div>
+<div class="box"><span class="lbl">Fragen an Tonboe (für das nächste Treffen)</span><div class="lines l6"></div></div>
+<div class="foot">8 / 10</div>
+</section>
+
+<!-- ============ SEITE 7 ============ -->
+<section class="page">
+<h2>E · Fortschritt und Stolpersteine</h2>
+<div class="two">
+<div>
+<p class="q">Phase A: ein Orbit von Anfang bis Ende</p>
+<ul class="chk">
+<li><b>A1</b> File öffnen, Variablen + Formen (Zeilen × 78) ✓</li>
+<li><b>A2</b> T_B, lat, lon, θ, W, V, T<sub>s</sub>, T<sub>i</sub> vorbereiten, T_B plotten ✓</li>
+<li><b>A3</b> Filter: Gl. 1 + Scanpos. 1–4 / 75–78 weg</li>
+<li><b>A4</b> Maske offenes Wasser (Tab. 2, |lat| ≥ 50°)</li>
+<li><b>A5</b> SIC unkorrigiert, Tie-Points pro Tag + Hemisph.</li>
+<li><b>A6</b> Korrektur Gl. 13–14 → Aufgabe 1 für einen Orbit</li>
+</ul>
+<p class="q">Phase B: Aufgaben</p>
+<ul class="chk">
+<li><b>B1</b> Aufgabe 2: Ausschlusstest</li>
+<li><b>B2</b> Aufgabe 3: Std pro θ-Bin</li>
+<li><b>B3</b> Ganzer Februar 1973, beide Hemisphären</li>
+<li><b>B4</b> Aufgabe 4: Empfehlung</li>
+<li><b>B5</b> Seminarfolien · <b>B6</b> Report</li>
+</ul>
+</div>
+<div>
+<p class="q">Bekannte Stolpersteine</p>
+<ul class="small">
+<li><code>esmr_rtm.m</code> nutzt <code>endif</code> (Octave) → läuft so nicht in MATLAB; skalar → vektorisieren.</li>
+<li><code>interp1</code> / <code>interp1d</code> nur für SST −5…25 °C: außerhalb NaN bzw. Fehler.</li>
+<li>Eis-Emissivität im Code (0,93) ≠ Tab. 1 (0,91). Über Wasser egal, für T<sub>p,ice</sub> nicht.</li>
+<li>Gl. 12 im Paper hat kein Ω vor T_BD, der Code schon (<code>omega*TBD</code>). Welche Version ist „richtig“? <span class="blank"></span></li>
+<li>sst/siconc sind NaN über Land (≈ 41 %).</li>
+<li>Unsere Daten: Feb 1973, Fig. 5: Jan 1974 → nur die Form vergleichen.</li>
+</ul>
+<div class="box"><span class="lbl">Neu gefundene Stolpersteine</span><div class="lines l6"></div></div>
+</div>
+</div>
+
+
+<div class="foot">9 / 10</div>
+</section>
+
+<!-- ============ SEITE 8 ============ -->
+<section class="page">
+<h2>F · Prüfung: 5 Minuten Report verteidigen <span class="ref">15. Dez · nur die Verteidigung wird benotet</span></h2>
+<p class="small">Nur der Vortrag zählt. Plane für 5 Minuten <b>vier Folien und drei Abbildungen</b>. Schreib zu jedem Block den einen Satz, der hängen bleiben soll.</p>
+<table>
+<tr><th style="width:15%">Zeit</th><th style="width:25%">Block</th><th>Kernsatz</th><th style="width:22%">Abbildung</th></tr>
+<tr><td>0:00–1:00</td><td>Problem: warum Rauschen stört (CDR-Stabilität)</td><td class="e" style="height:13mm"></td><td></td></tr>
+<tr><td>1:00–2:00</td><td>Methode: RTM-Differenz, Tie-Points</td><td class="e" style="height:13mm"></td><td></td></tr>
+<tr><td>2:00–3:30</td><td>Ergebnis: Std vorher/nachher, Ranking</td><td class="e" style="height:13mm"></td><td></td></tr>
+<tr><td>3:30–4:30</td><td>θ-Abhängigkeit</td><td class="e" style="height:13mm"></td><td></td></tr>
+<tr><td>4:30–5:00</td><td>Empfehlung</td><td class="e" style="height:13mm"></td><td></td></tr>
+</table>
+
+<h3>Fragen, die kommen könnten: Antwort in Stichworten, laut üben</h3>
+<table class="small">
+<tr><td style="width:50%">Warum korrigiert man nur über offenem Wasser gut, über Eis aber kaum?</td><td class="e" style="height:11mm"></td></tr>
+<tr><td>Warum ist die Differenz zweier RTM-Läufe robuster als ein Lauf?</td><td class="e" style="height:11mm"></td></tr>
+<tr><td>Was sind dynamische Tie-Points, und warum 15-Tage-Mittel im Paper?</td><td class="e" style="height:11mm"></td></tr>
+<tr><td>Wie gut ist ERA5 im Jahr 1973? Was heißt das für die Korrektur?</td><td class="e" style="height:11mm"></td></tr>
+<tr><td>Was bringt die Korrektur für den Trend der Eisausdehnung?</td><td class="e" style="height:11mm"></td></tr>
+<tr><td>Was würde ein zweiter Kanal (z. B. 37 GHz) ändern?</td><td class="e" style="height:11mm"></td></tr>
+</table>
+
+<h3>Begriffe: in einem Satz erklären können</h3>
+<table class="small">
+<tr><td style="width:22%"><b>Tie-Point</b></td><td class="e"></td><td style="width:22%"><b>Transmissivität τ</b></td><td></td></tr>
+<tr><td><b>Emissivität</b></td><td class="e"></td><td><b>Emitting layer temp.</b></td><td></td></tr>
+<tr><td><b>CDR-Stabilität</b></td><td class="e"></td><td><b>Reanalyse</b></td><td></td></tr>
+<tr><td><b>Swath / Scanposition</b></td><td class="e"></td><td><b>Geophysikal. Rauschen</b></td><td></td></tr>
+</table>
+
+<div class="box dash key" style="margin-top:3mm">
+<span class="lbl">Lösungshinweise: erst nachsehen, wenn du selbst etwas eingetragen hast</span>
+<b>S. 3, Sensitivität</b> (esmr_rtm.py, Referenz wie angegeben; θ = 0° / 30° / 50°): T_B ≈ 131 / 124 / 108 K · V +1 mm: +0,7 / +0,8 / +1,2 K · W +1 m/s: +0,35 / +0,6 / +0,8 K · L +0,1 mm: +1,9 / +2,3 / +3,5 K · T<sub>s</sub> +1 K: <b>−0,16</b> K (!) · T<sub>i</sub> über Wasser: 0 · T<sub>i</sub> über Eis: ≈ +0,9 K/K. Eis-T_B ≈ 243 / 241 / 236 K.
+Das negative Vorzeichen bei T<sub>s</sub> kommt daher, dass die Emissivität des Wassers bei 19 GHz H-pol mit wärmerem Wasser sinkt; das gleicht den Anstieg von T<sub>s</sub> mehr als aus.
+<b>S. 4, Rechnen:</b> 5,2 % · −4,3 % · 1 K ≙ 0,87 % · ≈ 3,5 %. Merksatz: Std(SIC) = Std(T_B) / (T<sub>p,ice</sub> − T<sub>p,water</sub>).
+<b>S. 3, Bias:</b> ein konstanter Bias kürzt sich in der Differenz heraus, nur die <i>Ableitung</i> des RTM muss stimmen.
+</div>
+<div class="foot">10 / 10</div>
+</section>
+
+</body>
+</html>

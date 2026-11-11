@@ -1,0 +1,692 @@
+% Arbeitsblatt zum Projekt 1 (30350 Remote Sensing)
+% Regionale Rauschreduktion von NIMBUS-5-ESMR-Daten
+% Kompilieren: latexmk -pdf Arbeitsblatt_ESMR_Projekt.tex
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage[a4paper,top=13mm,bottom=15mm,left=15mm,right=15mm,footskip=7mm]{geometry}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,decorations.pathmorphing,calc}
+\usepackage[most]{tcolorbox}
+\usepackage{tabularx,array,booktabs}
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{titlesec}
+
+\renewcommand{\familydefault}{\sfdefault}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1.2mm}
+\linespread{1.05}
+
+% ---------- Kopf / Fuß ----------
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\scriptsize 30350 Remote Sensing · Projekt 1 · ESMR-Rauschreduktion}
+\fancyfoot[R]{\scriptsize \thepage\,/\,\pageref{LastPage}}
+
+% ---------- Überschriften ----------
+\titleformat{\section}{\large\bfseries}{}{0pt}{}[\vspace{-2.5mm}\rule{\linewidth}{0.4pt}]
+\titlespacing*{\section}{0pt}{1mm}{2.5mm}
+\titleformat{\subsection}{\normalsize\bfseries}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{3mm}{1mm}
+\newcommand{\sect}[2]{%
+  \noindent\rule{\linewidth}{1.6pt}\par\vspace{-1.5mm}%
+  \section*{#1\hfill{\normalfont\footnotesize\itshape #2}}}
+
+% ---------- Bausteine ----------
+\newcommand{\lines}[1]{\par\vspace{-1mm}\foreach\i in {1,...,#1}{%
+  \noindent\rule{0pt}{6.6mm}{\color{black!40}\hrulefill}\par}}
+\newcommand{\blank}[1][22mm]{\makebox[#1]{\hrulefill}}
+\newcommand{\lbl}[1]{{\scriptsize\bfseries\MakeUppercase{#1}}\par\vspace{0.3mm}}
+
+\tcbset{
+  feldbase/.style={enhanced, sharp corners, colback=white, colframe=black,
+    boxrule=0.6pt, left=2mm, right=2mm, top=1.5mm, bottom=1.5mm,
+    before skip=1.5mm, after skip=1.5mm, fontupper=\small},
+}
+% Feld mit Überschrift
+\newtcolorbox{feld}[2][]{feldbase, #1, before upper={\lbl{#2}}}
+% gestricheltes Feld (Hypothese / Bauchgefühl)
+\newtcolorbox{strich}[2][]{feldbase, frame hidden,
+  borderline={0.6pt}{0pt}{dashed}, #1, before upper={\lbl{#2}}}
+% dickes Feld
+\newtcolorbox{dick}[1][]{feldbase, boxrule=1.5pt, #1}
+% Falle / Achtung: Balken links
+\newtcolorbox{falle}[2][]{enhanced, sharp corners, colback=white, frame hidden,
+  borderline west={2pt}{0pt}{black}, left=3mm, right=0mm, top=0.5mm, bottom=0.5mm,
+  before skip=1.8mm, after skip=1.8mm, fontupper=\small, #1,
+  before upper={{\scriptsize\bfseries\MakeUppercase{#2}.}\ }}
+
+% Tabellen
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcommand{\hrow}[1][8mm]{\rule{0pt}{#1}}   % Zeilenhöhe zum Schreiben
+\newcommand{\tht}[1]{\footnotesize\bfseries #1}
+
+% Checkliste
+\newlist{chk}{itemize}{1}
+\setlist[chk]{label=$\square$, leftmargin=5mm, itemsep=0.4mm, topsep=0.5mm}
+\setlist[itemize]{leftmargin=4.5mm, itemsep=0.4mm, topsep=0.5mm}
+\setlist[enumerate]{leftmargin=4.5mm, itemsep=0.4mm, topsep=0.5mm}
+
+\newcommand{\Tpw}{T_{p,\mathrm{water}}}
+\newcommand{\Tpi}{T_{p,\mathrm{ice}}}
+\newcommand{\TB}{T_B}
+\newcommand{\cice}{c_{\mathrm{ice}}}
+\newcommand{\dTB}{\Delta T_{B,\mathrm{sim}}}
+
+\tikzset{
+  >={Stealth[length=2.2mm]},
+  kasten/.style={draw, thick, minimum width=44mm, minimum height=11mm, align=left,
+    font=\footnotesize, inner sep=1.5mm, text width=41mm},
+  luecke/.style={kasten, dashed},
+  ergebnis/.style={kasten, line width=1.4pt},
+}
+
+\begin{document}
+
+% =====================================================================
+% SEITE 1
+% =====================================================================
+{\LARGE\bfseries Arbeitsblatt: Regionale Rauschreduktion\\[0.5mm] von NIMBUS-5-ESMR-Daten}\par
+\vspace{1mm}
+{\footnotesize\itshape 30350 Remote Sensing · Projekt 1 · Betreuer R.~Tonboe · zum Lesen neben Kolbe et~al.\ (2024), Abschnitt 4.1 (S.~1251--1254) · mit Bleistift ausfüllen}
+
+\begin{dick}
+\lbl{Forschungsfrage}
+{\large\bfseries Wie wirksam ist die regionale Rauschreduktion von NIMBUS-5-ESMR-Daten über offenem Wasser?}
+\end{dick}
+
+\begin{minipage}[t]{0.42\linewidth}
+\vspace{0pt}
+\begin{feld}[before skip=0pt]{Termine}
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+Seminarvortrag & \textbf{4.~Dez} · Länge: \blank[12mm]\\
+Report-Abgabe & \textbf{6.~Dez}, 24:00\\
+Verteidigung & \textbf{15.~Dez} · mündlich, 5~min\\
+& {\footnotesize zählt \(\tfrac{1}{3}\) der Note}
+\end{tabularx}
+\end{feld}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.555\linewidth}
+\vspace{0pt}
+\begin{feld}[before skip=0pt]{Die vier Aufgaben (read\_me.txt)}
+\footnotesize
+\begin{enumerate}
+\item Mittelwert und Std der SIC über offenem Wasser, \textbf{unkorrigiert} vs.\ \textbf{korrigiert} (Mittel \(\approx 0\)).
+\item Durch \textbf{Weglassen} testen: welche ERA5-Größen zählen am meisten?
+\item Std der SIC über dem \textbf{Einfallswinkel} \(\theta\): welche Winkel meiden?
+\item \textbf{Empfehlung} für eine ESMR-Korrekturstrategie.
+\end{enumerate}
+\end{feld}
+\end{minipage}
+
+\subsection*{1 · Die Idee in einem Satz (erst selbst schreiben, dann S.~1251 rechts prüfen)}
+\begin{feld}{Rauschreduktion heißt \dots}
+\lines{2}
+\end{feld}
+
+\subsection*{2 · Die Prozesskette: Lücken füllen}
+{\small Trage in jedes gestrichelte Feld die Größe oder Gleichung ein. Die Schritte A3--A6 entsprechen PROGRESS.md.}
+
+\begin{center}
+\begin{tikzpicture}[node distance=6mm and 8mm]
+  % links: Satellit
+  \node[kasten] (sw) {\textbf{ESMR-Swath (NetCDF)}\\ \(\TB\) gemessen, lat, lon, Scanpos.};
+  \node[luecke, below=of sw] (fi) {\textbf{Filter (A3):}\\ Gl.~\blank[6mm] und Scanpos.~\blank[6mm]/\blank[6mm]};
+  \node[luecke, below=of fi] (ma) {\textbf{Maske offenes Wasser (A4):}\\ Tab.~\blank[6mm] · \(|\mathrm{lat}|\ge\) \blank[7mm]\(^\circ\)};
+  \node[luecke, below=of ma] (su) {\textbf{SIC unkorrigiert (A5):}\\ Gl.~\blank[6mm] mit \(\Tpw\), \(\Tpi\)};
+  \node[ergebnis, below=of su] (r1) {\textbf{Aufgabe 1a}\\ Mittel \blank[13mm] Std \blank[13mm]};
+  % rechts: ERA5
+  \node[kasten, right=56mm of sw] (er) {\textbf{ERA5 (im selben File)}\\ u10, v10, tcwv, tcw, sst, t2m, siconc};
+  \node[luecke, below=of er] (in) {\textbf{RTM-Eingaben (A2):}\\ \(V\;\;W\;\;L\;\;T_s\;\;T_i\;\;\cice\;\;\theta\)};
+  \node[kasten, below=of in] (mi) {\textbf{Tagesmittel über Maske}\\ \(\bar V,\ \bar W,\ \bar L,\ \bar T_s,\ \bar T_i\)};
+  % Mitte
+  \node[luecke, text width=37mm, minimum width=40mm] at ($(ma)!0.5!(mi)$) (dt) {\textbf{\(\dTB\) (A6):} Gl.~\blank[6mm]\\ RTM(\blank[8mm]) \(-\) RTM(\blank[8mm])};
+  \node[luecke, text width=37mm, minimum width=40mm, below=of dt] (tk) {\textbf{\(\TB\) korrigiert:} Gl.~\blank[6mm]\\ neue Tie-Points!};
+  \node[ergebnis, text width=37mm, minimum width=40mm, below=of tk] (r2) {\textbf{Aufgabe 1b}\\ Mittel \blank[9mm] Std \blank[9mm]};
+  % Pfeile
+  \draw[->] (sw) -- (fi); \draw[->] (fi) -- (ma); \draw[->] (ma) -- (su); \draw[->] (su) -- (r1);
+  \draw[->] (er) -- (in); \draw[->] (in) -- (mi);
+  \draw[->] (mi.west) -- (dt.east);
+  \draw[->] (ma.east) -- (dt.west);
+  \draw[->] (dt) -- (tk); \draw[->] (tk) -- (r2);
+  \draw[->] (su.east) -- (tk.west);
+  % Legende
+  \node[font=\scriptsize\itshape, align=left, below=4mm of mi.south west, anchor=north west]
+    {gestrichelt = du füllst aus\\ dick = Ergebnis für Aufgabe 1};
+\end{tikzpicture}
+\end{center}
+
+\begin{strich}{Bevor du weiterliest: was sagt dein Bauchgefühl?}
+Wird die Std der SIC durch die Korrektur \textbf{kleiner / gleich / größer}? Um etwa wie viel Prozent? \blank[25mm]\\[2mm]
+Warum? \blank[\dimexpr\linewidth-16mm]
+\end{strich}
+
+\newpage
+% =====================================================================
+% SEITE 2
+% =====================================================================
+\sect{A · Was misst ESMR eigentlich?}{Kolbe Abschn.~2--3, S.~1249--1250}
+
+\begin{minipage}[t]{0.47\linewidth}
+\vspace{0pt}
+\begin{tabularx}{\linewidth}{|L|X|}
+\hline
+\tht{Steckbrief} & \tht{eintragen}\\\hline
+Frequenz\hrow & \\\hline
+Polarisation\hrow & \\\hline
+Kanäle\hrow & \\\hline
+Scanpositionen pro Zeile\hrow & \\\hline
+Einfallswinkel \(\theta\) (Bereich)\hrow & \\\hline
+Unsere Daten (Zeitraum)\hrow & \\\hline
+\end{tabularx}
+
+\begin{falle}{Denkfrage}
+ESMR hat nur \emph{einen} Kanal. Was folgt daraus für die SIC-Bestimmung im Vergleich zu SSM/I mit mehreren Kanälen? (Tipp: S.~1253 links unten.)
+\lines{3}
+\end{falle}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.5\linewidth}
+\vspace{0pt}
+\textbf{Skizze: Beschrifte die Strahlungsbeiträge}\\
+{\footnotesize Setze ein: \(T_{BU}\), \(T_{BD}\), \(T_{BC}\), \(\tau\), \(E\,T_s\), \((1-E)\cdots\). Welcher Pfeil wird an der Oberfläche reflektiert?}
+
+\begin{tikzpicture}[x=1mm,y=1mm, font=\footnotesize]
+  \draw[dashed] (0,50) -- (85,50);
+  \draw[dashed] (0,16) -- (85,16);
+  \draw[very thick] (0,4) -- (85,4);
+  \draw[decorate, decoration={snake, amplitude=0.6mm, segment length=5mm}] (0,4) -- (60,4);
+  \node[draw, minimum width=11mm, minimum height=5mm] at (72,58) {ESMR};
+  \node[anchor=west] at (1,53) {Weltraum (2{,}7\,K)};
+  \node[anchor=west] at (1,19) {Atmosphäre: \(V, L, T\)};
+  \node[anchor=west] at (1,0) {Ozean: \(T_s, W, \varepsilon(T_s)\)};
+  \draw[->] (12,60) -- (30,5);
+  \draw[->, densely dotted] (30,5) -- (48,55);
+  \draw[->] (40,36) -- (31,6);
+  \draw[->, thick] (52,5) -- (70,55);
+  \draw[->] (63,30) -- (71,55);
+  \node at (16,40) {\textcircled{\scriptsize 1}};
+  \node at (41,40) {\textcircled{\scriptsize 2}};
+  \node at (46,24) {\textcircled{\scriptsize 3}};
+  \node at (56,24) {\textcircled{\scriptsize 4}};
+  \node at (63,40) {\textcircled{\scriptsize 5}};
+\end{tikzpicture}
+
+\footnotesize
+\begin{tabularx}{\linewidth}{|c|X|c|X|}
+\hline
+1\hrow[6mm] & & 4 & \\\hline
+2\hrow[6mm] & & 5 & \\\hline
+3\hrow[6mm] & & \multicolumn{2}{l|}{\scriptsize vgl.\ Gl.~12, S.~1250}\\\hline
+\end{tabularx}
+\end{minipage}
+
+\subsection*{Die RTM-Eingaben: woher kommt was, und wie wirkt es?}
+{\small Spalte „Richtung“: steigt \(\TB\) über offenem Wasser, wenn die Größe steigt (\(\uparrow\) / \(\downarrow\) / 0)? Erst raten, später mit dem RTM prüfen (Seite~3).}
+
+\begin{tabularx}{\linewidth}{|p{9mm}|p{14mm}|p{36mm}|X|p{14mm}|p{14mm}|}
+\hline
+\tht{Größe} & \tht{Einheit} & \tht{NetCDF-Variable} & \tht{Physik: warum ändert das \(T_B\)?} & \tht{geraten} & \tht{RTM}\\\hline
+\(V\)\hrow[9mm] &&&&&\\\hline
+\(W\)\hrow[9mm] &&&&&\\\hline
+\(L\)\hrow[9mm] &&&&&\\\hline
+\(T_s\)\hrow[9mm] &&&&&\\\hline
+\(T_i\)\hrow[9mm] &&&&&\\\hline
+\(\cice\)\hrow[9mm] &&&&&\\\hline
+\(\theta\)\hrow[9mm] & \(^\circ\) &&&&\\\hline
+\end{tabularx}
+
+\begin{falle}{Achtung}
+Für \(L\) gibt es keine Variable im File. Tonboe (Treffen 10.11.): \(L \approx\) \blank \(-\) \blank. Und für \(T_i\) gilt Gl.~15: \(T_i =\) \blank[40mm].\\
+Was bedeutet die feste Zahl 272\,K physikalisch?
+\lines{2}
+\end{falle}
+
+\newpage
+% =====================================================================
+% SEITE 3
+% =====================================================================
+\sect{B · Sensitivitätsstudie des RTM}{Tonboe: „Wie stark ändert sich die Ausgabe pro Eingabe?“}
+
+{\small Lass \texttt{esmr\_rtm} mit einem Referenzzustand laufen und erhöhe \textbf{eine} Größe um den angegebenen Schritt. Trage \(\Delta T_B\) in K ein.\\
+Referenz-Vorschlag: \(V=5\)\,mm, \(W=8\)\,m/s, \(L=0{,}1\)\,mm, \(T_s=280\)\,K, \(T_i=260\)\,K, \(\cice=0\).}
+
+\begin{tabularx}{\linewidth}{|p{38mm}|p{17mm}|p{17mm}|p{17mm}|X|}
+\hline
+\tht{Schritt} & \tht{\(\theta=0^\circ\)} & \tht{\(\theta=30^\circ\)} & \tht{\(\theta=50^\circ\)} & \tht{Was fällt auf?}\\\hline
+\(T_B\) Referenz (K)\hrow[7mm] &&&&\\\hline
+\(V + 1\)\,mm\hrow[7mm] &&&&\\\hline
+\(W + 1\)\,m/s\hrow[7mm] &&&&\\\hline
+\(L + 0{,}1\)\,mm\hrow[7mm] &&&&\\\hline
+\(T_s + 1\)\,K\hrow[7mm] &&&&\\\hline
+\(T_i + 1\)\,K \;(\(\cice=0\))\hrow[7mm] &&&&\\\hline
+\(T_i + 1\)\,K \;(\(\cice=1\))\hrow[7mm] &&&&\\\hline
+\end{tabularx}
+
+\begin{minipage}[t]{0.49\linewidth}
+\begin{feld}[height=34mm]{Denkfrage 1}
+Warum wird fast jeder Effekt mit größerem \(\theta\) stärker?\\
+{\footnotesize (Stichwort Weglänge; im Code: \(\tau = \exp(-A/\cos\theta)\))}
+\lines{2}
+\end{feld}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}
+\begin{feld}[height=34mm]{Denkfrage 2}
+\(T_i\) hat über offenem Wasser den Effekt \blank[12mm]. Was heißt das für Aufgabe~2 („\(T_i\) weglassen“)? Wo wirkt \(T_i\) dann überhaupt?
+\lines{2}
+\end{feld}
+\end{minipage}
+
+\begin{feld}{Denkfrage 3 · Größenordnung}
+Typische \emph{Tagesschwankung} über der Maske (aus deinen Daten, Std):
+\(\sigma_V\approx\) \blank[11mm]\,mm, \(\sigma_W\approx\) \blank[11mm]\,m/s, \(\sigma_{T_s}\approx\) \blank[11mm]\,K.\\[1.5mm]
+Mal Sensitivität (\(\theta=30^\circ\)) ergibt den Beitrag zur \(T_B\)-Std: \(V\): \blank[11mm]\,K,\; \(W\): \blank[11mm]\,K,\; \(T_s\): \blank[11mm]\,K.\\[1.5mm]
+\(\rightarrow\) \textbf{Vorhersage für Aufgabe 2:} die wichtigste Größe ist \blank[25mm].
+\end{feld}
+
+\vspace{1mm}
+\sect{C · Warum eine \emph{Differenz} von zwei RTM-Läufen?}{Gl.~13--14, S.~1251--1252}
+\vspace{-2mm}
+\begin{align*}
+T_{B,\mathrm{korr}} &= T_{B,\mathrm{gemessen}} + \dTB\\
+\dTB &= \mathrm{RTM}\big(\bar V, \bar W, \bar L, \bar T_s, \bar T_i, \cice, \theta\big) - \mathrm{RTM}\big(V, W, \bar L, T_s, T_i, \cice, \theta\big)
+\end{align*}
+
+\begin{minipage}[t]{0.49\linewidth}
+\begin{feld}[height=40mm]{Gedankenexperiment: Bias}
+Das RTM liegt überall um \(+5\)\,K zu hoch. Was passiert mit \(\dTB\)?
+\lines{1}
+Und wenn man direkt \(T_{B,\mathrm{gem}} - \mathrm{RTM}(V,W,\dots)\) nähme?
+\lines{1}
+\end{feld}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}
+\begin{feld}[height=40mm]{Vorzeichen durchspielen}
+Ein Pixel hat \(V=12\)\,mm, Tagesmittel \(\bar V=6\)\,mm.\\
+RTM(aktuell) ist \textbf{höher / niedriger} als RTM(Mittel).\\
+\(\rightarrow\) \(\dTB\) ist \textbf{positiv / negativ}\\
+\(\rightarrow\) \(T_{B,\mathrm{korr}}\) ist \textbf{kleiner / größer} als gemessen.\\[1mm]
+Die Korrektur rechnet das Pixel auf eine „\blank[18mm]“ Atmosphäre um.
+\end{feld}
+\end{minipage}
+
+\begin{falle}{Falle}
+\(L\) steht in \emph{beiden} Läufen als Mittel \(\bar L\) (S.~1251 unten rechts). Warum ist \(L\) trotzdem nicht egal? Welche Rolle spielt \(\bar L\) noch?
+\lines{1}
+\end{falle}
+
+\newpage
+% =====================================================================
+% SEITE 4
+% =====================================================================
+\sect{D · Von \(T_B\) zur Eiskonzentration}{Gl.~16, S.~1253 · Tab.~2, S.~1252}
+\vspace{-1mm}
+\[
+\boxed{\;\cice = \frac{T_B - \Tpw}{\Tpi - \Tpw}\;}
+\]
+
+\begin{minipage}[t]{0.5\linewidth}
+\vspace{0pt}
+\textbf{Zeichne Gl.~16 als Gerade}\\[1mm]
+\begin{tikzpicture}[x=0.32mm, y=40mm, font=\footnotesize]
+  \draw[black!30, very thin] (50,-0.25) grid[xstep=25, ystep=0.25] (275,1.25);
+  \draw[->, thick] (50,0) -- (285,0) node[below left=1mm and 0mm] {\(T_B\) (K)};
+  \draw[->] (50,-0.3) -- (50,1.35) node[above] {\(\cice\)};
+  \foreach \x in {100,150,200,250} \draw (\x,-0.25) node[below] {\x};
+  \foreach \y/\l in {-0.25/{$-0{,}25$},0/0,0.5/{0,5},1/1,1.25/{1,25}} \node[left] at (50,\y) {\l};
+\end{tikzpicture}\\
+{\footnotesize Markiere \(\Tpw\), \(\Tpi\) und die Bereiche, in denen \(\cice<0\) bzw.\ \(>1\) wird.}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.47\linewidth}
+\vspace{0pt}
+\begin{feld}{Rechnen von Hand}
+Angenommen \(\Tpw=125\)\,K, \(\Tpi=240\)\,K.\\[1mm]
+\(T_B=131\)\,K \(\Rightarrow \cice=\) \blank[15mm]\,\%\\[1mm]
+\(T_B=120\)\,K \(\Rightarrow \cice=\) \blank[15mm]\,\%\\[1mm]
+1\,K Fehler in \(T_B\) \(\widehat{=}\) \blank[15mm]\,\% SIC\\[1mm]
+\(\mathrm{Std}(T_B)=4\)\,K \(\Rightarrow \mathrm{Std}(\mathrm{SIC})\approx\) \blank[12mm]\,\%
+\end{feld}
+\begin{feld}{Merksatz, selbst formulieren}
+\(\mathrm{Std}(\mathrm{SIC})\) hängt mit \(\mathrm{Std}(T_B)\) zusammen über \dots
+\lines{2}
+\end{feld}
+\end{minipage}
+
+\begin{falle}{Falle: nicht abschneiden}
+Im Paper wird \(\cice\) auf \([0,1]\) begrenzt und alles \(<15\,\%\) auf 0 gesetzt (S.~1254, Schritt~1). Für Aufgabe~1 rechnen wir Mittel und Std auf der \textbf{rohen} SIC. Was würde mit Mittelwert und Std passieren, wenn man abschneidet?
+\lines{3}
+\end{falle}
+
+\subsection*{Tie-Points: Bedingungen aus Tabelle 2 (+ Treffen mit Tonboe)}
+\begin{tabularx}{\linewidth}{|p{40mm}|X|X|}
+\hline
+\tht{Bedingung} & \tht{Ocean (offenes Wasser)} & \tht{Ice}\\\hline
+Breite Arktis / Antarktis\hrow & & \\\hline
+ERA5 SIC\hrow & & \\\hline
+\(5\times5\)-Box (optional)\hrow & & \\\hline
+\(T_B\)-Bereich\hrow & & \\\hline
+SST\hrow & & \centering --- \tabularnewline\hline
+Unsere Abweichung\hrow & \footnotesize \(|\mathrm{lat}|\ge 50^\circ\) & \footnotesize SIC \(\ge 95\,\%\) als 100\,\% behandeln\\\hline
+Wie oft berechnen?\hrow & \multicolumn{2}{l|}{}\\\hline
+Hemisphären\hrow & \multicolumn{2}{l|}{}\\\hline
+\end{tabularx}
+
+\newpage
+% =====================================================================
+% SEITE 5
+% =====================================================================
+\sect{Aufgabe 1 · Mittelwert und Std der SIC über offenem Wasser}{}
+
+\begin{strich}{Hypothese (vor dem Rechnen)}
+\lines{2}
+\end{strich}
+
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\linewidth}{|X|p{9mm}|p{10mm}|p{11mm}|p{11mm}|p{13mm}|p{13mm}|p{13mm}|p{13mm}|p{12mm}|}
+\hline
+\tht{Orbit / Tag} & \tht{Hem.} & \tht{N} & \tht{\(T_{p,w}\)} & \tht{\(T_{p,i}\)} & \tht{Mittel unkorr.} & \tht{Std unkorr.} & \tht{Mittel korr.} & \tht{Std korr.} & \tht{\(\Delta\)Std (\%)}\\\hline
+\hrow &&&&&&&&&\\\hline
+\hrow &&&&&&&&&\\\hline
+\hrow &&&&&&&&&\\\hline
+\hrow &&&&&&&&&\\\hline
+\textbf{Feb 1973}\hrow & NH &&&&&&&&\\\hline
+\textbf{Feb 1973}\hrow & SH &&&&&&&&\\\hline
+\end{tabularx}}
+
+\begin{chk}\small
+\item Mittel korrigiert \(\approx 0\)? Wenn nicht: welcher Tie-Point ist falsch?
+\item Gefiltert mit \texttt{brightness\_temperature\_filtered} und Scanpos.\ 1--4 / 75--78 entfernt?
+\item Pixel mit NaN in SST (Land) ausgeschlossen? Pixel außerhalb \(-5\dots25\,^\circ\)C (RTM-Tabelle) behandelt?
+\item Tie-Points pro \textbf{Tag} und pro \textbf{Hemisphäre}, nicht pro Orbit.
+\end{chk}
+
+\begin{feld}{Interpretation: um wie viel wird es besser, und ist das „wirksam“?}
+\lines{5}
+\end{feld}
+
+\begin{minipage}[t]{0.49\linewidth}
+\begin{feld}[height=50mm]{Denkfrage}
+Warum \textbf{SST \(>\) 278\,K} für Wasser, obwohl wir eigentlich Wasser nahe am Eis wollen? Was stört bei zu kaltem Wasser?
+\lines{4}
+\end{feld}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}
+\begin{feld}[height=50mm]{Denkfrage}
+Nach der Korrektur ändern sich auch die Tie-Points. Warum muss \(\Tpw\) aus den \emph{korrigierten} \(T_B\) neu berechnet werden? Was wäre sonst mit dem Mittelwert der SIC?
+\lines{3}
+\end{feld}
+\end{minipage}
+
+\newpage
+% =====================================================================
+% SEITE 6
+% =====================================================================
+\sect{Aufgabe 2 · Welche ERA5-Größe zählt? (Ausschlusstest)}{}
+
+{\small Wiederhole die Korrektur, aber setze jeweils \textbf{eine} Größe im „aktuellen“ Lauf auf ihr Mittel (dann korrigiert das RTM für sie nichts mehr). Je stärker die Std steigt, desto wichtiger ist die Größe.}
+
+\begin{tabularx}{\linewidth}{|p{36mm}|p{17mm}|p{17mm}|p{22mm}|p{10mm}|X|}
+\hline
+\tht{Lauf} & \tht{Std NH} & \tht{Std SH} & \tht{Anstieg ggü.\ „alle“} & \tht{Rang} & \tht{passt zur Vorhersage (S.~3)?}\\\hline
+keine Korrektur\hrow &&&& \centering --- &\\\hline
+alle (\(V, W, T_s, T_i\))\hrow &&& \centering 0 & \centering --- &\\\hline
+ohne \(V\)\hrow &&&&&\\\hline
+ohne \(W\)\hrow &&&&&\\\hline
+ohne \(T_s\)\hrow &&&&&\\\hline
+ohne \(T_i\)\hrow &&&&&\\\hline
+\end{tabularx}
+
+\begin{minipage}[t]{0.49\linewidth}
+\begin{feld}[height=40mm]{Denkfrage}
+Die Anstiege addieren sich nicht zur Gesamtwirkung. Warum?\\
+{\footnotesize (Stichwort: Varianzen addieren sich, nicht Std; Korrelation \(V\)--\(T_s\).)}
+\lines{3}
+\end{feld}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}
+\begin{feld}[height=40mm]{Denkfrage}
+Kann eine Korrektur die Std auch \emph{erhöhen}? Wann?\\
+{\footnotesize (Stichwort: ERA5-Fehler 1973, kaum Satellitendaten assimiliert.)}
+\lines{3}
+\end{feld}
+\end{minipage}
+
+\begin{feld}{Interpretation: welche Größe dominiert, und passt das zur Physik?}
+\lines{4}
+\end{feld}
+
+\subsection*{Plausibilitätsprüfung: notiere die Zahl, wenn du sie hast}
+\begin{tabularx}{\linewidth}{|p{58mm}|p{24mm}|p{24mm}|X|}
+\hline
+\tht{Größe} & \tht{Erwartung} & \tht{gemessen} & \tht{ok? Warum (nicht)?}\\\hline
+Anteil Pixel in der Wassermaske\hrow &&&\\\hline
+mittlere \(T_B\) über Wasser (K)\hrow &&&\\\hline
+mittlere \(T_B\) über Eis (K)\hrow &&&\\\hline
+Kontrast \(\Tpi-\Tpw\) (K)\hrow &&&\\\hline
+Spannweite \(\dTB\) (K)\hrow &&&\\\hline
+Laufzeit RTM für einen Orbit\hrow &&&\\\hline
+\end{tabularx}
+
+\newpage
+% =====================================================================
+% SEITE 7
+% =====================================================================
+\sect{Aufgabe 3 · Std der SIC über dem Einfallswinkel}{vgl.\ Fig.~5, S.~1254 (dort in K, Jan 1974)}
+
+\newcommand{\winkelachsen}{%
+\begin{tikzpicture}[x=0.6mm, y=45mm, font=\footnotesize]
+  \draw[black!30, very thin] (-64,0) grid[xstep=16, ystep=0.25] (64,1);
+  \draw[->] (-66,0) -- (72,0) node[above left] {\(\theta\)};
+  \draw[->] (-66,0) -- (-66,1.1) node[above right] {Std SIC (\%)};
+  \draw[dashed, thick] (-56,0) -- (-56,1) (56,0) -- (56,1);
+  \foreach \x in {-64,-32,0,32,64} \node[below] at (\x,0) {\(\x^\circ\)};
+\end{tikzpicture}}
+
+\begin{minipage}[t]{0.49\linewidth}
+\textbf{\textcircled{\scriptsize 1} Erwartung (vor dem Rechnen)}\\[1mm]
+\winkelachsen
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}
+\textbf{\textcircled{\scriptsize 2} Ergebnis (unkorr.\ ---, korr.\ - - -)}\\[1mm]
+\winkelachsen
+\end{minipage}\\[1mm]
+{\footnotesize Gestrichelte Senkrechte: dort wird abgeschnitten (Scanpos.\ 1--4 / 75--78, \(|\theta|\gtrsim 56^\circ\)).}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{|p{20mm}|C|C|C|C|C|C|C|}
+\hline
+\tht{\(\theta\)-Bin} & \tht{0--10\(^\circ\)} & \tht{10--20\(^\circ\)} & \tht{20--30\(^\circ\)} & \tht{30--40\(^\circ\)} & \tht{40--50\(^\circ\)} & \tht{50--56\(^\circ\)} & \tht{56--64\(^\circ\)*}\\\hline
+Std unkorr.\hrow &&&&&&&\\\hline
+Std korr.\hrow &&&&&&&\\\hline
+N Pixel\hrow &&&&&&&\\\hline
+\end{tabularx}}
+{\footnotesize * nur zum Vergleich, falls du die Ränder testweise drin lässt. Links und rechts (\(\pm\theta\)) getrennt oder zusammen? \blank[40mm]}
+
+\begin{minipage}[t]{0.49\linewidth}
+\begin{feld}[height=42mm]{Denkfrage}
+Woher kommt mehr Rauschen am Rand? Nenne einen \emph{atmosphärischen} und einen \emph{instrumentellen} Grund (S.~1249 unten, „Veng 2021“).
+\lines{3}
+\end{feld}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}
+\begin{feld}[height=42mm]{Denkfrage}
+Fig.~5 zeigt die Std in \textbf{K}, wir in \textbf{\% SIC}. Wie rechnest du um, und warum sind unsere Zahlen (Feb 1973) nicht direkt vergleichbar?
+\lines{3}
+\end{feld}
+\end{minipage}
+
+\begin{feld}{Ab welchem \(\theta\) würdest du abschneiden? Begründung mit deiner Kurve}
+\lines{4}
+\end{feld}
+
+\newpage
+% =====================================================================
+% SEITE 8
+% =====================================================================
+\sect{Aufgabe 4 · Empfehlung für eine Korrekturstrategie}{}
+
+{\small Pro Punkt: Empfehlung + \textbf{Beleg aus deinen eigenen Ergebnissen} (Tabelle / Abbildung).}
+
+\begin{tabularx}{\linewidth}{|p{40mm}|X|p{50mm}|}
+\hline
+\tht{Frage} & \tht{Empfehlung} & \tht{Beleg}\\\hline
+Winkel-Cut-off\hrow[16mm] &&\\\hline
+Welche ERA5-Größen korrigieren?\hrow[16mm] &&\\\hline
+Wolken (\(L\))\hrow[16mm] &&\\\hline
+Eisseite / \(T_i\) (Gl.~15, 272\,K)\hrow[16mm] &&\\\hline
+Tie-Points (Takt, Hemisphären)\hrow[16mm] &&\\\hline
+\end{tabularx}
+
+\begin{feld}{Die Antwort auf die Forschungsfrage in drei Sätzen}
+\lines{4}
+\end{feld}
+
+\begin{feld}{Fragen an Tonboe (für das nächste Treffen)}
+\lines{6}
+\end{feld}
+
+\newpage
+% =====================================================================
+% SEITE 9
+% =====================================================================
+\sect{E · Fortschritt und Stolpersteine}{PROGRESS.md}
+
+\begin{minipage}[t]{0.47\linewidth}
+\textbf{Phase A: ein Orbit von Anfang bis Ende}
+\begin{chk}\small
+\item[$\boxtimes$] \textbf{A1} File öffnen, Variablen + Formen (Zeilen \(\times\) 78)
+\item[$\boxtimes$] \textbf{A2} \(T_B\), lat, lon, \(\theta\), \(W\), \(V\), \(T_s\), \(T_i\) vorbereiten, \(T_B\) plotten
+\item \textbf{A3} Filter: Gl.~1 + Scanpos.\ 1--4 / 75--78 weg
+\item \textbf{A4} Maske offenes Wasser (Tab.~2, \(|\mathrm{lat}|\ge 50^\circ\))
+\item \textbf{A5} SIC unkorrigiert, Tie-Points pro Tag + Hemisphäre
+\item \textbf{A6} Korrektur Gl.~13--14 \(\rightarrow\) Aufgabe~1 für einen Orbit
+\end{chk}
+\vspace{2mm}
+\textbf{Phase B: Aufgaben}
+\begin{chk}\small
+\item \textbf{B1} Aufgabe 2: Ausschlusstest
+\item \textbf{B2} Aufgabe 3: Std pro \(\theta\)-Bin
+\item \textbf{B3} Ganzer Februar 1973, beide Hemisphären
+\item \textbf{B4} Aufgabe 4: Empfehlung
+\item \textbf{B5} Seminarfolien · \textbf{B6} Report
+\end{chk}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.5\linewidth}
+\textbf{Bekannte Stolpersteine}
+\begin{itemize}\footnotesize
+\item \texttt{esmr\_rtm.m} nutzt \texttt{endif} (Octave) und läuft so nicht in MATLAB; nur skalar, muss vektorisiert werden.
+\item \texttt{interp1} / \texttt{interp1d} nur für SST \(-5\dots25\,^\circ\)C: außerhalb NaN bzw.\ Fehler.
+\item Eis-Emissivität im Code (0{,}93) \(\neq\) Tab.~1 (0{,}91). Über Wasser egal, für \(\Tpi\) nicht.
+\item Gl.~12 im Paper hat kein \(\Omega\) vor \(T_{BD}\), der Code schon (\texttt{omega*TBD}). Welche Version stimmt? \blank[20mm]
+\item sst/siconc sind NaN über Land (\(\approx 41\,\%\)).
+\item Unsere Daten: Feb 1973, Fig.~5: Jan 1974 \(\rightarrow\) nur die Form vergleichen.
+\end{itemize}
+\end{minipage}
+
+\begin{feld}{Neu gefundene Stolpersteine}
+\lines{8}
+\end{feld}
+
+\begin{feld}{Entscheidungen, die ich getroffen habe (mit Grund, für den Report)}
+\lines{8}
+\end{feld}
+
+\newpage
+% =====================================================================
+% SEITE 10
+% =====================================================================
+\sect{F · Prüfung: 5 Minuten Report verteidigen}{15.~Dez · nur die Verteidigung wird benotet}
+
+{\small Nur der Vortrag zählt. Plane für 5 Minuten etwa \textbf{vier Folien und drei Abbildungen}. Schreib zu jedem Block den einen Satz, der hängen bleiben soll.}
+
+\begin{tabularx}{\linewidth}{|p{17mm}|p{42mm}|X|p{30mm}|}
+\hline
+\tht{Zeit} & \tht{Block} & \tht{Kernsatz} & \tht{Abbildung}\\\hline
+0:00--1:00\hrow[12mm] & Problem: warum Rauschen stört (CDR-Stabilität) &&\\\hline
+1:00--2:00\hrow[12mm] & Methode: RTM-Differenz, Tie-Points &&\\\hline
+2:00--3:30\hrow[12mm] & Ergebnis: Std vorher/nachher, Ranking &&\\\hline
+3:30--4:30\hrow[12mm] & \(\theta\)-Abhängigkeit &&\\\hline
+4:30--5:00\hrow[12mm] & Empfehlung &&\\\hline
+\end{tabularx}
+
+\subsection*{Fragen, die kommen könnten: Antwort in Stichworten, laut üben}
+{\small
+\begin{tabularx}{\linewidth}{|p{80mm}|X|}
+\hline
+Warum korrigiert man über offenem Wasser gut, über Eis aber kaum?\hrow[10mm] &\\\hline
+Warum ist die Differenz zweier RTM-Läufe robuster als ein einzelner Lauf?\hrow[10mm] &\\\hline
+Was sind dynamische Tie-Points, und warum 15-Tage-Mittel im Paper?\hrow[10mm] &\\\hline
+Wie gut ist ERA5 im Jahr 1973? Was heißt das für die Korrektur?\hrow[10mm] &\\\hline
+Was bringt die Korrektur für den Trend der Eisausdehnung?\hrow[10mm] &\\\hline
+Was würde ein zweiter Kanal (z.\,B.\ 37\,GHz) ändern?\hrow[10mm] &\\\hline
+\end{tabularx}}
+
+\subsection*{Begriffe: in einem Satz erklären können}
+{\small
+\begin{tabularx}{\linewidth}{|p{30mm}|X|p{32mm}|X|}
+\hline
+\textbf{Tie-Point}\hrow & & \textbf{Transmissivität \(\tau\)} & \\\hline
+\textbf{Emissivität}\hrow & & \textbf{Emitting-layer-Temp.} & \\\hline
+\textbf{CDR-Stabilität}\hrow & & \textbf{Reanalyse} & \\\hline
+\textbf{Swath / Scanpos.}\hrow & & \textbf{Geophys.\ Rauschen} & \\\hline
+\end{tabularx}}
+
+\newpage
+% =====================================================================
+% SEITE 11: Formelsammlung
+% =====================================================================
+\sect{Formelsammlung}{Kolbe et~al.\ (2024), Gl.~1, 5--16}
+
+\begin{feld}{Filter und Strahlungstransportmodell (Abschn.~2.2 und 3)}
+\begin{align}
+&90\ \mathrm{K} < T_B \le 273{,}15\ \mathrm{K} \tag{1}\\[1mm]
+&T_B = \mathrm{RTM}\big(V, W, L, T_s, T_i, \cice, \theta\big) \tag{5}\\[1mm]
+&r_h(\theta) = \frac{\big(p-\cos\theta\big)^2 + q^2}{\big(p+\cos\theta\big)^2 + q^2} \tag{6}\\[1mm]
+&p,\,q = \frac{1}{\sqrt 2}\left[\sqrt{\big(\varepsilon_r' - \sin^2\theta\big)^2 + \varepsilon_r''^{\,2}} \;\pm\; \big(\varepsilon_r' - \sin^2\theta\big)\right]^{1/2} \tag{7, 8}\\[1mm]
+&E_0 = 1 - r_h, \qquad E_W = \frac{W\,(0{,}0094\,\theta + 0{,}3)}{T_s}, \qquad E_{\mathrm{water}} = E_0 + E_W \tag{9--11}
+\end{align}
+\vspace{-3mm}
+\begin{multline}
+T_B = T_{BU} + \tau \Big[ (1-\cice)\,E_{\mathrm{water}}\,T_s + (1-\cice)\,(1-E_{\mathrm{water}})\,\big(T_{BD} + \tau\, T_{BC}\big)\\
++ \cice\,E_{\mathrm{ice}}\,T_i + \cice\,(1-E_{\mathrm{ice}})\,\big(T_{BD} + \tau\, T_{BC}\big) \Big] \tag{12}
+\end{multline}
+{\footnotesize \(T_{BU}\), \(T_{BD}\): Auf-/Abwärtsstrahlung der Atmosphäre · \(\tau\): Transmissivität · \(T_{BC}=2{,}7\)\,K: kosmischer Hintergrund · \(\varepsilon_r=\varepsilon_r'+j\,\varepsilon_r''\): Permittivität des Meerwassers. Im Code steht zusätzlich der Rauigkeitsfaktor \(\Omega\) vor \(T_{BD}\) (Wasserterm).}
+\end{feld}
+
+\begin{feld}{Rauschreduktion und SIC (Abschn.~4.1--4.2)}
+\begin{align}
+T_{B,\mathrm{korr}} &= T_{B,\mathrm{gemessen}} + \dTB \tag{13}\\[1mm]
+\dTB &= \mathrm{RTM}\big(\bar V, \bar W, \bar L, \bar T_s, \bar T_i, \cice, \theta\big) - \mathrm{RTM}\big(V, W, \bar L, T_s, T_i, \cice, \theta\big) \tag{14}\\[1mm]
+T_i &= 0{,}4\, T_{2\mathrm m} + 0{,}6 \cdot 272\ \mathrm K \tag{15}\\[1mm]
+\cice &= \frac{T_{B} - \Tpw}{\Tpi - \Tpw} \tag{16}
+\end{align}
+{\footnotesize Querstrich = Tagesmittel über die Tie-Point-Pixel. Über offenem Wasser gilt \(\cice=0\). Für die Std-Rechnung folgt aus (16):}
+\[
+\sigma_{\cice} = \frac{\sigma_{T_B}}{\Tpi - \Tpw}
+\qquad\text{und mit Gl.~14 grob}\qquad
+\sigma_{T_B}^2 \approx \sum_{X\in\{V,W,T_s\}} \left(\frac{\partial\,\mathrm{RTM}}{\partial X}\right)^{\!2} \sigma_X^2 \;+\; \sigma_{\mathrm{Rest}}^2
+\]
+{\footnotesize (die Summe gilt nur für unkorrelierte \(X\); genau deshalb addieren sich die Effekte im Ausschlusstest nicht.)}
+\end{feld}
+
+\begin{strich}[fontupper=\footnotesize]{Lösungshinweise: erst nachsehen, wenn du selbst etwas eingetragen hast}
+\textbf{S.~3, Sensitivität} (\texttt{esmr\_rtm.py}, Referenz wie angegeben; \(\theta = 0^\circ / 30^\circ / 50^\circ\)):
+\(T_B \approx 131 / 124 / 108\)\,K · \(V{+}1\)\,mm: \(+0{,}7 / +0{,}8 / +1{,}2\)\,K · \(W{+}1\)\,m/s: \(+0{,}35 / +0{,}6 / +0{,}8\)\,K · \(L{+}0{,}1\)\,mm: \(+1{,}9 / +2{,}3 / +3{,}5\)\,K · \(T_s{+}1\)\,K: \(\mathbf{-0{,}16}\)\,K (!) · \(T_i\) über Wasser: 0 · \(T_i\) über Eis: \(\approx +0{,}9\)\,K/K. Eis-\(T_B \approx 243 / 241 / 236\)\,K.
+Das negative Vorzeichen bei \(T_s\): laut RTM sinkt die Emissivität des Wassers bei 19\,GHz H-pol mit wärmerem Wasser stärker, als \(T_s\) steigt.\\
+\textbf{S.~4, Rechnen:} 5{,}2\,\% · \(-4{,}3\)\,\% · 1\,K \(\widehat{=}\) 0{,}87\,\% · \(\approx 3{,}5\)\,\%. Merksatz: \(\mathrm{Std}(\mathrm{SIC}) = \mathrm{Std}(T_B)/(\Tpi-\Tpw)\).\\
+\textbf{S.~3, Bias:} Ein konstanter Bias kürzt sich in der Differenz heraus; es muss nur die \emph{Änderung} des RTM mit den Eingaben stimmen.
+\end{strich}
+
+\end{document}

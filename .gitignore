@@ -17,3 +17,7 @@ __pycache__/
 
 # Generated results (re-creatable)
 output/
+
+# Large media
+*.mp3
+*.mp4

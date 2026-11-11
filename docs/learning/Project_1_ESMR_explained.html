@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ESMR Noise Reduction</title>
+<style>
+:root{--bg:#fbfaf7;--card:#fff;--ink:#1d1f23;--mute:#5d6470;--line:#e2e0da;--acc:#1f6feb;--warm:#c2410c;--ok:#15803d;--warn:#b45309;--code:#f2f1ec}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171a;--card:#1d2024;--ink:#e8e6e1;--mute:#9aa1ab;--line:#30343a;--acc:#6ea8ff;--warm:#fb923c;--ok:#4ade80;--warn:#fbbf24;--code:#262a30}}
+:root[data-theme="dark"]{--bg:#15171a;--card:#1d2024;--ink:#e8e6e1;--mute:#9aa1ab;--line:#30343a;--acc:#6ea8ff;--warm:#fb923c;--ok:#4ade80;--warn:#fbbf24;--code:#262a30}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 80px}
+h1{font-size:1.6rem;margin:.2em 0}
+h2{font-size:1.2rem;margin:0 0 .4em}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin:16px 0}
+.src{font-size:.82rem;color:var(--mute);margin-top:8px}
+.eq{background:var(--code);border-radius:8px;padding:8px 12px;font-family:ui-monospace,Menlo,monospace;font-size:.88rem;overflow-x:auto;white-space:pre}
+.lead{color:var(--mute)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}
+@media (max-width:620px){.grid{grid-template-columns:1fr}}
+label{font-size:.88rem;display:flex;justify-content:space-between;gap:8px}
+input[type=range]{width:100%}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
+.box{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.box b{display:block;font-size:1.15rem}
+.box span{font-size:.78rem;color:var(--mute)}
+.bad b{color:var(--warm)} .good b{color:var(--ok)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+td,th{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:top}
+details{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+.trap{border-left:4px solid var(--warn);padding:4px 10px;margin:8px 0}
+canvas{width:100%;height:280px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+button{font:inherit;padding:6px 12px;border-radius:8px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer}
+.chk{display:flex;flex-wrap:wrap;gap:14px;font-size:.9rem;margin:6px 0}
+.tag{font-size:.75rem;padding:1px 6px;border-radius:6px;background:var(--code)}
+svg text{fill:var(--ink);font-size:12px}
+.next{border:2px solid var(--acc)}
+</style>
+</head>
+<body>
+<main>
+<p class="lead">30350 Remote Sensing · Project 1 · LG6, LG7, LG8</p>
+<h1>Regional noise reduction of NIMBUS 5 ESMR sea ice concentration</h1>
+<p class="lead">One question: <b>how much does an ERA5 + radiative-transfer correction reduce the noise in sea ice concentration (SIC) over open water?</b></p>
+
+<section>
+<h2>1 · The project in 30 seconds</h2>
+<p>Open water should give SIC = 0 %. Weather (water vapour, wind, temperature) shifts the measured brightness temperature T<sub>B</sub>, so open water shows fake ice of a few percent. You remove that with a model and ERA5, then measure how much the scatter dropped.</p>
+<table>
+<tr><th>Task</th><th>What you actually produce</th></tr>
+<tr><td>1</td><td>Mean and STD of open-water SIC, uncorrected vs corrected (mean ≈ 0)</td></tr>
+<tr><td>2</td><td>Leave one ERA5 parameter out of the correction at a time → which one matters most</td></tr>
+<tr><td>3</td><td>Plot STD(SIC) vs incidence angle, before/after → avoid some angles?</td></tr>
+<tr><td>4</td><td>Recommendation: a correction strategy for ESMR</td></tr>
+</table>
+<p class="src">🟢 Project_descriptions_2026.pdf, p. 1 · ESMR_proj/read_me.docx</p>
+</section>
+
+<section>
+<h2>2 · The instrument: ESMR on NIMBUS 5</h2>
+<ul>
+<li>One channel: <b>19.35 GHz, horizontal polarisation</b>. Dec 1972 – May 1977.</li>
+<li><b>Cross-track scanner</b> (not conical!): 78 scan positions, incidence angle 0 → ~64° each side, swath ~3100 km.</li>
+<li>Footprint ~25 km at nadir → ~160 × 45 km at the swath edge. Outer 4 positions (57–64°) are dropped in Kolbe et al.</li>
+<li>Advantage: no pole hole. Disadvantage: the angle changes across the swath, and so does the physics.</li>
+</ul>
+<p class="src">🟢 Kolbe_etal_essd-16-1247-2024.pdf, p. 1248 (Sect. 2), p. 1249–1250 · sea_ice_lecture1.pdf, p. 5</p>
+</section>
+
+<section>
+<h2>3 · Why water and ice look different at 19 GHz H</h2>
+<svg viewBox="0 0 620 150" width="100%" role="img" aria-label="Emissivity contrast between water and ice">
+ <rect x="10" y="90" width="290" height="40" fill="#2563eb" opacity=".25"/><text x="20" y="115">open water: ε<tspan font-size="9">H</tspan> ≈ 0.3–0.5 → cold, T<tspan font-size="9">B</tspan> ≈ 140 K</text>
+ <rect x="320" y="90" width="290" height="40" fill="#94a3b8" opacity=".35"/><text x="330" y="115">first-year ice: ε ≈ 0.9 → warm, T<tspan font-size="9">B</tspan> ≈ 225 K</text>
+ <text x="20" y="30">Rayleigh-Jeans: T_B ≈ ε · T_physical  (+ atmosphere)</text>
+ <text x="20" y="55">Contrast ≈ 85 K → that is the "ruler" for SIC.</text>
+</svg>
+<ul>
+<li>Water: high permittivity → strong Fresnel reflection → low emissivity, especially at H-pol.</li>
+<li>Wind roughens the surface → emissivity rises → water looks <i>warmer</i> → fake ice.</li>
+<li>Water vapour and clouds emit → T<sub>B</sub> rises over water (dark background), barely over ice.</li>
+</ul>
+<p class="src">🟢 sea_ice_lecture1.pdf, p. 4, 48, 69–70 · Tie-point levels: sea_ice_lecture2.pdf, p. 32 (water ~140 K, ice ~220–230 K) · Kolbe p. 1251, Table 1</p>
+</section>
+
+<section>
+<h2>4 · The forward model (RTM)</h2>
+<p>Given the weather and surface, what T<sub>B</sub> does the satellite see?</p>
+<div class="eq">T_B = RTM(V, W, L, Ts, Ti, c_ice, θ)
+
+T_B = T_BU + τ·[ (1−c)·E_w·Ts + (1−c)(1−E_w)(Ω·T_BD + τ·T_BC)
+               +  c ·E_i·Ti +  c (1−E_i)(T_BD + τ·T_BC) ]</div>
+<table>
+<tr><td>T<sub>BU</sub>, T<sub>BD</sub></td><td>up/down-welling atmosphere emission (V, L, Ts)</td></tr>
+<tr><td>τ</td><td>atmospheric transmissivity; path ∝ 1/cos θ → bigger effect at high θ</td></tr>
+<tr><td>E<sub>w</sub> = E<sub>0</sub> + E<sub>W</sub></td><td>calm-sea Fresnel emissivity + wind part E<sub>W</sub> = W(0.0094θ + 0.3)/Ts</td></tr>
+<tr><td>E<sub>i</sub>(θ)</td><td>first-year ice emissivity, look-up table</td></tr>
+<tr><td>Ω</td><td>roughness reduces reflected sky</td></tr>
+<tr><td>T<sub>BC</sub></td><td>cosmic background 2.7 K</td></tr>
+</table>
+<p>You get it ready-made: <code>esmr_rtm.py</code> → <code>esmr(V,W,L,Ts,Ti,c_ice,theta)</code>. One pixel per call (scalar), so loop or vectorise.</p>
+<p class="src">🟢 Kolbe p. 1250, eq. 5–12 · sea_ice_lecture1.pdf, p. 72–76 · sea_ice_lecture2.pdf, p. 30 · ESMR_proj/esmr_rtm.py</p>
+</section>
+
+<section>
+<h2>5 · One-channel SIC with tie points</h2>
+<div class="eq">c_ice = (T_B − T_p,water) / (T_p,ice − T_p,water)</div>
+<p>Tie points = typical T<sub>B</sub> of 100 % water and 100 % ice. In Kolbe et al. they are <b>dynamic</b>: picked daily from the data (criteria: ERA5 SIC, SST &gt; 278 K for water, latitude, T<sub>B</sub> range), then a 15-day running mean.</p>
+<p>With one channel you cannot separate ice type and temperature (lecture: “one channel algorithms are sensitive to target temperature and sea ice type”). Over <b>open water</b> this does not bite, which is why your project looks there.</p>
+<p class="src">🟢 Kolbe p. 1251–1253, eq. 16, Table 2 · sea_ice_lecture2.pdf, p. 11–12, 32–35</p>
+</section>
+
+<section>
+<h2>6 · The core idea: correction by difference</h2>
+<div class="eq">T_B,corrected = T_B,measured + ΔT_B
+ΔT_B = RTM( mean V, mean W, mean L, mean Ts, mean Ti, c, θ )   ← reference weather
+     − RTM( ERA5 V, ERA5 W, mean L, ERA5 Ts, ERA5 Ti, c, θ )   ← actual weather
+Ti = 0.4·T2m + 0.6·272</div>
+<ul>
+<li>You push every pixel to the same <b>reference weather</b> (the tie-point mean). What is left should be ice only.</li>
+<li>Only the <b>difference</b> of two model runs is used → constant model bias cancels.</li>
+<li>L (cloud liquid) is <b>not</b> corrected: mean L goes into both runs.</li>
+<li>c is needed inside the RTM → 2 steps: SIC from uncorrected T<sub>B</sub> (clip 0–1, &lt; 0.15 → 0), correct, recompute SIC.</li>
+</ul>
+<p class="src">🟢 Kolbe p. 1251–1253, eq. 13–15 and steps 1–2 · sea_ice_lecture2.pdf, p. 27, 31</p>
+<details><summary>Check: why not just compute T<sub>B</sub> with ERA5 and subtract it?</summary>
+Because the RTM has an absolute bias of a few K (~2 K vs other models, Kolbe p. 1251). Subtracting the full model would put that bias straight into SIC. The difference of two runs with the same model cancels it.</details>
+</section>
+
+<section>
+<h2>7 · Live: one open-water pixel</h2>
+<p class="lead">The page runs the same RTM as <code>esmr_rtm.py</code> (ported to JavaScript). Tie points here come from the model at reference weather (simplified). Move the sliders and watch the fake ice.</p>
+<div class="grid" id="p1"></div>
+<div class="out" id="o1"></div>
+<p class="src">Reference weather: V̄ = 8 mm, W̄ = 8 m/s, L̄ = 0.05 mm, T̄s = 280 K, T̄2m = 262 K (my choice, 🟡 typical polar values, not from the paper).</p>
+<details><summary>Try this</summary>
+1) W from 8 → 16 m/s, θ = 50°: how much fake ice? 2) Same at θ = 5°. Why the difference? (Hint: E<sub>W</sub> formula.) 3) Set an ERA5 wind error of 3 m/s: what stays after correction?</details>
+</section>
+
+<section>
+<h2>8 · Live: toy version of the whole project</h2>
+<p class="lead">3000 synthetic open-water pixels with random weather, ERA5 errors and 3 K instrument noise. Untick a parameter = “exclude it from the correction” (task 2). The plot is STD(SIC) vs angle (task 3).</p>
+<div class="chk">
+<label><input type="checkbox" id="cV" checked> correct V</label>
+<label><input type="checkbox" id="cW" checked> correct W</label>
+<label><input type="checkbox" id="cT" checked> correct Ts / Ti</label>
+</div>
+<div class="grid" id="p2"></div>
+<p><button id="run">Run</button></p>
+<canvas id="cv" width="820" height="280"></canvas>
+<div class="out" id="o2"></div>
+<div class="trap"><b>Synthetic.</b> These numbers show the mechanism, not your result. Real ESMR data have calibration jumps, angle-flattened T<sub>B</sub> (see trap 2) and empirical tie points. Your real plot is the finding.</div>
+<p class="src">Instrument noise δT<sub>B</sub> = 3 K: 🟢 Kolbe p. 1254 (Parkinson et al. 1987) · weather distributions and ERA5 errors: 🟡 my assumptions</p>
+</section>
+
+<section>
+<h2>9 · Traps</h2>
+<div class="trap"><b>1 · Scaling.</b> Brightness_temperature, Latitude, Longitude are stored ×10 (K×10, °×10). Divide first. <span class="src">🟢 Kolbe Table A1</span></div>
+<div class="trap"><b>2 · Angle.</b> NASA's correction removed the natural angle dependence of T<sub>B</sub>; Kolbe et al. could not undo it. The RTM <i>does</i> vary with θ. Keep this in mind when you interpret task 3. <span class="src">🟢 Kolbe p. 1249, p. 1258 (“possible improvement: angle-dependent tie points”)</span></div>
+<div class="trap"><b>3 · Incidence angle is not in the file.</b> Map scan position (1–78) → θ with <code>spos2ia.txt</code>; negative = left side, symmetric. RTM needs |θ|, and the ice table only goes to 60°. <span class="src">🟢 read_me.docx · esmr_rtm.py</span></div>
+<div class="trap"><b>4 · Wind is a vector.</b> W = √(u10² + v10²). V = tcwv. L is not directly in the list (tcw = total column water). <span class="src">🟢 Kolbe Table A1 · ⚠️ how to get L is not stated: ask Rasmus Tonboe, or use mean L (it is not corrected anyway)</span></div>
+<div class="trap"><b>5 · Open water selection.</b> Use the water criteria (ERA5 SIC = 0, 5×5 mean &lt; 0.01, SST &gt; 278 K, T<sub>B</sub> 90–180 K, latitude band). Otherwise ice edge pixels inflate your STD. <span class="src">🟢 Kolbe Table 2</span></div>
+<div class="trap"><b>6 · Don't clip SIC to 0–1 for the statistics.</b> Mean ≈ 0 over water only works if negative values stay. 🟡 my advice; check with your supervisor.</div>
+</section>
+
+<section>
+<h2>10 · What to read, in this order</h2>
+<table>
+<tr><th>#</th><th>Read</th><th>Why</th><th>Time</th></tr>
+<tr><td>1</td><td><b>sea_ice_lecture2.pdf, p. 25–36</b></td><td>Literally your project: CDR procedure, ESMR RTM, correction, tie points, SIC + uncertainty</td><td>30 min</td></tr>
+<tr><td>2</td><td><b>Kolbe et al. 2024</b>, Sect. 2–4 + Table A1 (p. 1248–1255, 1260)</td><td>The method you reproduce. Supervisor says “especially important”</td><td>1.5 h</td></tr>
+<tr><td>3</td><td>sea_ice_lecture1.pdf, p. 4–5, 48–61</td><td>T<sub>B</sub>, emissivity, cross-track scanner, ice/water signatures</td><td>30 min</td></tr>
+<tr><td>4</td><td>sea_ice_lecture1.pdf, p. 64–78</td><td>Atmosphere, Fresnel, wind effect, Wentz model and its sensitivities</td><td>30 min</td></tr>
+<tr><td>5</td><td>sea_ice_lecture2.pdf, p. 9–16</td><td>SIC, tie points, why one channel is ambiguous, error sources</td><td>20 min</td></tr>
+<tr><td>6</td><td>Your notebooks: <code>open_water_model_exercise_3</code>, <code>NASA_team_exercise_4</code>, <code>model_and_inversion_exercise_5</code></td><td>You already did sensitivity to W, V, SST and open-water SIC STD: same chain</td><td>re-run</td></tr>
+<tr><td>7</td><td>Microwave Radiometry: <code>02 Ch4+5</code> (radiometric resolution), <code>04 Ch11</code> (imaging, footprint vs scan)</td><td>Instrument noise floor; why edge pixels are worse</td><td>optional</td></tr>
+<tr><td>–</td><td>N5_Users_Guide.pdf, Carsey 1992</td><td>Reference only. Look things up, don't read through</td><td>–</td></tr>
+</table>
+<p class="src">🟢 file list from the course folder · page ranges from the PDFs above</p>
+</section>
+
+<section>
+<h2>11 · Explain it back (say it aloud)</h2>
+<details><summary>Why does wind create fake ice over open water?</summary>Wind roughens the surface → emissivity at H-pol goes up → T<sub>B</sub> rises toward the ice tie point → SIC &gt; 0. Effect grows with θ (0.0094θ + 0.3 K per m/s).</details>
+<details><summary>Why is the correction a difference of two RTM runs?</summary>Model bias cancels; you only move each pixel from its actual weather to the reference weather.</details>
+<details><summary>Why can corrected STD never reach 0?</summary>Instrument noise (~3 K ≈ 3–4 % SIC), ERA5 errors, and processes the RTM doesn't model.</details>
+<details><summary>Why is the correction better over water than over ice?</summary>Over ice the main noise is in snow/ice (layers, grain size, melt), which the RTM doesn't describe; atmosphere is only ~⅓ of the noise there. (Kolbe p. 1253, 1257)</details>
+</section>
+
+<section class="next">
+<h2>Next step</h2>
+<p>Read item 1 (lecture 2, p. 25–36, 30 min). Then explain section 6 back to me in 3 sentences.</p>
+</section>
+</main>
+
+<script>
+// ---- RTM: direct port of ESMR_proj/esmr_rtm.py ----
+function interp(xs,ys,x){if(x<=xs[0])return ys[0];for(let i=1;i<xs.length;i++){if(x<=xs[i]){const t=(x-xs[i-1])/(xs[i]-xs[i-1]);return ys[i-1]+t*(ys[i]-ys[i-1]);}}return ys[ys.length-1];}
+const TH=[0,5,10,15,20,25,30,35,40,45,50,55,60];
+const EI=[0.9318,0.9316,0.9309,0.9296,0.9278,0.9254,0.9222,0.9180,0.9126,0.9058,0.8994,0.8883,0.8713];
+const TT=[];for(let t=-5;t<=25;t++)TT.push(t);
+const PR=[15.3,15.9,16.5,17.1,17.8,18.5,19.2,20.0,20.7,21.5,22.3,23.2,24.0,24.9,25.7,26.6,27.5,28.4,29.3,30.2,31.1,31.9,32.8,33.6,34.5,35.3,36.1,36.8,37.6,38.3,39.0];
+const PI_=[28.0,28.6,29.1,29.7,30.3,30.9,31.4,31.9,32.4,32.9,33.4,33.8,34.2,34.6,35.0,35.3,35.6,35.9,36.1,36.3,36.4,36.6,36.7,36.7,36.8,36.8,36.7,36.7,36.6,36.5,36.4];
+function rtm(V,W,L,Ts,Ti,c,th){
+ th=Math.min(Math.abs(th),60);const r=0.017453*th;const ei=interp(TH,EI,th);
+ const c0=240.0,c1=305.96e-2,c2=-764.41e-4,c3=885.95e-6,c4=-40.80e-7,c5=0.60,c6=-0.16,c7=-2.13e-2,a0=11.80,av1=2.23e-3,av2=0,Xi=0.688;
+ c=Math.max(0,Math.min(1,c));V=Math.max(V,0);W=Math.max(W,0);L=Math.max(L,0);
+ const Tv=V<=48?273.16+0.8337*V-3.029e-5*Math.pow(V,3.33):301.16;
+ const Tl=(Ts+273)/2,Al=0.2858*0.208*(1-0.026*(Tl-283))*L,TBC=2.7;
+ const TD=c0+c1*V+c2*V*V+c3*V**3+c4*V**4+c5*(Ts-Tv),TU=TD+c6+c7*V;
+ const A0=Math.pow(a0/TD,1.4),Av=av1*V+av2*V*V;
+ const tau=Math.exp(-(A0+Av+Al)/Math.cos(r)),TBU=TU*(1-tau),TBD=TD*(1-tau);
+ const er=interp(TT,PR,Ts-273.15),ei2=interp(TT,PI_,Ts-273.15),s2=Math.sin(r)**2;
+ const m=Math.sqrt((er-s2)**2+ei2**2);const p=Math.sqrt((m+(er-s2))/2),q=Math.sqrt((m-(er-s2))/2);
+ const rh=((p-Math.cos(r))**2+q*q)/((p+Math.cos(r))**2+q*q);
+ const E0=1-Math.abs(rh),Ew=(0.0094*th+0.3)*W/Ts;
+ let sg=Math.sqrt(5.22e-3*Xi*W);if(sg*sg>0.07)sg=Math.sqrt(0.07);
+ const om=1+6.1*(sg*sg-68*sg**6)*tau*tau,em=E0+Ew;
+ return TBU+tau*((1-c)*em*Ts+c*ei*Ti+(1-c)*(1-em)*(om*TBD+tau*TBC)+c*(1-ei)*(TBD+tau*TBC));
+}
+const REF={V:8,W:8,L:0.05,Ts:280,T2m:262};
+const Ti=t2m=>0.4*t2m+0.6*272;
+// one pixel: true weather -> measured TB; ERA5 = true + error
+function pixel(s,use){
+ const tiR=Ti(REF.T2m);
+ const Tpw=rtm(REF.V,REF.W,REF.L,REF.Ts,tiR,0,s.th),Tpi=rtm(REF.V,REF.W,REF.L,REF.Ts,tiR,1,s.th);
+ const tb=rtm(s.V,s.W,s.L,s.Ts,Ti(s.T2m),s.c,s.th)+(s.noise||0);
+ const sic0=(tb-Tpw)/(Tpi-Tpw);
+ let cest=Math.max(0,Math.min(1,sic0));if(cest<0.15)cest=0;
+ const eV=use.V?s.V+s.eV:REF.V,eW=use.W?Math.max(0,s.W+s.eW):REF.W,eT=use.T?s.Ts+s.eT:REF.Ts,eT2=use.T?s.T2m+s.eT:REF.T2m;
+ const d=rtm(REF.V,REF.W,REF.L,REF.Ts,tiR,cest,s.th)-rtm(eV,eW,REF.L,eT,Ti(eT2),cest,s.th);
+ const tbc=tb+d;return{tb,Tpw,Tpi,sic0,d,tbc,sic1:(tbc-Tpw)/(Tpi-Tpw)};
+}
+function mk(host,defs,cb){const st={};defs.forEach(([k,lab,mn,mx,stp,v])=>{st[k]=v;const l=document.createElement('label');const sp=document.createElement('span');sp.textContent=lab;const val=document.createElement('span');val.textContent=v;l.append(sp,val);const i=document.createElement('input');i.type='range';i.min=mn;i.max=mx;i.step=stp;i.value=v;i.oninput=()=>{st[k]=+i.value;val.textContent=i.value;cb&&cb();};const w=document.createElement('div');w.append(l,i);host.append(w);});return st;}
+const box=(v,t,cls='')=>`<div class="box ${cls}"><b>${v}</b><span>${t}</span></div>`;
+// widget 1
+const s1=mk(document.getElementById('p1'),[
+ ['th','incidence angle θ [°]',0,60,1,40],['V','water vapour V [mm]',0,30,0.5,8],['W','wind W [m/s]',0,20,0.5,8],
+ ['Ts','SST Ts [K]',271,290,0.5,280],['L','cloud liquid L [mm]',0,0.5,0.01,0.05],['c','true SIC',0,1,0.05,0],
+ ['eW','ERA5 wind error [m/s]',-5,5,0.5,0],['eV','ERA5 vapour error [mm]',-6,6,0.5,0]],draw1);
+function draw1(){const r=pixel({...s1,T2m:262,eT:0},{V:1,W:1,T:1});const f=x=>(100*x).toFixed(1)+' %';
+ document.getElementById('o1').innerHTML=box(r.tb.toFixed(1)+' K','measured T_B')+box(r.Tpw.toFixed(1)+' / '+r.Tpi.toFixed(1),'tie points water / ice [K]')+box(f(r.sic0),'SIC uncorrected',Math.abs(r.sic0-s1.c)>0.03?'bad':'good')+box((r.d>=0?'+':'')+r.d.toFixed(2)+' K','correction ΔT_B')+box(f(r.sic1),'SIC corrected',Math.abs(r.sic1-s1.c)>0.03?'bad':'good');}
+draw1();
+// widget 2
+const s2=mk(document.getElementById('p2'),[['sW','ERA5 wind error σ [m/s]',0,4,0.25,1.5],['sV','ERA5 vapour error σ [mm]',0,4,0.25,1.5],['nz','instrument noise σ [K]',0,5,0.5,3]]);
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function run(){const R=rng(42),N=()=>Math.sqrt(-2*Math.log(R()+1e-12))*Math.cos(2*Math.PI*R());
+ const use={V:cV.checked,W:cW.checked,T:cT.checked};const bins=[];for(let i=0;i<12;i++)bins.push({a:[],b:[]});const A=[],B=[];
+ for(let n=0;n<3000;n++){const Ts=278+6*R();const s={th:56*R(),V:Math.max(0.5,8+4*N()),W:Math.abs(8+4*N()),L:Math.abs(0.05+0.05*N()),Ts,T2m:Ts-6+3*N(),c:0,
+  eV:s2.sV*N(),eW:s2.sW*N(),eT:0.5*N(),noise:s2.nz*N()};const r=pixel(s,use);const k=Math.min(11,Math.floor(s.th/5));bins[k].a.push(r.sic0);bins[k].b.push(r.sic1);A.push(r.sic0);B.push(r.sic1);}
+ const m=a=>a.reduce((x,y)=>x+y,0)/a.length,sd=a=>{const mu=m(a);return Math.sqrt(a.reduce((x,y)=>x+(y-mu)**2,0)/(a.length-1));};
+ const P=bins.map((b,i)=>({x:i*5+2.5,a:100*sd(b.a),b:100*sd(b.b)})).filter(p=>!isNaN(p.a));
+ document.getElementById('o2').innerHTML=box((100*m(A)).toFixed(2)+' %','mean SIC uncorrected')+box((100*sd(A)).toFixed(2)+' %','STD uncorrected','bad')+box((100*m(B)).toFixed(2)+' %','mean SIC corrected')+box((100*sd(B)).toFixed(2)+' %','STD corrected','good');
+ plot(P);}
+function plot(P){const c=document.getElementById('cv'),g=c.getContext('2d'),cs=getComputedStyle(document.documentElement);const ink=cs.getPropertyValue('--mute'),wa=cs.getPropertyValue('--warm'),ok=cs.getPropertyValue('--ok'),ln=cs.getPropertyValue('--line');
+ const W=c.width,H=c.height,l=50,b=36,t=14,rr=14;g.clearRect(0,0,W,H);const ymax=Math.ceil(Math.max(...P.map(p=>Math.max(p.a,p.b)))+1);
+ const X=x=>l+(W-l-rr)*x/60,Y=y=>H-b-(H-b-t)*y/ymax;g.font='12px system-ui';g.fillStyle=ink;g.strokeStyle=ln;
+ for(let y=0;y<=ymax;y+=Math.max(1,Math.round(ymax/6))){g.beginPath();g.moveTo(l,Y(y));g.lineTo(W-rr,Y(y));g.stroke();g.fillText(y+'%',8,Y(y)+4);}
+ for(let x=0;x<=60;x+=10)g.fillText(x+'°',X(x)-8,H-14);g.fillText('incidence angle',W/2-40,H-1);
+ [['a',wa,'uncorrected'],['b',ok,'corrected']].forEach(([k,col,lab],j)=>{g.strokeStyle=col;g.fillStyle=col;g.lineWidth=2.5;g.beginPath();P.forEach((p,i)=>{i?g.lineTo(X(p.x),Y(p[k])):g.moveTo(X(p.x),Y(p[k]));});g.stroke();P.forEach(p=>{g.beginPath();g.arc(X(p.x),Y(p[k]),3.5,0,7);g.fill();});g.fillText('— '+lab,l+10+j*120,t+8);});g.lineWidth=1;}
+const cV=document.getElementById('cV'),cW=document.getElementById('cW'),cT=document.getElementById('cT');
+document.getElementById('run').onclick=run;[cV,cW,cT].forEach(e=>e.onchange=run);run();
+</script>
+</body>
+</html>
