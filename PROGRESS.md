@@ -3,7 +3,7 @@
 30350 Remote Sensing · supervisor Rasmus Tonboe (rtt@space.dtu.dk)
 Method: Kolbe et al. 2024, Sect. 4.1 (`docs/Kolbe_etal_essd-16-1247-2024.pdf`, p. 5–8).
 Newer paper (Tonboe mail 2026-11-06, local dynamical tie points; optional): `docs/Tellefsen_etal_essd-18-2891-2026.pdf`.
-Tasks: `docs/read_me.txt`. Learning page: `docs/learning/Kolbe_etal_essd-16-1247-2024_interaktiv.html`.
+Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`. Learning page: `docs/learning/Kolbe_etal_essd-16-1247-2024_interaktiv.html`.
 
 **Deadlines:** seminar talk (length tbc) 4 Dec · report due midnight 6 Dec · defence in the oral exam 15 Dec.
 
@@ -24,9 +24,9 @@ Tasks: `docs/read_me.txt`. Learning page: `docs/learning/Kolbe_etal_essd-16-1247
 ### Phase A: one orbit end to end
 - [x] A1 Open one file, list variables and shapes (scan lines × 78). Check what is already filtered ("filtered" in the folder name).
 - [x] A2 Prepare: T_B, lat, lon (already in K/°, no ÷10 needed); θ from `spos2ia`; W = √(u10² + v10²); V = `tcwv`; Ts = `sst`; Ti = 0.4·t2m + 0.6·272 (Eq. 15). Plot T_B on lat/lon.
-- [ ] A3 Filters: Eq. 1 (90 K < T_B ≤ 273.15 K) and drop scan positions 1–4 and 75–78. Eq. 2–4 later if needed.
-- [ ] A4 Open-water mask, Table 2: siconc = 0, sst > 278 K, 90 K < T_B < 180 K, lat > 32° N or < −48° S (5×5 box optional). Meeting: only use |lat| ≥ 50° (skip the low latitudes, less data); SST > 278 K as in Table 2.
-- [ ] A5 Uncorrected SIC (Eq. 16): Tp,water = mean T_B of the mask, Tp,ice from 95 %→100 % ice pixels (per day, per hemisphere; was 225 K placeholder). Mean and std on **raw** SIC (no clipping, no 15 % filter).
+- [x] A3 Filters: Eq. 1 (90 K < T_B ≤ 273.15 K) and drop scan positions 1–4 and 75–78. Eq. 2–4 later if needed.
+- [x] A4 Open-water mask, Table 2: siconc = 0, sst > 278 K, 90 K < T_B < 180 K, lat > 32° N or < −48° S (5×5 box optional). Meeting: only use |lat| ≥ 50° (skip the low latitudes, less data); SST > 278 K as in Table 2.
+- [x] A5 Uncorrected SIC (Eq. 16): Tp,water = mean T_B of the mask, Tp,ice from 95 %→100 % ice pixels (per day, per hemisphere; was 225 K placeholder). Mean and std on **raw** SIC (no clipping, no 15 % filter).
 - [ ] A6 Correction (Eq. 13–14): means V̄, W̄, T̄s, T̄i over the mask; L = mean in both runs. Corrected SIC with the corrected tie point → mean and std. **Task 1 for one orbit.**
 
 ### Phase B: tasks
@@ -61,6 +61,13 @@ Tasks: `docs/read_me.txt`. Learning page: `docs/learning/Kolbe_etal_essd-16-1247
 - `sst`/`siconc` are NaN over land (41 %). `spos2ia` has 78 values, θ = ±63.86°.
 - No cloud liquid variable; `tcw`, `tcwv` exist.
 
+## Findings from A3–A5 (MATLAB: `a3_filter.m`, `a4_mask.m`, `a5_sic.m`)
+- A3 (orbit 02:23): 91.8 % pass Eq. 1, 82.5 % after dropping scan pos 1–4/75–78, 40 % after |lat| ≥ 50°. Kept θ = ±55.67°. → `output/A3_tb_filtered.png`
+- A4: ice mask = siconc ≥ 0.95 and 100 K < T_B < 274 K (Table 2 T_B range). 5×5 box not applied. Antarctic ice: few pixels (~3–6k per day vs. 40–100k Arctic). → `output/A4_masks.png`
+- A5 (all of Feb 1973, ~55 s): mean open-water SIC = 0 by construction (same pixels as Tp,water), so **std is the result**. Uncorrected std: **N 10.4 %** (7.1–12.9), **S 11.6 %** (9.0–14.5). Tp,water ≈ 145 K (N) / 141 K (S); Tp,ice ≈ 226 K (N) / 213 K (S). SIC distribution right-skewed (tail to +40 %, presumably wind/clouds). 28 Feb has only 1 orbit (unreliable). → `output/A5_sic_uncorrected.csv`, `.png`
+
 ## Log
 - 2026-11-08 · project files copied from Drive, learning page for the paper built · next: A1
 - 2026-11-09 · A1+A2 done (Python, then ported to MATLAB in src/matlab/) · next: A3 after feedback session
+- 2026-11-13 · A3–A5 done in MATLAB (daily tie points per hemisphere, uncorrected SIC std ≈ 10–12 %) · next: fix/vectorise RTM, A6
+- 2026-11-13 · globe viewer `output/globe/ESMR_globe.html` (all days, preprocessing steps, offline) · report notes A1–A5 in `report_notes/`

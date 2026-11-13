@@ -1,0 +1,391 @@
+<title>ESMR Swath Globe</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: instrument console. Globe on the left, a narrow control/readout column on the right; stacks on phones. */
+:root {
+  --bg: #f3f5f7; --panel: #ffffff; --fg: #17212b; --muted: #5d6b78; --line: #d9dfe5; --accent: #1f6fb2;
+  --water: #3b8fe0; --ice: #f08a3c; --other: #8a96a3;
+  --r-eq1: #e04848; --r-edge: #b06ee0; --r-lat: #59636d; --r-land: #b08850;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e141a; --panel: #151d25; --fg: #e3e9ef; --muted: #91a0ad; --line: #26323d; --accent: #6cb4ee; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e141a; --panel: #151d25; --fg: #e3e9ef; --muted: #91a0ad; --line: #26323d; --accent: #6cb4ee; color-scheme: dark }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px; box-sizing: border-box; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+h1 { font-size: 20px; font-weight: 600; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); font-family: var(--mono); font-size: 12.5px; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 14px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; aspect-ratio: 1 / 1; max-width: 100%; overflow: hidden; touch-action: none; }
+canvas#globe { width: 100%; height: 100%; display: block; cursor: grab; }
+canvas#globe.drag { cursor: grabbing; }
+.zoom { position: absolute; right: 10px; top: 10px; display: grid; gap: 4px; }
+.zoom button { width: 32px; height: 32px; font-size: 18px; line-height: 1; padding: 0; }
+.readout { position: absolute; left: 10px; bottom: 10px; font-family: var(--mono); font-size: 12px; background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; max-width: calc(100% - 20px); white-space: pre; overflow: hidden; }
+.hint { position: absolute; left: 10px; top: 10px; z-index: 1; pointer-events: none; font-size: 12px; color: var(--muted); }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); font-size: 13px; color: var(--muted); background: color-mix(in srgb, var(--panel) 70%, transparent); }
+aside { display: grid; gap: 12px; min-width: 0; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: grid; gap: 8px; min-width: 0; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 500; }
+select, button { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; cursor: pointer; }
+select { width: 100%; min-width: 0; }
+button:hover, select:hover { border-color: var(--accent); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dayrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; }
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; padding: 7px 4px; font-size: 13px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+.row { display: flex; gap: 6px; flex-wrap: wrap; }
+.row button { flex: 1; }
+canvas#bar { width: 100%; height: 14px; display: block; border-radius: 2px; }
+.ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.keys { display: grid; gap: 4px; font-size: 13px; }
+.sw::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 7px; vertical-align: -1px; background: var(--c); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.steps { display: grid; gap: 2px; }
+.step { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 6px; align-items: baseline; font-size: 13px; padding: 3px 4px; border-radius: 3px; color: var(--muted); }
+.step.on { color: var(--fg); }
+.step.cur { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.step .n { font-family: var(--mono); font-size: 11.5px; font-variant-numeric: tabular-nums; text-align: right; }
+.step .d { font-size: 12px; color: var(--muted); grid-column: 2 / 4; }
+.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
+table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 3px 0; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; font-family: var(--sans); color: var(--muted); font-weight: 400; }
+th { font-family: var(--sans); font-weight: 500; color: var(--muted); }
+.note { font-size: 12px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>NIMBUS 5 ESMR on the globe</h1>
+    <span class="sub" id="sub">19.35 GHz · Feb 1973</span>
+  </header>
+  <div class="main">
+    <div class="stage" id="stage">
+      <canvas id="globe" aria-label="Interactive globe with ESMR swaths"></canvas>
+      <div class="hint">Drag to rotate · scroll to zoom · ←/→ change day</div>
+      <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div>
+      <div class="readout" id="readout">Hover over a pixel</div>
+      <div class="loading" id="loading" hidden>loading day …</div>
+    </div>
+    <aside>
+      <div class="box">
+        <label class="label" for="day">Day</label>
+        <div class="dayrow"><button id="dprev" aria-label="Previous day">◀</button><select id="day"></select><button id="dnext" aria-label="Next day">▶</button></div>
+        <label class="label" for="orbit">Orbit</label>
+        <select id="orbit"></select>
+        <div class="label">Colour</div>
+        <div class="seg" role="group" aria-label="Colour">
+          <button id="m-tb" aria-pressed="true">T<sub>B</sub></button>
+          <button id="m-th" aria-pressed="false">θ</button>
+          <button id="m-mask" aria-pressed="false">Masks</button>
+          <button id="m-sic" aria-pressed="false">SIC</button>
+        </div>
+        <div id="legend"></div>
+        <div class="row"><button id="v-n">Arctic</button><button id="v-s">Antarctic</button></div>
+      </div>
+      <div class="box">
+        <label class="label" for="step">Preprocessing</label>
+        <input type="range" id="step" min="0" max="4" step="1" value="3">
+        <div class="steps" id="steps"></div>
+        <label class="chk"><input type="checkbox" id="showrm" checked> show removed pixels, coloured by reason</label>
+        <div class="note">Counts for the selected orbit(s). Pixels with |lat| &lt; 50° are stored thinned (every 4th scan line and position), so their counts are scaled by 16 (≈).</div>
+      </div>
+      <div class="box">
+        <div class="label">Daily tie points (A5)</div>
+        <table id="tp"></table>
+        <div class="note">SIC = (T<sub>B</sub> − T<sub>p,water</sub>) / (T<sub>p,ice</sub> − T<sub>p,water</sub>), uncorrected, not clipped. Tie points from pixels left after step 3.</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3-array@3.2.4/dist/d3-array.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-geo@3.1.0/dist/d3-geo.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+const DAYS = [].concat(/*__DAYS__*/null);
+const SPOS = /*__SPOS__*/null;        // incidence angle per scan position 1..78
+const LAND = /*__LAND__*/null;
+const RAD = Math.PI / 180;
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = v => Math.round(v).toLocaleString('en-US');
+
+// ---- preprocessing steps -------------------------------------------------
+// stage = first step that removes the pixel (9 = kept to the end)
+const STEPS = [
+  { name: 'Raw swath', desc: 'all 78 scan positions, θ up to ±63.9°' },
+  { name: 'Eq. 1', desc: '90 K < T_B ≤ 273.15 K (brightness_temperature_filtered)', c: '--r-eq1' },
+  { name: 'Swath edges', desc: 'drop scan positions 1–4 and 75–78 (|θ| > 55.7°)', c: '--r-edge' },
+  { name: 'High latitudes', desc: 'keep |lat| ≥ 50°', c: '--r-lat' },
+  { name: 'ERA5 land', desc: 'drop pixels where ERA5 SST is missing (land)', c: '--r-land' },
+];
+function stageOf(code) {
+  if (code & 8) return 1; if (code & 16) return 2; if (code & 32) return 3; if (code & 4) return 4; return 9;
+}
+
+// ---- data loading (one script file per day; works from file:// too) --------
+function dec(b64, T) { const s = atob(b64), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new T(u.buffer); }
+const cache = new Map();
+let pending = null;
+window.ESMR_DAY = raw => { if (pending) { pending(raw); pending = null; } };
+function loadDay(d) {
+  if (cache.has(d)) return Promise.resolve(cache.get(d));
+  return new Promise((res, rej) => {
+    pending = raw => {
+      const day = { tp: raw.tp, orbits: [].concat(raw.orbits).map(prep) };
+      cache.set(d, day); if (cache.size > 4) cache.delete(cache.keys().next().value);
+      res(day);
+    };
+    const s = document.createElement('script');
+    s.src = `days/${d}.js`; s.onerror = () => { pending = null; rej(new Error(`days/${d}.js not found`)); };
+    s.onload = () => s.remove();
+    document.head.appendChild(s);
+  });
+}
+function prep(o) {
+  const lat = dec(o.lat, Int16Array), lon = dec(o.lon, Int16Array), tb = dec(o.tb, Int16Array), code = dec(o.code, Uint8Array), spos = dec(o.spos, Uint8Array);
+  const n = lat.length, x = new Float32Array(n), y = new Float32Array(n), z = new Float32Array(n), stage = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const p = lat[i] / 100 * RAD, l = lon[i] / 100 * RAD;
+    x[i] = Math.cos(p) * Math.cos(l); y[i] = Math.cos(p) * Math.sin(l); z[i] = Math.sin(p);
+    stage[i] = stageOf(code[i]);
+  }
+  return { name: o.name, n, lat, lon, tb, code, spos, stage, x, y, z, col: new Uint32Array(n) };
+}
+
+// ---- colour maps ----------------------------------------------------------
+const VIRIDIS = ['#440154','#482878','#3e4989','#31688e','#26828e','#1f9e89','#35b779','#6ece58','#b5de2b','#fde725'];
+const ICE = [[-20,'#3a1c71'],[0,'#0b2e5c'],[25,'#1f5f9a'],[50,'#4f93c7'],[75,'#a6cde6'],[100,'#f5f9fc'],[120,'#f2a9bf']];
+const THETA = [[-64,'#7a2d8f'],[-32,'#c58ad6'],[0,'#f2f2f2'],[32,'#7fc4a6'],[64,'#13705a']];
+const hex = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+const pack = ([r,g,b]) => (255 << 24) | (b << 16) | (g << 8) | r;   // little-endian RGBA
+function lerpStops(stops, v) {
+  if (v <= stops[0][0]) return hex(stops[0][1]);
+  for (let i = 1; i < stops.length; i++) if (v <= stops[i][0]) {
+    const [v0, c0] = stops[i-1], [v1, c1] = stops[i], t = (v - v0) / (v1 - v0), a = hex(c0), b = hex(c1);
+    return a.map((q, k) => Math.round(q + t * (b[k] - q)));
+  }
+  return hex(stops[stops.length-1][1]);
+}
+const TB_STOPS = VIRIDIS.map((c, i) => [100 + i * 180 / (VIRIDIS.length - 1), c]);
+const LUT_TB = Array.from({length: 181}, (_, i) => pack(lerpStops(TB_STOPS, 100 + i)));
+const LUT_SIC = Array.from({length: 141}, (_, i) => pack(lerpStops(ICE, -20 + i)));
+const LUT_TH = SPOS.map(t => pack(lerpStops(THETA, t)));
+
+// ---- state ------------------------------------------------------------------
+let cur = null, dayIdx = 0, sel = 'all', mode = 'tb', step = 3, showRm = true;
+let rot = [50, -62], zoom = 1;
+const selected = () => !cur ? [] : sel === 'all' ? cur.orbits : [cur.orbits[sel]];
+function sicOf(o, i) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S; return 100 * (o.tb[i] / 10 - t.water) / (t.ice - t.water); }
+let RM = [];
+function recolor() {
+  const C = [pack(hex(css('--other'))), pack(hex(css('--water'))), pack(hex(css('--ice')))];
+  RM = [0, ...STEPS.slice(1).map(s => pack(hex(css(s.c))))];
+  for (const o of cur ? cur.orbits : []) for (let i = 0; i < o.n; i++) {
+    const tbv = o.tb[i];
+    if (mode === 'th') o.col[i] = LUT_TH[o.spos[i] - 1];
+    else if (tbv === -32768) o.col[i] = 0;
+    else if (mode === 'tb') o.col[i] = LUT_TB[Math.max(0, Math.min(180, Math.round(tbv / 10 - 100)))];
+    else if (mode === 'sic') o.col[i] = LUT_SIC[Math.max(0, Math.min(140, Math.round(sicOf(o, i) + 20)))];
+    else o.col[i] = C[o.code[i] & 3];
+  }
+}
+
+// ---- globe ------------------------------------------------------------------
+const cv = $('globe'), ctx = cv.getContext('2d');
+const off = document.createElement('canvas'), octx = off.getContext('2d');
+let W = 0, H = 0, dpr = 1, img, buf;
+const proj = d3.geoOrthographic().clipAngle(90).precision(0.3);
+const path = d3.geoPath(proj, ctx);
+const land = topojson.feature(LAND, LAND.objects.land);
+const grat = d3.geoGraticule10();
+
+function resize() {
+  const r = cv.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1);
+  W = Math.round(r.width * dpr); H = Math.round(r.height * dpr);
+  cv.width = W; cv.height = H; off.width = W; off.height = H;
+  img = octx.createImageData(W, H); buf = new Uint32Array(img.data.buffer);
+  draw();
+}
+const radius = () => 0.46 * Math.min(W, H) / dpr * zoom;
+
+function draw() {
+  if (!W) return;
+  const R = radius(), cx = W / dpr / 2, cy = H / dpr / 2;
+  proj.scale(R).translate([cx, cy]).rotate(rot);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.beginPath(); path({type: 'Sphere'}); ctx.fillStyle = '#1b2733'; ctx.fill();
+  ctx.beginPath(); path(land); ctx.fillStyle = '#3d4955'; ctx.fill();
+  ctx.lineWidth = 0.6; ctx.strokeStyle = '#7d8b98'; ctx.stroke();
+  ctx.beginPath(); path(grat); ctx.lineWidth = 0.5; ctx.strokeStyle = 'rgba(160,180,200,0.22)'; ctx.stroke();
+
+  buf.fill(0);
+  const lr = rot[0] * RAD, cp = Math.cos(rot[1] * RAD), sp = Math.sin(rot[1] * RAD), cl = Math.cos(lr), sl = Math.sin(lr);
+  const k = R * dpr, X0 = cx * dpr, Y0 = cy * dpr;
+  const ps = Math.max(1, Math.min(14, Math.round(30 / 6371 * k)));   // ~30 km footprint in device px
+  const h = ps >> 1, ps4 = Math.max(ps, Math.min(40, Math.round(4 * 30 / 6371 * k)));  // thinned low-lat pixels drawn 4x larger
+  // pass 0: removed pixels, pass 1: kept "other", pass 2: kept tie-point pixels (on top)
+  for (let pass = 0; pass < 3; pass++) for (const o of selected()) {
+    const { x, y, z, col, code, stage, n } = o;
+    for (let i = 0; i < n; i++) {
+      const removed = stage[i] <= step;
+      let c;
+      if (pass === 0) { if (!removed || !showRm) continue; c = RM[stage[i]]; }
+      else { if (removed) continue; const tpix = mode === 'mask' && (code[i] & 3); if ((pass === 2) !== !!tpix) continue; c = col[i]; if (!c) continue; }
+      const xr = x[i] * cl - y[i] * sl, yr = x[i] * sl + y[i] * cl;
+      const X3 = xr * cp - z[i] * sp; if (X3 <= 0) continue;
+      const Z3 = z[i] * cp + xr * sp;
+      const s = (code[i] & 32) ? ps4 : ps, hh = s >> 1;
+      const px = Math.round(X0 + k * yr) - hh, py = Math.round(Y0 - k * Z3) - hh;
+      for (let dy = 0; dy < s; dy++) {
+        const yy = py + dy; if (yy < 0 || yy >= H) continue;
+        let p = yy * W + px;
+        for (let dx = 0; dx < s; dx++, p++) if (px + dx >= 0 && px + dx < W) buf[p] = c;
+      }
+    }
+  }
+  octx.putImageData(img, 0, 0);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(off, 0, 0);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.beginPath(); path({type: 'Sphere'}); ctx.lineWidth = 1; ctx.strokeStyle = css('--line'); ctx.stroke();
+}
+let queued = false;
+const redraw = () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; draw(); }); } };
+
+// ---- interaction ------------------------------------------------------------
+let drag = null;
+cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, r: rot.slice() }; cv.setPointerCapture(e.pointerId); cv.classList.add('drag'); });
+cv.addEventListener('pointermove', e => {
+  if (drag) { const s = 0.25 / zoom; rot = [drag.r[0] + (e.clientX - drag.x) * s, Math.max(-90, Math.min(90, drag.r[1] - (e.clientY - drag.y) * s))]; redraw(); }
+  else hover(e);
+});
+const end = () => { drag = null; cv.classList.remove('drag'); };
+cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+cv.addEventListener('wheel', e => { e.preventDefault(); setZoom(zoom * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+function setZoom(z) { zoom = Math.max(0.8, Math.min(12, z)); redraw(); }
+$('zin').onclick = () => setZoom(zoom * 1.4);
+$('zout').onclick = () => setZoom(zoom / 1.4);
+$('v-n').onclick = () => { rot = [50, -62]; redraw(); };
+$('v-s').onclick = () => { rot = [-60, 62]; redraw(); };
+window.addEventListener('resize', resize);
+
+const ro = $('readout');
+let hq = false, lastEv = null;
+function hover(e) { lastEv = e; if (hq) return; hq = true; requestAnimationFrame(() => { hq = false; doHover(lastEv); }); }
+function doHover(e) {
+  if (!cur) return;
+  const r = cv.getBoundingClientRect(), p = proj.invert([e.clientX - r.left, e.clientY - r.top]);
+  if (!p || d3.geoDistance(p, [-rot[0], -rot[1]]) > Math.PI / 2) { ro.textContent = 'off the globe'; return; }
+  const px = Math.cos(p[1]*RAD)*Math.cos(p[0]*RAD), py = Math.cos(p[1]*RAD)*Math.sin(p[0]*RAD), pz = Math.sin(p[1]*RAD);
+  let best = -1, bo = null, bi = -1;
+  for (const o of selected()) for (let i = 0; i < o.n; i++) {
+    if (o.stage[i] <= step && !showRm) continue;
+    const d = o.x[i]*px + o.y[i]*py + o.z[i]*pz; if (d > best) { best = d; bo = o; bi = i; }
+  }
+  const km = Math.acos(Math.min(1, best)) * 6371, maxKm = Math.max(30, 8 * 6371 / radius()) * (bo && (bo.code[bi] & 32) ? 4 : 1);
+  const pos = `${Math.abs(p[1]).toFixed(1)}°${p[1] >= 0 ? 'N' : 'S'}  ${Math.abs(p[0]).toFixed(1)}°${p[0] >= 0 ? 'E' : 'W'}`;
+  if (!bo || km > maxKm) { ro.textContent = `${pos}\nno ESMR pixel`; return; }
+  const st = bo.stage[bi], tbv = bo.tb[bi];
+  const status = st <= step ? `removed: ${STEPS[st].name}` : ['kept', 'kept, water tie point', 'kept, ice tie point'][bo.code[bi] & 3];
+  ro.textContent = `${pos}   ${bo.name}\nscan pos ${bo.spos[bi]}  θ ${SPOS[bo.spos[bi]-1].toFixed(1)}°  T_B ${tbv === -32768 ? '–' : (tbv/10).toFixed(1) + ' K'}\n` +
+    `SIC ${tbv === -32768 ? '–' : sicOf(bo, bi).toFixed(1) + ' %'}   ${status}${bo.code[bi] & 4 ? ' (ERA5 land)' : ''}`;
+}
+
+// ---- controls ---------------------------------------------------------------
+const ds = $('day');
+DAYS.forEach((d, i) => ds.add(new Option(`${d.label} · ${d.n_orbits} orbit${d.n_orbits > 1 ? 's' : ''}`, i)));
+ds.onchange = () => setDay(+ds.value);
+$('dprev').onclick = () => setDay(Math.max(0, dayIdx - 1));
+$('dnext').onclick = () => setDay(Math.min(DAYS.length - 1, dayIdx + 1));
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowLeft') $('dprev').click(); if (e.key === 'ArrowRight') $('dnext').click();
+});
+const os = $('orbit');
+os.onchange = () => { sel = os.value === 'all' ? 'all' : +os.value; steps(); redraw(); };
+
+async function setDay(i) {
+  dayIdx = i; ds.value = i;
+  $('dprev').disabled = i === 0; $('dnext').disabled = i === DAYS.length - 1;
+  $('loading').hidden = false;
+  try { cur = await loadDay(DAYS[i].day); }
+  catch (err) { $('loading').textContent = `${err.message}. Keep the days/ folder next to this page.`; return; }
+  if (dayIdx !== i) return;
+  $('loading').hidden = true;
+  const prevSel = sel;
+  os.innerHTML = '';
+  os.add(new Option(`All ${cur.orbits.length} orbits of the day`, 'all'));
+  cur.orbits.forEach((o, j) => os.add(new Option(o.name, j)));
+  sel = prevSel !== 'all' && prevSel < cur.orbits.length ? prevSel : 'all'; os.value = sel;
+  $('sub').textContent = `${DAYS[i].label} · 19.35 GHz H-pol`;
+  recolor(); tpTable(); steps(); redraw();
+}
+
+const btn = { tb: 'm-tb', th: 'm-th', mask: 'm-mask', sic: 'm-sic' };
+for (const [m, id] of Object.entries(btn)) $(id).onclick = () => setMode(m);
+function setMode(m) {
+  mode = m;
+  for (const [mm, id] of Object.entries(btn)) $(id).setAttribute('aria-pressed', mm === m);
+  recolor(); legend(); redraw();
+}
+function legend() {
+  const L = $('legend');
+  if (mode === 'mask') {
+    L.innerHTML = `<div class="keys"><span class="sw" style="--c:var(--water)">water tie point (siconc = 0, SST &gt; 278 K, 90 &lt; T<sub>B</sub> &lt; 180 K)</span>
+      <span class="sw" style="--c:var(--ice)">ice tie point (siconc ≥ 0.95, 100 &lt; T<sub>B</sub> &lt; 274 K)</span><span class="sw" style="--c:var(--other)">other kept pixels</span></div>`;
+    return;
+  }
+  const cfg = {
+    tb:  [100, 280, TB_STOPS, [100, 145, 190, 235, 280], 'T<sub>B</sub> in K'],
+    sic: [-20, 120, ICE, [-20, 0, 50, 100, 120], 'SIC in %, uncorrected; values &lt; 0 % and &gt; 100 % are noise'],
+    th:  [-64, 64, THETA, [-64, -32, 0, 32, 64], 'incidence angle θ in degrees (negative = left side of swath)'],
+  }[mode];
+  const [lo, hi, stops, ticks, note] = cfg;
+  L.innerHTML = `<canvas id="bar" width="300" height="14"></canvas><div class="ticks">${ticks.map(t => `<span>${t}</span>`).join('')}</div><div class="note">${note}</div>`;
+  const g = $('bar').getContext('2d');
+  for (let i = 0; i < 300; i++) { const c = lerpStops(stops, lo + (hi - lo) * i / 299); g.fillStyle = `rgb(${c})`; g.fillRect(i, 0, 1, 14); }
+}
+
+$('step').oninput = e => { step = +e.target.value; steps(); redraw(); };
+$('showrm').onchange = e => { showRm = e.target.checked; redraw(); };
+function steps() {
+  const rm = [0, 0, 0, 0, 0]; let total = 0;
+  for (const o of selected()) for (let i = 0; i < o.n; i++) {
+    const w = (o.code[i] & 32) ? 16 : 1; total += w; const s = o.stage[i]; if (s <= 4) rm[s] += w;
+  }
+  let left = total;
+  $('steps').innerHTML = STEPS.map((s, j) => {
+    if (j > 0) left -= rm[j];
+    const on = j <= step, n = j === 0 ? `≈${fmt(total)} px` : `−${fmt(rm[j])} → ${fmt(left)}`;
+    return `<div class="step${on ? ' on' : ''}${j === step ? ' cur' : ''}"><span class="${j ? 'sw' : ''}" style="${j ? `--c:var(${s.c})` : ''}">${j}</span>
+      <span>${s.name}</span><span class="n">${n}</span><span class="d">${s.desc.replace('T_B', 'T<sub>B</sub>')}</span></div>`;
+  }).join('');
+}
+function tpTable() {
+  const t = cur.tp, f = (v, d = 1) => v.toFixed(d);
+  $('tp').innerHTML = `<tr><th></th><th>North</th><th>South</th></tr>
+    <tr><td>T<sub>p,water</sub> [K]</td><td>${f(t.N.water)}</td><td>${f(t.S.water)}</td></tr>
+    <tr><td>T<sub>p,ice</sub> [K]</td><td>${f(t.N.ice)}</td><td>${f(t.S.ice)}</td></tr>
+    <tr><td>water pixels</td><td>${fmt(t.N.nw)}</td><td>${fmt(t.S.nw)}</td></tr>
+    <tr><td>ice pixels</td><td>${fmt(t.N.ni)}</td><td>${fmt(t.S.ni)}</td></tr>
+    <tr><td>std SIC water [%]</td><td>${f(t.N.sic_std)}</td><td>${f(t.S.sic_std)}</td></tr>`;
+}
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { recolor(); legend(); steps(); redraw(); });
+legend(); resize(); setDay(0);
+</script>
