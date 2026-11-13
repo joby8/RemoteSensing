@@ -15,5 +15,6 @@ Use them as the writing plan for the report (due 6 Dec) and the seminar (4 Dec).
 | B1 RTM sensitivity (Task 2) | [B1_sensitivity.md](B1_sensitivity.md) | Results: Task 2 |
 | Session 2026-11-13 | [questions_2026-11-13.md](questions_2026-11-13.md) | decisions |
 | Visualisation | [globe_viewer.md](globe_viewer.md) | Figures / seminar |
+| Pipeline overview (all steps, equations, sources) | [pipeline_flowchart.html](pipeline_flowchart.html) | Method: overview figure / seminar |
 
 Still to come: B2 (Task 3 std vs. angle), B4 (Task 4 recommendation).

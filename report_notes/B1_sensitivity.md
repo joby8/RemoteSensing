@@ -57,6 +57,16 @@ W and Ts have no effect at c = 1.
 - **Everything over water grows with θ.** The path through the atmosphere scales with 1/cos θ, and the H-pol water emissivity falls with θ, so more sky is reflected. → Task 3: the noise should be largest at the swath edge.
 - **Over ice only Ti matters** (≈ 3.8 K per 1σ, about 4.5 % SIC). It hardly depends on θ. The atmosphere is dry and the ice is a strong emitter, so the atmospheric terms are small. This makes Eq. 15 (and a possible ERA5 `istl1` alternative) the key choice for the ice side.
 
+## Presentation ideas (brainstorm 2026-11-13)
+Current figure = line plot ΔT_B vs. θ. Jo: wants more colour and easier to read, not only lines. Same numbers, other forms:
+1. **Tornado chart** (standard in sensitivity studies): one horizontal bar per input, −1σ and +1σ around the mean state, sorted by size, one colour per input; water and ice panels at one angle (e.g. 50°). Ranking visible at once.
+2. **Heatmap θ × input with numbers in the cells**: rows V, W, L, Ts (Ti), columns θ = 0, 10, …, 55°, colour = ΔT_B, value printed. Exact values + growth with θ, compact, prints well.
+3. **Stacked area "noise budget" vs. θ**: each input contributes ΔT_B², sum = total weather noise. As 100 % stack it shows the share of each input; L appears as the large uncorrected part.
+4. **Unit % SIC instead of K** (for all of them): divide by the ice–water contrast (≈ 81 K North) → "1σ water vapour ≈ 9 % SIC", readable without microwave background.
+5. **Fixed colour per input in every figure** (V blue, W orange, L green + hatched/dashed = not corrected, Ts purple, Ti red), also for Task 2/3 figures and slides.
+
+**Recommendation:** report = tornado (1) in % SIC (4) with fixed colours (5) as main figure + heatmap (2) for the θ dependence (together they replace the line plot). Seminar/discussion = noise budget (3) because it tells the L story in one picture. Decision pending (Jo).
+
 ## Next / open
 - Optional cross-check with the data: exclusion test (correction with one input fixed at its mean, see how much the std of the corrected SIC grows). This would confirm the ranking V > W ≫ Ts with real pixels.
 - Check Ti from Eq. 15 vs. ERA5 `istl1` on the ice side.

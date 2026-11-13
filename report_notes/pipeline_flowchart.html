@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESMR Pipeline Flowchart</title>
+<style>
+@page { size: A4; margin: 11mm 12mm 12mm 12mm; }
+:root {
+  --ink: #111; --muted: #555; --line: #333;
+  --esmr: #e4eefb; --esmr-b: #2f6db5;
+  --era5: #fdeedd; --era5-b: #c0640f;
+  --calc: #f3f3f3; --calc-b: #666;
+  --rtm:  #e3f3e7; --rtm-b:  #2e8b48;
+  --res:  #fff8d6; --res-b:  #111;
+}
+* { box-sizing: border-box; }
+html, body { background: #fff; color: var(--ink); }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9.2pt; line-height: 1.35; margin: 0 auto; max-width: 200mm; padding: 4mm 16px; }
+h1 { font-size: 16pt; margin: 0 0 1mm; letter-spacing: -0.2px; }
+h2 { font-size: 12pt; margin: 4mm 0 2mm; padding: 1mm 0; border-top: 2pt solid #000; border-bottom: 0.6pt solid #000; }
+.sub { font-size: 8.8pt; font-style: italic; color: var(--muted); margin-bottom: 2.5mm; }
+.page { page-break-after: always; }
+.page:last-child { page-break-after: auto; }
+
+/* legend */
+.legend { display: flex; flex-wrap: wrap; gap: 2mm 4mm; font-size: 8.2pt; margin: 0 0 3mm; align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 1.5mm; }
+.sw { width: 4.5mm; height: 3.2mm; border: 1pt solid; display: inline-block; }
+
+/* flow */
+.stage { display: grid; grid-template-columns: 13mm 1fr; gap: 0 2mm; align-items: stretch; }
+.tag { font-weight: bold; font-size: 8.5pt; text-align: right; padding-top: 1.6mm; color: var(--muted); }
+.tag b { display: block; color: var(--ink); font-size: 10pt; }
+.row { display: grid; gap: 2.5mm; }
+.c2 { grid-template-columns: 1fr 1fr; }
+.c3 { grid-template-columns: 1fr 1fr 1fr; }
+.n { border: 1pt solid var(--calc-b); background: var(--calc); padding: 1.6mm 2.2mm; border-radius: 1.2mm; break-inside: avoid; min-width: 0; }
+.n.esmr { background: var(--esmr); border-color: var(--esmr-b); }
+.n.era5 { background: var(--era5); border-color: var(--era5-b); }
+.n.rtm  { background: var(--rtm);  border-color: var(--rtm-b); border-width: 1.4pt; }
+.n.res  { background: var(--res);  border: 1.8pt solid var(--res-b); }
+.n h3 { font-size: 9.4pt; margin: 0 0 0.8mm; }
+.n p { margin: 0 0 0.8mm; }
+.n p:last-child { margin-bottom: 0; }
+.eq { font-family: "Times New Roman", Times, serif; font-size: 10.8pt; margin: 0.8mm 0; }
+.eq i { font-style: italic; }
+.eqn { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 7.6pt; font-weight: bold; border: 0.7pt solid currentColor; border-radius: 0.8mm; padding: 0 1mm; margin-left: 1mm; vertical-align: 1px; white-space: nowrap; }
+.from { font-size: 7.8pt; color: var(--muted); }
+.from b { color: var(--ink); font-weight: 600; }
+code, .code { font-family: Menlo, Consolas, monospace; font-size: 7.4pt; }
+.code { display: block; color: var(--muted); margin-top: 0.8mm; }
+.arrows { display: grid; gap: 2.5mm; height: 6mm; margin-left: 15mm; }
+.arrows div { position: relative; }
+.arrows div::before { content: ""; position: absolute; left: 50%; top: 0.5mm; bottom: 1.8mm; border-left: 1.2pt solid var(--line); }
+.arrows div::after { content: ""; position: absolute; left: calc(50% - 1.6mm); bottom: 0.3mm; border: 1.6mm solid transparent; border-top: 2mm solid var(--line); border-bottom: 0; }
+.arrows div.none::before, .arrows div.none::after { display: none; }
+.arrows .lab { position: absolute; left: calc(50% + 2mm); top: 0.8mm; font-size: 7.4pt; color: var(--muted); white-space: nowrap; }
+
+/* iteration loop */
+.loop { border: 1.4pt dashed var(--rtm-b); border-radius: 2mm; padding: 2mm 2.2mm 1.8mm; position: relative; }
+.loop > .lt { font-size: 8pt; font-weight: bold; color: var(--rtm-b); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1.5mm; }
+.chain { display: grid; grid-template-columns: 1fr 5mm 1fr 5mm 1fr; gap: 1.6mm 0; align-items: stretch; }
+.chain .ar { display: flex; align-items: center; justify-content: center; font-size: 13pt; color: var(--line); }
+.num { display: inline-block; width: 4.2mm; height: 4.2mm; line-height: 4.2mm; text-align: center; border-radius: 50%; background: var(--ink); color: #fff; font-size: 7pt; font-weight: bold; margin-right: 1mm; vertical-align: 1px; }
+.back { font-size: 8pt; color: var(--rtm-b); font-weight: bold; text-align: right; margin-top: 1.2mm; }
+.side { font-size: 7.8pt; border-left: 2.2pt solid #000; padding: 0.6mm 0 0.6mm 2mm; margin-top: 2mm; }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; margin: 1.5mm 0; font-size: 8.3pt; break-inside: avoid; }
+th, td { border: 0.6pt solid #000; padding: 1mm 1.4mm; text-align: left; vertical-align: top; }
+th { font-size: 8pt; border-bottom: 1.4pt solid #000; }
+td.k { font-family: "Times New Roman", Times, serif; font-size: 10pt; white-space: nowrap; }
+tr.g-esmr td:first-child { box-shadow: inset 2.4mm 0 0 var(--esmr-b); padding-left: 3.6mm; }
+tr.g-era5 td:first-child { box-shadow: inset 2.4mm 0 0 var(--era5-b); padding-left: 3.6mm; }
+tr.g-calc td:first-child { box-shadow: inset 2.4mm 0 0 var(--calc-b); padding-left: 3.6mm; }
+tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-left: 3.6mm; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.trap { border-left: 2.4pt solid #000; padding: 0.8mm 0 0.8mm 2.5mm; margin: 2mm 0; font-size: 8.4pt; break-inside: avoid; }
+.to { font-family: "Times New Roman", Times, serif; }
+.foot { font-size: 7.3pt; color: var(--muted); text-align: right; margin-top: 2mm; }
+@media print { body { padding: 0; max-width: none; zoom: 0.8; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+@media (max-width: 640px) {
+  .c2, .c3, .two { grid-template-columns: 1fr; }
+  .chain { grid-template-columns: 1fr; } .chain .ar { transform: rotate(90deg); height: 5mm; }
+  .stage { grid-template-columns: 1fr; } .tag { text-align: left; padding: 0 0 1mm; }
+  .arrows { margin-left: 0; grid-template-columns: 1fr !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= PAGE 1: FLOW ================= -->
+<section class="page">
+<h1>Processing pipeline: from ESMR T<sub>B</sub> to corrected SIC</h1>
+<div class="sub">30350 Remote Sensing · Project 1 · NIMBUS 5 ESMR, Feb 1973 · method as implemented (Kolbe et al. 2024, Sect. 4.1 + session 2026-11-13) · equation numbers = paper</div>
+
+<div class="legend">
+  <span><i class="sw" style="background:var(--esmr);border-color:var(--esmr-b)"></i>ESMR satellite data</span>
+  <span><i class="sw" style="background:var(--era5);border-color:var(--era5-b)"></i>ERA5 (collocated, same NetCDF)</span>
+  <span><i class="sw" style="background:var(--calc);border-color:var(--calc-b)"></i>our computation</span>
+  <span><i class="sw" style="background:var(--rtm);border-color:var(--rtm-b)"></i>RTM (<code>esmr_rtm_vec.m</code>)</span>
+  <span><i class="sw" style="background:var(--res);border-color:#111;border-width:1.6pt"></i>result</span>
+  <span><span class="eqn">Eq. 16</span> paper equation</span>
+</div>
+
+<!-- A1 data -->
+<div class="stage"><div class="tag"><b>A1</b>data</div>
+<div class="row c2">
+  <div class="n esmr"><h3>ESMR swath (1 file per orbit)</h3>
+    <p>312 orbits, each 1691 scan lines × 78 scan positions, 19.35 GHz, H-pol.</p>
+    <p class="from"><b>Variables:</b> <code>Brightness_temperature</code>, <code>brightness_temperature_filtered</code>, <code>Latitude</code>, <code>Longitude</code>; scan position = column 1–78</p></div>
+  <div class="n era5"><h3>ERA5, collocated per pixel</h3>
+    <p>Hourly reanalysis interpolated to every ESMR pixel.</p>
+    <p class="from"><b>Variables:</b> <code>tcwv</code>, <code>tcw</code>, <code>u10</code>, <code>v10</code>, <code>sst</code>, <code>t2m</code>, <code>siconc</code></p></div>
+</div></div>
+<div class="arrows c2" style="grid-template-columns:1fr 1fr"><div></div><div></div></div>
+
+<!-- A2 inputs -->
+<div class="stage"><div class="tag"><b>A2</b>inputs</div>
+<div class="row c2">
+  <div class="n esmr"><h3>Measured T<sub>B</sub> and geometry</h3>
+    <p class="eq"><i>T</i><sub>B</sub> = <code>brightness_temperature_filtered</code> [K]</p>
+    <p class="eq"><i>θ</i> = spos2ia(scan position) [°], &nbsp;0° … ±64°</p>
+    <p class="from"><b>from:</b> NetCDF; θ table <code>provided/spos2ia.txt</code></p>
+    <span class="code">load_orbit.m</span></div>
+  <div class="n era5"><h3>RTM inputs per pixel</h3>
+    <p class="eq"><i>V</i> = tcwv &nbsp;·&nbsp; <i>L</i> = tcw − tcwv &nbsp;[kg/m²]</p>
+    <p class="eq"><i>W</i> = √(u10² + v10²) [m/s] &nbsp;·&nbsp; <i>T</i><sub>s</sub> = sst [K]</p>
+    <p class="eq"><i>T</i><sub>i</sub> = 0.4·t2m + 0.6·272 K <span class="eqn">Eq. 15</span></p>
+    <p class="eq"><i>c</i><sub>ice</sub><sup>(0)</sup> = siconc &nbsp;(start value of the iteration)</p>
+    <span class="code">load_orbit.m · correct_day.m (L)</span></div>
+</div></div>
+<div class="arrows" style="grid-template-columns:1fr"><div><span class="lab">ESMR + ERA5 on the same pixel grid</span></div></div>
+
+<!-- A3 filters -->
+<div class="stage"><div class="tag"><b>A3</b>filters</div>
+<div class="row">
+  <div class="n"><h3>Valid pixels (all three must hold)</h3>
+    <p class="eq">90 K &lt; <i>T</i><sub>B</sub> ≤ 273.15 K <span class="eqn">Eq. 1</span> &nbsp;∧&nbsp; scan pos. 5–74 (|θ| ≤ 55.67°) &nbsp;∧&nbsp; |lat| ≥ 50° &nbsp;∧&nbsp; sst ≠ NaN (ERA5 ocean)</p>
+    <p class="from"><b>why:</b> Eq. 1 removes land/bad values (already in <code>_filtered</code>); swath edges 1–4/75–78 have the largest θ; |lat| ≥ 50° agreed with Tonboe; sst = NaN marks ERA5 land. <b>Orbit 02:23:</b> 91.8 % <span class="to">→</span> 82.5 % <span class="to">→</span> 40 % of pixels left.</p>
+    <span class="code">a3_filter.m · correct_day.m (valid, corr)</span></div>
+</div></div>
+<div class="arrows c2" style="grid-template-columns:1fr 1fr"><div><span class="lab">per day and hemisphere (N, S)</span></div><div></div></div>
+
+<!-- A4 clusters -->
+<div class="stage"><div class="tag"><b>A4</b>tie-point clusters</div>
+<div class="row c2">
+  <div class="n"><h3>Water cluster M<sub>w</sub> <span class="eqn">Table 2</span></h3>
+    <p class="eq">siconc = 0 &nbsp;∧&nbsp; sst &gt; 278 K &nbsp;∧&nbsp; 90 K &lt; <i>T</i><sub>B</sub> &lt; 180 K</p>
+    <p class="from">≈ 17 000 pixels/day (N), 36 000 (S)</p></div>
+  <div class="n"><h3>Ice cluster M<sub>i</sub> <span class="eqn">Table 2</span></h3>
+    <p class="eq">siconc &gt; 0.8 &nbsp;∧&nbsp; 100 K &lt; <i>T</i><sub>B</sub> &lt; 274 K</p>
+    <p class="from">≈ 79 000 pixels/day (N), 13 000 (S)</p></div>
+</div></div>
+<div class="arrows c2" style="grid-template-columns:1fr 1fr"><div><span class="lab">T<sub>B</sub> of the clusters</span></div><div><span class="lab">V, W, L, T<sub>s</sub>, T<sub>i</sub> of the clusters</span></div></div>
+
+<!-- A5 + means -->
+<div class="stage"><div class="tag"><b>A5</b>raw SIC</div>
+<div class="row c2">
+  <div class="n"><h3>Uncorrected tie points and SIC</h3>
+    <p class="eq"><i>T</i><sub>p,water</sub> = mean<sub>w</sub> <i>T</i><sub>B</sub> &nbsp;·&nbsp; <i>T</i><sub>p,ice</sub> = mean<sub>i</sub> <i>T</i><sub>B</sub></p>
+    <p class="eq">SIC<sub>u</sub> = (<i>T</i><sub>B</sub> − <i>T</i><sub>p,water</sub>) / (<i>T</i><sub>p,ice</sub> − <i>T</i><sub>p,water</sub>) <span class="eqn">Eq. 16</span></p>
+    <p class="from">N ≈ 145 / 226 K, S ≈ 141 / 200 K. Not clipped for the statistics.</p>
+    <span class="code">a5_sic.m · correct_day.m (su)</span></div>
+  <div class="n era5"><h3>Mean state of each cluster</h3>
+    <p class="eq"><i>X̄</i><sub>w</sub> = mean<sub>w</sub> <i>X</i>, &nbsp; <i>X̄</i><sub>i</sub> = mean<sub>i</sub> <i>X</i>, &nbsp; <i>X</i> ∈ {<i>V, W, L, T</i><sub>s</sub><i>, T</i><sub>i</sub>}</p>
+    <p class="from">The "standard atmosphere" of the day: the RTM corrects every pixel <b>towards</b> this state. Also used as base state for B1 (with σ).</p>
+    <span class="code">correct_day.m (Mw, Mi)</span></div>
+</div></div>
+<div class="arrows" style="grid-template-columns:1fr"><div></div></div>
+
+<!-- A6b loop -->
+<div class="stage"><div class="tag"><b>A6b</b>RTM correction</div>
+<div class="loop"><div class="lt">Iteration k = 1, 2 (NIT = 2, as in the paper) · every valid ocean pixel</div>
+  <div class="chain">
+    <div class="n"><h3><span class="num">1</span>Ice fraction used</h3>
+      <p class="eq"><i>c</i> = siconc &nbsp;(k = 1)<br><i>c</i> = <i>c</i><sup>new</sup> &nbsp;(k = 2)</p></div>
+    <div class="ar">→</div>
+    <div class="n"><h3><span class="num">2</span>Reference state</h3>
+      <p class="eq"><i>X</i><sub>ref</sub> = (1 − <i>c</i>)·<i>X̄</i><sub>w</sub> + <i>c</i>·<i>X̄</i><sub>i</sub></p>
+      <p class="from">mixes the two tie-point means with c (also <i>L</i><sub>ref</sub>)</p></div>
+    <div class="ar">→</div>
+    <div class="n rtm"><h3><span class="num">3</span>RTM correction</h3>
+      <p class="eq">Δ<i>T</i><sub>B</sub> = RTM(<i>X</i><sub>ref</sub>, <i>L</i><sub>ref</sub>, <i>c</i>, θ) − RTM(<i>V, W</i>, <i>L</i><sub>ref</sub>, <i>T</i><sub>s</sub>, <i>T</i><sub>i</sub>, <i>c</i>, θ) <span class="eqn">Eq. 14</span></p>
+      <p class="from"><b>L is not corrected:</b> <i>L</i><sub>ref</sub> in both runs</p></div>
+  </div>
+  <div style="height:2mm"></div>
+  <div class="chain">
+    <div class="n"><h3><span class="num">6</span>New ice fraction</h3>
+      <p class="eq"><i>c</i><sup>new</sup> = clip(SIC<sub>c</sub>, 0, 1);<br>&lt; 0.15 <span class="to">→</span> 0</p></div>
+    <div class="ar">←</div>
+    <div class="n"><h3><span class="num">5</span>Corrected SIC</h3>
+      <p class="eq">SIC<sub>c</sub> = (<i>T</i><sub>B,c</sub> − <i>T</i><sup>c</sup><sub>p,water</sub>) / (<i>T</i><sup>c</sup><sub>p,ice</sub> − <i>T</i><sup>c</sup><sub>p,water</sub>) <span class="eqn">Eq. 16</span></p></div>
+    <div class="ar">←</div>
+    <div class="n"><h3><span class="num">4</span>Corrected T<sub>B</sub> and tie points</h3>
+      <p class="eq"><i>T</i><sub>B,c</sub> = <i>T</i><sub>B</sub> + Δ<i>T</i><sub>B</sub> <span class="eqn">Eq. 13</span></p>
+      <p class="eq"><i>T</i><sup>c</sup><sub>p,water</sub> = mean<sub>w</sub> <i>T</i><sub>B,c</sub>, &nbsp;<i>T</i><sup>c</sup><sub>p,ice</sub> = mean<sub>i</sub> <i>T</i><sub>B,c</sub></p></div>
+  </div>
+  <div class="back">loop: c<sup>new</sup> goes back to ① · iteration 3 changes SIC by &lt; 0.4 % <span class="to">→</span> stop after k = 2</div>
+  <span class="code">a6b_iterative.m (statistics) · correct_day.m (all pixels, globe) · esmr_rtm_vec.m (Wentz-based RTM, checked vs. esmr_rtm.py: 5·10⁻⁴ K)</span>
+</div>
+</div>
+<div class="arrows c3" style="grid-template-columns:1fr 1fr 1fr"><div></div><div></div><div></div></div>
+
+<!-- results -->
+<div class="stage"><div class="tag"><b>out</b>results</div>
+<div class="row c3">
+  <div class="n res"><h3>Task 1: std of SIC</h3>
+    <p>std over M<sub>w</sub> and M<sub>i</sub> per day, mean of Feb (w/o 28 Feb):</p>
+    <p><b>water</b> N 10.5 <span class="to">→</span> 8.2 %, S 14.3 <span class="to">→</span> 11.0 % (−23 %)<br><b>ice</b> N 14.6 <span class="to">→</span> 13.0 %, S 44.3 <span class="to">→</span> 40.5 %</p>
+    <span class="code">output/A6b_iterative.csv/.png</span></div>
+  <div class="n res"><h3>Task 2: B1 sensitivity</h3>
+    <p class="eq">Δ<i>T</i><sub>B</sub>(θ) = RTM(<i>X̄</i> + σ<sub>X</sub>) − RTM(<i>X̄</i>)</p>
+    <p>one input at a time, base = cluster means (A5 box), θ = 0…64°. Water at 50°: V 7.3 K, W 3.1 K, Ts −0.2 K.</p>
+    <span class="code">b1_sensitivity.m</span></div>
+  <div class="n res"><h3>Maps: globe viewer</h3>
+    <p>T<sub>B</sub>, θ, masks, SIC<sub>u</sub>, Δ<i>T</i><sub>B</sub>, SIC<sub>c</sub> per pixel and day; preprocessing slider = A3 steps.</p>
+    <span class="code">globe_html.m <span class="to">→</span> output/globe/</span></div>
+</div></div>
+</section>
+
+<!-- ================= PAGE 2: VALUE TABLE ================= -->
+<section class="page">
+<h2>Where each value comes from</h2>
+<table>
+<tr><th style="width:15%">Symbol</th><th style="width:30%">Meaning</th><th style="width:31%">Source / formula</th><th>Code</th></tr>
+<tr class="g-esmr"><td class="k"><i>T</i><sub>B</sub></td><td>measured brightness temperature, 19.35 GHz H</td><td><code>brightness_temperature_filtered</code> (Eq. 1 applied)</td><td><code>load_orbit.m</code> (tb_f)</td></tr>
+<tr class="g-esmr"><td class="k">θ</td><td>incidence angle</td><td><code>spos2ia.txt</code>, per scan position</td><td><code>load_orbit.m</code></td></tr>
+<tr class="g-esmr"><td class="k">lat, lon</td><td>pixel position</td><td><code>Latitude</code>, <code>Longitude</code></td><td><code>load_orbit.m</code></td></tr>
+<tr class="g-era5"><td class="k"><i>V</i></td><td>total column water vapour</td><td>ERA5 <code>tcwv</code></td><td><code>load_orbit.m</code></td></tr>
+<tr class="g-era5"><td class="k"><i>L</i></td><td>cloud liquid water (+ ice) path</td><td>ERA5 <code>tcw − tcwv</code>; <b>only the mean enters</b></td><td><code>correct_day.m</code></td></tr>
+<tr class="g-era5"><td class="k"><i>W</i></td><td>10 m wind speed</td><td>√(<code>u10</code>² + <code>v10</code>²)</td><td><code>load_orbit.m</code></td></tr>
+<tr class="g-era5"><td class="k"><i>T</i><sub>s</sub></td><td>sea surface temperature</td><td>ERA5 <code>sst</code> (271.35 K under ice where NaN, weight ≈ 0)</td><td><code>correct_day.m</code> (Tsx)</td></tr>
+<tr class="g-era5"><td class="k"><i>T</i><sub>i</sub></td><td>emitting layer temperature of the ice</td><td>0.4·<code>t2m</code> + 0.6·272 K (Eq. 15)</td><td><code>load_orbit.m</code></td></tr>
+<tr class="g-era5"><td class="k"><i>c</i><sup>(0)</sup></td><td>start ice fraction</td><td>ERA5 <code>siconc</code></td><td><code>correct_day.m</code></td></tr>
+<tr class="g-calc"><td class="k">M<sub>w</sub>, M<sub>i</sub></td><td>water / ice tie-point clusters</td><td>Table 2 thresholds + A3 filters, per day and hemisphere</td><td><code>correct_day.m</code> (mw, mi)</td></tr>
+<tr class="g-calc"><td class="k"><i>X̄</i><sub>w</sub>, <i>X̄</i><sub>i</sub></td><td>mean RTM inputs of the clusters</td><td>mean over M<sub>w</sub> / M<sub>i</sub></td><td><code>correct_day.m</code> (Mw, Mi)</td></tr>
+<tr class="g-calc"><td class="k"><i>X</i><sub>ref</sub></td><td>reference state per pixel</td><td>(1 − c)·X̄<sub>w</sub> + c·X̄<sub>i</sub></td><td><code>correct_day.m</code> (r)</td></tr>
+<tr class="g-rtm"><td class="k">Δ<i>T</i><sub>B</sub></td><td>weather correction</td><td>RTM(ref) − RTM(pixel), Eq. 14</td><td><code>esmr_rtm_vec.m</code></td></tr>
+<tr class="g-calc"><td class="k"><i>T</i><sub>p,water</sub>, <i>T</i><sub>p,ice</sub></td><td>tie points (raw / corrected)</td><td>mean T<sub>B</sub> (or T<sub>B,c</sub>) over M<sub>w</sub> / M<sub>i</sub></td><td><code>correct_day.m</code> (tpw, tpi)</td></tr>
+<tr class="g-calc"><td class="k">SIC</td><td>sea ice concentration</td><td>Eq. 16; raw for statistics, clipped only for the next c</td><td><code>correct_day.m</code> (su, sic)</td></tr>
+</table>
+
+<div class="two">
+<div>
+<h2>Typical numbers (Feb 1973, monthly mean)</h2>
+<table>
+<tr><th></th><th>North</th><th>South</th></tr>
+<tr><td><i>T</i><sub>p,water</sub> raw <span class="to">→</span> corr.</td><td>145.0 <span class="to">→</span> 145.0 K</td><td>140.9 <span class="to">→</span> 140.9 K</td></tr>
+<tr><td><i>T</i><sub>p,ice</sub> raw <span class="to">→</span> corr.</td><td>225.8 <span class="to">→</span> 226.3 K</td><td>200.1 <span class="to">→</span> 201.2 K</td></tr>
+<tr><td>contrast ice − water</td><td>≈ 81 K</td><td>≈ 60 K</td></tr>
+<tr><td>1 % SIC equals</td><td>≈ 0.8 K</td><td>≈ 0.6 K</td></tr>
+<tr><td>pixels M<sub>w</sub> / M<sub>i</sub> per day</td><td>17 000 / 79 000</td><td>36 000 / 13 000</td></tr>
+</table>
+<p class="small" style="font-size:8pt">The water tie point barely moves: the correction pulls every pixel towards the cluster mean, so the mean of M<sub>w</sub> stays the same and only the spread shrinks.</p>
+</div>
+<div>
+<h2>Traps to explain in the report</h2>
+<div class="trap"><b>Mean SIC over water = 0 by construction.</b> T<sub>p,water</sub> is the mean of the same pixels, so only the std is a result.</div>
+<div class="trap"><b>L in both runs.</b> Per-pixel L makes the std worse (A6: 11.5 % N vs. 10.6 % raw), because ERA5 clouds do not match the 1973 clouds pixel by pixel.</div>
+<div class="trap"><b>c is needed by the RTM but is the output.</b> Hence the iteration: start with ERA5 siconc, then use our own SIC.</div>
+<div class="trap"><b>Southern ice tie point is weak</b> (siconc &gt; 0.8: 200 K, std 26 K): small contrast <span class="to">→</span> large SIC std.</div>
+</div>
+</div>
+<div class="foot">source: report_notes/pipeline_flowchart.html · built 2026-11-13 · numbers from output/A6b_iterative.csv (iteration 2)</div>
+</section>
+</body>
+</html>
