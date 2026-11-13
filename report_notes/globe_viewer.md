@@ -15,6 +15,10 @@
 - Hover readout: position, scan position, θ, T_B, ΔT_B, SIC raw and corrected, reason a pixel was removed.
 
 ## Notes
+- Loading a day shows a progress card (reading the file, then decoding orbit by orbit); the last 4 days stay in memory and switch instantly.
+- **Two different land sources:**
+  - *ERA5 land* (slider step 4, grey "no value" pixels): from the data files themselves. A pixel is land where the collocated ERA5 `sst` is missing. Same rule as in the processing (water tie points need SST > 278 K). ERA5 `lsm` would be an alternative.
+  - *Drawn continents and coastlines*: Natural Earth 1:50m (`world-atlas@2.0.2`, public domain), downloaded once to `src/web/land-50m.json` and embedded in the page. Only a background map: it does not change any data. Nothing is loaded online at runtime.
 - Pixels with |lat| < 50° are stored thinned (every 4th line and position) to keep files small; counts are scaled by 16.
 - Rebuild after code changes: `matlab -batch "run('src/matlab/globe_html.m')"` (~2.5 min for all days, ~240 MB in `output/globe/days/`).
 

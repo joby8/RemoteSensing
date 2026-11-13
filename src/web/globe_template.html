@@ -33,7 +33,16 @@ canvas#globe.drag { cursor: grabbing; }
 .readout { position: absolute; left: 10px; bottom: 10px; font-family: var(--mono); font-size: 12px; background: color-mix(in srgb, var(--panel) 88%, transparent);
   border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; max-width: calc(100% - 20px); white-space: pre; overflow: hidden; }
 .hint { position: absolute; left: 10px; top: 10px; z-index: 1; pointer-events: none; font-size: 12px; color: var(--muted); }
-.loading { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); font-size: 13px; color: var(--muted); background: color-mix(in srgb, var(--panel) 70%, transparent); }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.loading .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; display: grid; gap: 8px; width: min(260px, 80%);
+  font-family: var(--mono); font-size: 12.5px; color: var(--fg); box-shadow: 0 4px 18px rgba(0,0,0,.25); }
+.loading .row1 { display: flex; align-items: center; gap: 8px; }
+.spin { width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+.pbar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.pbar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .15s; }
+.loading.err .spin, .loading.err .pbar { display: none; }
 aside { display: grid; gap: 12px; min-width: 0; }
 .box { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: grid; gap: 8px; min-width: 0; }
 .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 500; }
@@ -80,7 +89,7 @@ th { font-family: var(--sans); font-weight: 500; color: var(--muted); }
       <div class="hint">Drag to rotate · scroll to zoom · ←/→ change day</div>
       <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div>
       <div class="readout" id="readout">Hover over a pixel</div>
-      <div class="loading" id="loading" hidden>loading day …</div>
+      <div class="loading" id="loading" hidden><div class="card" role="status" aria-live="polite"><div class="row1"><span class="spin"></span><span id="ltext">loading day …</span></div><div class="pbar"><i id="lbar"></i></div></div></div>
     </div>
     <aside>
       <div class="box">
@@ -144,21 +153,30 @@ function stageOf(code) {
 // ---- data loading (one script file per day; works from file:// too) --------
 function dec(b64, T) { const s = atob(b64), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new T(u.buffer); }
 const cache = new Map();
-let pending = null;
-window.ESMR_DAY = raw => { if (pending) { pending(raw); pending = null; } };
-function loadDay(d) {
-  if (cache.has(d)) return Promise.resolve(cache.get(d));
+const waiters = new Map();                                    // day -> resolve, so fast clicking cannot mix up days
+window.ESMR_DAY = raw => { const f = waiters.get(raw.day); if (f) { waiters.delete(raw.day); f(raw); } };
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));   // let the browser paint
+function loadScript(d) {
   return new Promise((res, rej) => {
-    pending = raw => {
-      const day = { tp: raw.tp, orbits: [].concat(raw.orbits).map(prep) };
-      cache.set(d, day); if (cache.size > 4) cache.delete(cache.keys().next().value);
-      res(day);
-    };
+    waiters.set(d, res);
     const s = document.createElement('script');
-    s.src = `days/${d}.js`; s.onerror = () => { pending = null; rej(new Error(`days/${d}.js not found`)); };
+    s.src = `days/${d}.js`; s.onerror = () => { waiters.delete(d); rej(new Error(`days/${d}.js not found`)); };
     s.onload = () => s.remove();
     document.head.appendChild(s);
   });
+}
+async function loadDay(d, progress) {
+  if (cache.has(d)) return cache.get(d);
+  progress('reading data file …', 0.05); await nextFrame();
+  const raw = await loadScript(d);
+  const src = [].concat(raw.orbits), orbits = [];
+  for (let j = 0; j < src.length; j++) {
+    progress(`decoding orbit ${j + 1} of ${src.length} …`, 0.1 + 0.85 * j / src.length); await nextFrame();
+    orbits.push(prep(src[j]));
+  }
+  const day = { tp: raw.tp, orbits };
+  cache.set(d, day); if (cache.size > 4) cache.delete(cache.keys().next().value);
+  return day;
 }
 function prep(o) {
   const lat = dec(o.lat, Int16Array), lon = dec(o.lon, Int16Array), tb = dec(o.tb, Int16Array), code = dec(o.code, Uint8Array), spos = dec(o.spos, Uint8Array), dtb = dec(o.dtb, Int16Array);
@@ -338,11 +356,14 @@ os.onchange = () => { sel = os.value === 'all' ? 'all' : +os.value; steps(); red
 async function setDay(i) {
   dayIdx = i; ds.value = i;
   $('dprev').disabled = i === 0; $('dnext').disabled = i === DAYS.length - 1;
-  $('loading').hidden = false;
-  try { cur = await loadDay(DAYS[i].day); }
-  catch (err) { $('loading').textContent = `${err.message}. Keep the days/ folder next to this page.`; return; }
+  const ov = $('loading'), cached = cache.has(DAYS[i].day);
+  const progress = (txt, f) => { if (dayIdx !== i) return; $('ltext').textContent = `${DAYS[i].label}: ${txt}`; $('lbar').style.width = `${Math.round(100 * f)}%`; };
+  if (!cached) { ov.classList.remove('err'); ov.hidden = false; }
+  try { const day = await loadDay(DAYS[i].day, progress); if (dayIdx !== i) return; cur = day; }
+  catch (err) { ov.classList.add('err'); $('ltext').textContent = `${err.message}. Keep the days/ folder next to this page.`; return; }
+  progress('drawing …', 1); if (!cached) await nextFrame();
   if (dayIdx !== i) return;
-  $('loading').hidden = true;
+  ov.hidden = true;
   const prevSel = sel;
   os.innerHTML = '';
   os.add(new Option(`All ${cur.orbits.length} orbits of the day`, 'all'));
