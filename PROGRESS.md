@@ -95,4 +95,5 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
 - 2026-11-13 · feedback session; A6b iterative correction done (water std −23 %) · next: B1 RTM sensitivity (Task 2), B2 std vs. θ (Task 3)
 - 2026-11-13 · B1 sensitivity study (Task 2) as static version of the animation · next: B2 std vs. θ (Task 3)
 - 2026-11-13 · pipeline flowchart `report_notes/pipeline_flowchart.html` (p. 1 flow A1–A6b with paper equations, p. 2 all RTM equations (Wentz 1997) + where each input enters, p. 3 value table; 3 A4 pages)
+- 2026-11-13 · explainer video `output/video/ESMR_pipeline_explainer.mp4` (~8 min, steps 1–9 on orbit 5 Feb 09:59 UTC, narration edge-tts Andrew); sources in `video/` (script.md, player.html, build.py) + `src/matlab/video_export.m`
 - 2026-11-13 · globe viewer: A6b correction for all valid ocean pixels (`correct_day.m`), new modes ΔT_B and SIC corrected
