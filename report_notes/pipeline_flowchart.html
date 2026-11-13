@@ -77,6 +77,10 @@ tr.g-calc td:first-child { box-shadow: inset 2.4mm 0 0 var(--calc-b); padding-le
 tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-left: 3.6mm; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
 .trap { border-left: 2.4pt solid #000; padding: 0.8mm 0 0.8mm 2.5mm; margin: 2mm 0; font-size: 8.4pt; break-inside: avoid; }
+.in { font-weight: bold; font-style: italic; padding: 0 0.4mm; border-radius: 0.6mm; }
+.in.e { color: #a4520a; background: var(--era5); }
+.in.s { color: #2058a0; background: var(--esmr); }
+.in.c { color: #333; background: #e4e4e4; }
 .to { font-family: "Times New Roman", Times, serif; }
 .foot { font-size: 7.3pt; color: var(--muted); text-align: right; margin-top: 2mm; }
 @media print { body { padding: 0; max-width: none; zoom: 0.8; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
@@ -183,7 +187,7 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
     <div class="ar">→</div>
     <div class="n rtm"><h3><span class="num">3</span>RTM correction</h3>
       <p class="eq">Δ<i>T</i><sub>B</sub> = RTM(<i>X</i><sub>ref</sub>, <i>L</i><sub>ref</sub>, <i>c</i>, θ) − RTM(<i>V, W</i>, <i>L</i><sub>ref</sub>, <i>T</i><sub>s</sub>, <i>T</i><sub>i</sub>, <i>c</i>, θ) <span class="eqn">Eq. 14</span></p>
-      <p class="from"><b>L is not corrected:</b> <i>L</i><sub>ref</sub> in both runs</p></div>
+      <p class="from"><b>L is not corrected:</b> <i>L</i><sub>ref</sub> in both runs · RTM equations: page 2</p></div>
   </div>
   <div style="height:2mm"></div>
   <div class="chain">
@@ -220,7 +224,72 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
 </div></div>
 </section>
 
-<!-- ================= PAGE 2: VALUE TABLE ================= -->
+<!-- ================= PAGE 2: INSIDE THE RTM ================= -->
+<section class="page">
+<h2>Inside the RTM box ③: the equations of <code>esmr_rtm_vec.m</code></h2>
+<div class="sub" style="margin-bottom:2mm">19.35 GHz H-pol · Wentz (1997) ocean model, adapted to 0–60° and sea ice (provided by Tonboe). Equation tags <span class="eqn">W 17a</span> = Wentz (1997), as in the code comments. Inputs are coloured: <span class="in e">V</span> <span class="in e">W</span> <span class="in e">L</span> <span class="in e">T<sub>s</sub></span> <span class="in e">T<sub>i</sub></span> from ERA5, <span class="in s">θ</span> from ESMR, <span class="in c">c</span> ice fraction.</div>
+
+<div class="stage"><div class="tag"><b>1</b>air temp.</div>
+<div class="row c2">
+  <div class="n"><h3>Effective temperatures of the atmosphere</h3>
+    <p class="eq"><i>T</i><sub>V</sub> = 273.16 + 0.8337 <span class="in e">V</span> − 3.029·10<sup>−5</sup> <span class="in e">V</span><sup>3.33</sup> &nbsp;(301.16 K if V &gt; 48) <span class="eqn">W 18</span></p>
+    <p class="eq"><i>T</i><sub>D</sub> = c<sub>0</sub> + c<sub>1</sub><span class="in e">V</span> + c<sub>2</sub><span class="in e">V</span>² + c<sub>3</sub><span class="in e">V</span>³ + c<sub>4</sub><span class="in e">V</span>⁴ + c<sub>5</sub>(<span class="in e">T<sub>s</sub></span> − <i>T</i><sub>V</sub>) <span class="eqn">W 17a</span></p>
+    <p class="eq"><i>T</i><sub>U</sub> = <i>T</i><sub>D</sub> + c<sub>6</sub> + c<sub>7</sub><span class="in e">V</span> <span class="eqn">W 17b</span></p>
+    <p class="from">T<sub>D</sub>, T<sub>U</sub>: brightness of the down- and up-welling air. c<sub>0…7</sub> = Wentz Table 1 for 19 GHz (c<sub>0</sub> = 240 K).</p></div>
+  <div class="n"><h3>Absorption and transmittance</h3>
+    <p class="eq"><i>A</i><sub>O</sub> = (11.80 / <i>T</i><sub>D</sub>)<sup>1.4</sup> &nbsp;(oxygen) <span class="eqn">W 20</span></p>
+    <p class="eq"><i>A</i><sub>V</sub> = 2.23·10<sup>−3</sup> <span class="in e">V</span> &nbsp;(vapour) <span class="eqn">W 21</span></p>
+    <p class="eq"><i>A</i><sub>L</sub> = 0.2858 · 0.208 [1 − 0.026(<i>T</i><sub>L</sub> − 283)] <span class="in e">L</span>, &nbsp;<i>T</i><sub>L</sub> = (<span class="in e">T<sub>s</sub></span> + 273)/2 <span class="eqn">W 22–23</span></p>
+    <p class="eq">τ = exp[ −(<i>A</i><sub>O</sub> + <i>A</i><sub>V</sub> + <i>A</i><sub>L</sub>) / cos <span class="in s">θ</span> ] <span class="eqn">W 19</span></p>
+    <p class="from">1/cos θ = longer path at large angles <span class="to">→</span> V and L matter more at the swath edge (B1).</p></div>
+</div></div>
+<div class="arrows c2" style="grid-template-columns:1fr 1fr"><div></div><div></div></div>
+
+<div class="stage"><div class="tag"><b>2</b>sky</div>
+<div class="row">
+  <div class="n"><h3>Emission of the atmosphere</h3>
+    <p class="eq"><i>T</i><sub>BU</sub> = <i>T</i><sub>U</sub> (1 − τ) &nbsp;(up, straight to the sensor) <span class="eqn">W 16a</span> &nbsp;&nbsp;&nbsp; <i>T</i><sub>BD</sub> = <i>T</i><sub>D</sub> (1 − τ) &nbsp;(down, reflected by the surface) <span class="eqn">W 16b</span> &nbsp;&nbsp;&nbsp; <i>T</i><sub>C</sub> = 2.7 K (cosmic)</p></div>
+</div></div>
+<div class="arrows c2" style="grid-template-columns:1fr 1fr"><div></div><div></div></div>
+
+<div class="stage"><div class="tag"><b>3</b>surface</div>
+<div class="row c2">
+  <div class="n"><h3>Open water (weight 1 − c)</h3>
+    <p class="eq">ε<sub>w</sub> = ε′ + iε″ from table at 19.35 GHz, 34 psu, f(<span class="in e">T<sub>s</sub></span>) &nbsp;(Ulaby 1986)</p>
+    <p class="eq"><i>E</i><sub>0</sub> = 1 − <i>R</i><sub>H</sub>(ε<sub>w</sub>, <span class="in s">θ</span>), &nbsp;<i>R</i><sub>H</sub> = [(p − cos θ)² + q²] / [(p + cos θ)² + q²] &nbsp;(Fresnel, H-pol)</p>
+    <p class="eq"><i>E</i><sub>W</sub> = (0.0094 <span class="in s">θ</span> + 0.3) · <span class="in e">W</span> / <span class="in e">T<sub>s</sub></span> &nbsp;(wind foam/roughness)</p>
+    <p class="eq"><i>E</i> = <i>E</i><sub>0</sub> + <i>E</i><sub>W</sub> <span class="eqn">W 24</span></p>
+    <p class="eq">σ² = min(5.22·10<sup>−3</sup> · 0.688 · <span class="in e">W</span>, 0.07) <span class="eqn">W 29</span> &nbsp; Ω = 1 + 6.1(σ² − 68σ⁶) τ² <span class="eqn">W 28</span></p>
+    <p class="from">p, q from ε<sub>w</sub> and sin²θ (Schanda 1986). Ω: rough sea reflects more sky. H-pol E<sub>0</sub> falls with θ <span class="to">→</span> more reflected sky at the edge.</p></div>
+  <div class="n"><h3>Sea ice (weight c)</h3>
+    <p class="eq"><i>e</i><sub>ice</sub>(<span class="in s">θ</span>) from table (MEMLS, 19H, winter mean)</p>
+    <table style="font-size:7.6pt;margin:1mm 0"><tr><td>θ</td><td>0°</td><td>20°</td><td>40°</td><td>50°</td><td>55°</td></tr><tr><td>e<sub>ice</sub></td><td>0.932</td><td>0.928</td><td>0.913</td><td>0.899</td><td>0.888</td></tr></table>
+    <p class="eq">emits at <span class="in e">T<sub>i</sub></span> = 0.4·t2m + 0.6·272 K <span class="eqn">Eq. 15</span></p>
+    <p class="from">No wind, no SST: over ice only T<sub>i</sub> really matters (B1: 3.8 K per 1σ). High emissivity <span class="to">→</span> little reflected sky <span class="to">→</span> atmosphere terms small.</p></div>
+</div></div>
+<div class="arrows" style="grid-template-columns:1fr"><div></div></div>
+
+<div class="stage"><div class="tag"><b>4</b>total</div>
+<div class="row">
+  <div class="n rtm"><h3>Brightness temperature at the sensor <span class="eqn">W 16</span></h3>
+    <p class="eq" style="font-size:12pt"><i>T</i><sub>B</sub> = <i>T</i><sub>BU</sub> + τ · [ (1 − <span class="in c">c</span>) <i>E</i> <span class="in e">T<sub>s</sub></span> + <span class="in c">c</span> <i>e</i><sub>ice</sub> <span class="in e">T<sub>i</sub></span> + (1 − <span class="in c">c</span>)(1 − <i>E</i>)(Ω <i>T</i><sub>BD</sub> + τ <i>T</i><sub>C</sub>) + <span class="in c">c</span> (1 − <i>e</i><sub>ice</sub>)(<i>T</i><sub>BD</sub> + τ <i>T</i><sub>C</sub>) ]</p>
+    <p class="from" style="font-size:8pt">= air above &nbsp;+&nbsp; transmitted ( water emission + ice emission + sky reflected by water + sky reflected by ice ). This function is called twice per pixel in box ③: once with X<sub>ref</sub>, once with the pixel's own V, W, T<sub>s</sub>, T<sub>i</sub> (L<sub>ref</sub> in both) <span class="to">→</span> ΔT<sub>B</sub> (Eq. 14).</p></div>
+</div></div>
+
+<h2 style="margin-top:4mm">Where each input enters</h2>
+<table>
+<tr><th>Input</th><th>enters via</th><th>effect on T<sub>B</sub> (water)</th><th>B1: ΔT<sub>B</sub> per +1σ at 50°</th></tr>
+<tr class="g-era5"><td class="k"><i>V</i></td><td>T<sub>V</sub>, T<sub>D</sub>, T<sub>U</sub>, A<sub>V</sub> <span class="to">→</span> τ</td><td>more emission from the air, less transmitted <span class="to">→</span> warmer</td><td>+7.3 K (water), +0.4 K (ice)</td></tr>
+<tr class="g-era5"><td class="k"><i>W</i></td><td>E<sub>W</sub>, σ² <span class="to">→</span> Ω</td><td>rough/foamy sea emits more <span class="to">→</span> warmer</td><td>+3.1 K (water only)</td></tr>
+<tr class="g-era5"><td class="k"><i>L</i></td><td>A<sub>L</sub> <span class="to">→</span> τ</td><td>cloud emission <span class="to">→</span> warmer (<b>not corrected</b>)</td><td>+10.4 K (water), +0.4 K (ice)</td></tr>
+<tr class="g-era5"><td class="k"><i>T</i><sub>s</sub></td><td>surface term, ε<sub>w</sub>, T<sub>D</sub>, T<sub>L</sub>, E<sub>W</sub></td><td>warmer water, but lower emissivity <span class="to">→</span> almost cancels</td><td>−0.2 K</td></tr>
+<tr class="g-era5"><td class="k"><i>T</i><sub>i</sub></td><td>ice surface term only</td><td>direct: T<sub>B</sub> ≈ e<sub>ice</sub>·T<sub>i</sub></td><td>+3.6 K (ice)</td></tr>
+<tr class="g-esmr"><td class="k">θ</td><td>1/cos θ in τ, R<sub>H</sub>, E<sub>W</sub>, e<sub>ice</sub></td><td>all water terms grow with θ</td><td><span class="to">→</span> Task 3</td></tr>
+<tr class="g-calc"><td class="k"><i>c</i></td><td>mixes water and ice terms</td><td>sets which inputs count for the pixel</td><td>start ERA5 siconc, then iterated</td></tr>
+</table>
+</section>
+
+<!-- ================= PAGE 3: VALUE TABLE ================= -->
 <section class="page">
 <h2>Where each value comes from</h2>
 <table>
