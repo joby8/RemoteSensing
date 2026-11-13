@@ -27,10 +27,12 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
 - [x] A3 Filters: Eq. 1 (90 K < T_B ≤ 273.15 K) and drop scan positions 1–4 and 75–78. Eq. 2–4 later if needed.
 - [x] A4 Open-water mask, Table 2: siconc = 0, sst > 278 K, 90 K < T_B < 180 K, lat > 32° N or < −48° S (5×5 box optional). Meeting: only use |lat| ≥ 50° (skip the low latitudes, less data); SST > 278 K as in Table 2.
 - [x] A5 Uncorrected SIC (Eq. 16): Tp,water = mean T_B of the mask, Tp,ice from 95 %→100 % ice pixels (per day, per hemisphere; was 225 K placeholder). Mean and std on **raw** SIC (no clipping, no 15 % filter).
-- [ ] A6 Correction (Eq. 13–14): means V̄, W̄, T̄s, T̄i over the mask; L = mean in both runs. Corrected SIC with the corrected tie point → mean and std. **Task 1 for one orbit.**
+- [x] A6 Correction (Eq. 13–14): means V̄, W̄, T̄s, T̄i over the mask; L = mean in both runs. Corrected SIC with the corrected tie point → mean and std. **Task 1 for one orbit.**
+
+- [x] A6b Iterative correction (session 2026-11-13): Table 2 clusters (ice siconc > 0.8, |lat| ≥ 50°), c_ice from ERA5 → iterate, reference values mixed by c_ice; std per day N/S for water and ice. **Main method for Task 1.**
 
 ### Phase B: tasks
-- [ ] B1 Task 2 exclusion test: repeat A6 with V, W, Ts (Ti) each fixed at its mean → table of std increase.
+- [x] B1 Task 2 (agreed 2026-11-13: **RTM sensitivity study**): `b1_sensitivity.m` → `output/B1_sensitivity.png` = static report version of the learning-page animation (θ on x axis, ΔT_B per +1σ of each input). Optional: data exclusion test as cross-check.
 - [ ] B2 Task 3: std of SIC per θ bin, uncorrected vs corrected (like Fig. 5, but in % SIC).
 - [ ] B3 Scale up to all of Feb 1973, both hemispheres. Vectorise the RTM (NumPy) if the loop is too slow.
 - [ ] B4 Task 4: recommendation (angle cut-off, which variables, ice side, clouds).
@@ -50,6 +52,11 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
   - Task 2: **sensitivity study of the RTM**: how much does the output change per input? Ice/emitting-layer temperature is important.
   - Seminar: present the report to the other students; length unknown. Last feedback for the exam is given there. Make good figures (useful for the exam).
   - **Exam (15 Dec):** (1) draw a remote-sensing topic, present it 5 min, short questions; (2) topic 2: 7 min of questions; (3) present the report 5 min. Report = 1/3 of the grade, but only the **defence** is graded, not the report text.
+- **Feedback session (2026-11-13)**, full notes in `report_notes/questions_2026-11-13.md`:
+  - Calibration (tie points) **per day** confirmed.
+  - Report the **std per day, north and south**, for the ice and water tie points.
+  - Use the ERA5 algorithm: **ERA5 SIC for the T_B model**, criteria as in **Table 2** (interpretation still to confirm).
+  - Task 2 = **sensitivity study with the RTM**.
 - Still to check: seminar length (newer paper from Tonboe's mail is optional reading).
 - `esmr_rtm.py` ice emissivity table (0.93) ≠ paper Table 1 (0.91); irrelevant over open water.
 - `provided/esmr_rtm.m` is scalar-only and uses `endif` (Octave syntax, not valid in MATLAB): needs a fixed/vectorised copy in `src/matlab/` before A5/A6. `interp1` returns NaN outside −5…25 °C.
@@ -66,8 +73,24 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
 - A4: ice mask = siconc ≥ 0.95 and 100 K < T_B < 274 K (Table 2 T_B range). 5×5 box not applied. Antarctic ice: few pixels (~3–6k per day vs. 40–100k Arctic). → `output/A4_masks.png`
 - A5 (all of Feb 1973, ~55 s): mean open-water SIC = 0 by construction (same pixels as Tp,water), so **std is the result**. Uncorrected std: **N 10.4 %** (7.1–12.9), **S 11.6 %** (9.0–14.5). Tp,water ≈ 145 K (N) / 141 K (S); Tp,ice ≈ 226 K (N) / 213 K (S). SIC distribution right-skewed (tail to +40 %, presumably wind/clouds). 28 Feb has only 1 orbit (unreliable). → `output/A5_sic_uncorrected.csv`, `.png`
 
+## Findings from A6 (`esmr_rtm_vec.m`, `a6_corrected.m`)
+- Vectorised RTM matches provided Python RTM to < 0.001 K (8 test cases).
+- L̄ (tcw − tcwv, cluster mean) in **both** runs, as in the paper (Sect. 4.1: "TB is not corrected for the cloud liquid water"). Per-pixel L over-corrects (std SIC 11.5 % N / 13.7 % S, worse than uncorrected).
+- Result Task 1 (Feb 1973 without 28 Feb): std open-water SIC **N 10.6 → 8.7 %, S 11.5 → 9.6 %** (−17 %), std T_B 8.5 → 7.0 K; improved on 53 of 54 day/hemisphere cases. → `output/A6_sic_corrected.csv`, `.png`; per-pixel data for B1/B2 in `output/A6_water_pixels.mat`. Notes: `report_notes/A6_corrected_sic.md`
+
+## Findings from A6b (`a6b_iterative.m`)
+- Iteration 2 best (iteration 3 changes < 0.4 % SIC). Water std N 10.5 → 8.2 %, S 14.3 → 11.0 % (−23 %); ice std N 14.6 → 13.0 %, S 44.3 → 40.5 %.
+- Southern ice tie point with siconc > 0.8: T_p,ice 200 K (vs. 214 K with ≥ 0.95), contrast only 59 K, ice T_B std 26 K → weak point, discuss with Tonboe. Notes: `report_notes/A6b_iterative.md`
+
+## Findings from B1 (`b1_sensitivity.m`)
+- Water, ΔT_B per +1σ at 50°: V 7.3 K, W 3.1 K, Ts −0.2 K (L 10.4 K but not corrected); all grow with θ. Ice: Ti 3.6–3.8 K, V and L < 0.4 K.
+- Report idea for Tonboe's question (animation → report): θ as x axis gives the whole animation in one figure; interactive page live in seminar/defence. Notes: `report_notes/B1_sensitivity.md`
+
 ## Log
 - 2026-11-08 · project files copied from Drive, learning page for the paper built · next: A1
 - 2026-11-09 · A1+A2 done (Python, then ported to MATLAB in src/matlab/) · next: A3 after feedback session
 - 2026-11-13 · A3–A5 done in MATLAB (daily tie points per hemisphere, uncorrected SIC std ≈ 10–12 %) · next: fix/vectorise RTM, A6
 - 2026-11-13 · globe viewer `output/globe/ESMR_globe.html` (all days, preprocessing steps, offline) · report notes A1–A5 in `report_notes/`
+- 2026-11-13 · A6 done: RTM ported to MATLAB (vectorised, validated), corrected SIC std −17 % · next: B1 (Task 2), B2 (Task 3)
+- 2026-11-13 · feedback session; A6b iterative correction done (water std −23 %) · next: B1 RTM sensitivity (Task 2), B2 std vs. θ (Task 3)
+- 2026-11-13 · B1 sensitivity study (Task 2) as static version of the animation · next: B2 std vs. θ (Task 3)

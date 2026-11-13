@@ -10,6 +10,10 @@ Use them as the writing plan for the report (due 6 Dec) and the seminar (4 Dec).
 | A3 Filters | [A3_filters.md](A3_filters.md) | Method: preprocessing |
 | A4 Tie-point masks | [A4_tiepoint_masks.md](A4_tiepoint_masks.md) | Method: tie points |
 | A5 Uncorrected SIC | [A5_uncorrected_sic.md](A5_uncorrected_sic.md) | Results: Task 1 (before) |
+| A6 Corrected SIC | [A6_corrected_sic.md](A6_corrected_sic.md) | Method: noise reduction; Results: Task 1 |
+| A6b Iterative correction (final) | [A6b_iterative.md](A6b_iterative.md) | Method: SIC algorithm; Results: Task 1 |
+| B1 RTM sensitivity (Task 2) | [B1_sensitivity.md](B1_sensitivity.md) | Results: Task 2 |
+| Session 2026-11-13 | [questions_2026-11-13.md](questions_2026-11-13.md) | decisions |
 | Visualisation | [globe_viewer.md](globe_viewer.md) | Figures / seminar |
 
-Still to come: A6 (corrected SIC, Task 1), B1 (Task 2 exclusion test), B2 (Task 3 std vs. angle), B4 (Task 4 recommendation).
+Still to come: B2 (Task 3 std vs. angle), B4 (Task 4 recommendation).
