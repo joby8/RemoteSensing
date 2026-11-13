@@ -7,7 +7,7 @@
 :root {
   --bg: #f3f5f7; --panel: #ffffff; --fg: #17212b; --muted: #5d6b78; --line: #d9dfe5; --accent: #1f6fb2;
   --water: #3b8fe0; --ice: #f08a3c; --other: #8a96a3;
-  --r-eq1: #e04848; --r-edge: #b06ee0; --r-lat: #59636d; --r-land: #b08850;
+  --r-eq1: #e04848; --r-edge: #b06ee0; --r-lat: #59636d; --r-land: #b08850; --nodata: #c3cbd3;
   --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
@@ -199,18 +199,20 @@ const selected = () => !cur ? [] : sel === 'all' ? cur.orbits : [cur.orbits[sel]
 function sicOf(o, i) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S; return 100 * (o.tb[i] / 10 - t.water_u) / (t.ice_u - t.water_u); }
 function sicCorr(o, i) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S; return 100 * ((o.tb[i] + o.dtb[i]) / 10 - t.water_c) / (t.ice_c - t.water_c); }
 let RM = [];
+const NEEDS_OCEAN = new Set(['sic', 'dtb', 'sicc']);   // modes that only make sense for ocean pixels after step 3
 function recolor() {
   const C = [pack(hex(css('--other'))), pack(hex(css('--water'))), pack(hex(css('--ice')))];
   RM = [0, ...STEPS.slice(1).map(s => pack(hex(css(s.c))))];
+  const ND = pack(hex(css('--nodata')));               // kept pixel without a value for this mode
   for (const o of cur ? cur.orbits : []) for (let i = 0; i < o.n; i++) {
     const tbv = o.tb[i];
     if (mode === 'th') o.col[i] = LUT_TH[o.spos[i] - 1];
-    else if (tbv === -32768) o.col[i] = 0;
+    else if (tbv === -32768) o.col[i] = ND;
+    else if (NEEDS_OCEAN.has(mode) && o.dtb[i] === -32768) o.col[i] = ND;   // land or outside steps 1-3: no SIC/correction
     else if (mode === 'tb') o.col[i] = LUT_TB[Math.max(0, Math.min(180, Math.round(tbv / 10 - 100)))];
     else if (mode === 'sic') o.col[i] = LUT_SIC[Math.max(0, Math.min(140, Math.round(sicOf(o, i) + 20)))];
     else if (mode === 'dtb' || mode === 'sicc') {
-      if (o.dtb[i] === -32768) o.col[i] = 0;
-      else if (mode === 'dtb') o.col[i] = LUT_DTB[Math.max(0, Math.min(300, o.dtb[i] + 150))];
+      if (mode === 'dtb') o.col[i] = LUT_DTB[Math.max(0, Math.min(300, o.dtb[i] + 150))];
       else o.col[i] = LUT_SIC[Math.max(0, Math.min(140, Math.round(sicCorr(o, i) + 20)))];
     }
     else o.col[i] = C[o.code[i] & 3];
@@ -355,6 +357,7 @@ for (const [m, id] of Object.entries(btn)) $(id).onclick = () => setMode(m);
 function setMode(m) {
   mode = m;
   for (const [mm, id] of Object.entries(btn)) $(id).setAttribute('aria-pressed', mm === m);
+  if (NEEDS_OCEAN.has(m) && step < 4) { step = 4; $('step').value = 4; steps(); }   // the state A6b works on
   recolor(); legend(); redraw();
 }
 function legend() {
@@ -372,7 +375,8 @@ function legend() {
     th:  [-64, 64, THETA, [-64, -32, 0, 32, 64], 'incidence angle θ in degrees (negative = left side of swath)'],
   }[mode];
   const [lo, hi, stops, ticks, note] = cfg;
-  L.innerHTML = `<canvas id="bar" width="300" height="14"></canvas><div class="ticks">${ticks.map(t => `<span>${t}</span>`).join('')}</div><div class="note">${note}</div>`;
+  const nd = NEEDS_OCEAN.has(mode) ? `<div class="keys"><span class="sw" style="--c:var(--nodata)">no value: land or outside the filters (not corrected)</span></div>` : '';
+  L.innerHTML = `<canvas id="bar" width="300" height="14"></canvas><div class="ticks">${ticks.map(t => `<span>${t}</span>`).join('')}</div><div class="note">${note}</div>${nd}`;
   const g = $('bar').getContext('2d');
   for (let i = 0; i < 300; i++) { const c = lerpStops(stops, lo + (hi - lo) * i / 299); g.fillStyle = `rgb(${c})`; g.fillRect(i, 0, 1, 14); }
 }

@@ -11,6 +11,7 @@
 - Correction = A6b method (c_ice from ERA5, one iteration, L not corrected) applied to **all** valid ocean pixels via `src/matlab/correct_day.m`. Same tie points and std as `a6b_iterative.m` (checked for 5 Feb: identical).
 - Tie-point table per day: T_p,water, T_p,ice, std SIC water and ice, raw → corrected.
 - **Preprocessing slider** (steps 0–4: raw swath → Eq. 1 → swath edges → |lat| ≥ 50° → ERA5 land), removed pixels coloured by reason, with pixel counts per step.
+- Slider (which pixels are left) and colour mode (what is shown) are independent. For SIC raw, ΔT_B and SIC corrected the slider jumps to step 4 (ocean after all filters = what A6b works on); kept pixels without a value there are drawn light grey ("no value: land or outside the filters").
 - Hover readout: position, scan position, θ, T_B, ΔT_B, SIC raw and corrected, reason a pixel was removed.
 
 ## Notes
