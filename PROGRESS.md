@@ -97,3 +97,7 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
 - 2026-11-13 · pipeline flowchart `report_notes/pipeline_flowchart.html` (p. 1 flow A1–A6b with paper equations, p. 2 all RTM equations (Wentz 1997) + where each input enters, p. 3 value table; 3 A4 pages)
 - 2026-11-13 · explainer video `output/video/ESMR_pipeline_explainer.mp4` (~8 min, steps 1–9 on orbit 5 Feb 09:59 UTC, narration edge-tts Andrew); sources in `video/` (script.md, player.html, build.py) + `src/matlab/video_export.m`
 - 2026-11-13 · globe viewer: A6b correction for all valid ocean pixels (`correct_day.m`), new modes ΔT_B and SIC corrected
+
+### 2026-11-13 · Explainer video, review round 1
+- Fixed from Jo's review: sea-ice label in step 1 was off-screen (callouts now stay inside the panel); formulas rendered as LaTeX (KaTeX 0.16.11 vendored in `video/vendor/katex/`); histogram text larger, tie-point labels above the bars; zoom into the example pixel without overshoot/jitter; map → chart switches are sequential (fade out, then in) instead of cross-fades; layer alpha now multiplies with the scene alpha.
+- Narration: open water "one hundred forty seven kelvin" (matches the label).

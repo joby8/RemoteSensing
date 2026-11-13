@@ -14,7 +14,7 @@ All numbers come from `output/video/video_data.js` (`src/matlab/video_export.m`)
 {globe} This is the orbit. The satellite circles the Earth from pole to pole, and the scanner sweeps across the track.
 {swath} Each scan line has seventy-eight positions. This orbit has about sixteen hundred scan lines.
 {tb} The colour is the measured brightness temperature at nineteen gigahertz, horizontal polarisation.
-{contrast} Open water is radiometrically cold, around one hundred and forty five kelvin. Sea ice is warm, around two hundred and twenty five kelvin.
+{contrast} Open water is radiometrically cold, around one hundred forty seven kelvin. Sea ice is warm, around two hundred and twenty five kelvin.
 {era5} For every pixel, the file also contains ERA5 weather data, interpolated to the same time and place.
 
 ## inputs | Step 2 · Inputs | Weather at every pixel

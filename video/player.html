@@ -31,7 +31,10 @@ body { font-family: Arrows, "Helvetica Neue", Helvetica, Arial, sans-serif; colo
 #cards { position: absolute; top: 350px; left: -20px; right: -20px; bottom: 0; padding: 0 20px; overflow: hidden; }
 .card { position: absolute; left: 20px; right: 20px; background: #fff; border-radius: 14px; padding: 16px 20px; border-left: 7px solid var(--c, var(--calc)); box-shadow: 0 4px 18px rgba(0,0,0,0.06); font-size: 22px; line-height: 1.38; }
 .card .k { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: var(--muted); margin-bottom: 6px; }
-.eq { font-family: "Times New Roman", Times, serif; font-size: 29px; line-height: 1.35; }
+.eq { font-size: 26px; line-height: 1.5; }
+.katex { font-size: 1.12em; }
+.ovbox .katex { font-size: 1.05em; }
+.lab { position: absolute; background: rgba(255,255,255,0.94); border-radius: 8px; padding: 2px 10px; font-size: 26px; font-weight: 700; white-space: nowrap; }
 .eq i { font-style: italic; }
 .eqn { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 15px; font-weight: 700; border: 2px solid currentColor; border-radius: 6px; padding: 0 6px; margin-left: 8px; vertical-align: 4px; color: var(--muted); }
 .big { font-size: 46px; font-weight: 700; letter-spacing: -0.5px; }
@@ -63,6 +66,8 @@ table.vt td:first-child, table.vt th:first-child { text-align: left; }
 <div id="ctl"><button id="play">▶</button><input id="seek" type="range" min="0" max="100" step="0.04" value="0"><span id="tt"></span></div>
 <audio id="aud" src="../output/video/narration.wav" preload="auto"></audio>
 
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<script src="vendor/katex/katex.min.js"></script>
 <script src="../src/web/d3-array.min.js"></script>
 <script src="../src/web/d3-geo.min.js"></script>
 <script src="../src/web/topojson-client.min.js"></script>
@@ -141,7 +146,7 @@ const projCache = new Map(), layerCache = new Map();
 function projFor(v) {
   return d3.geoOrthographic().rotate([-v.lon, -v.lat]).scale(v.scale).translate([v.w / 2, v.h / 2]).clipAngle(90);
 }
-const vkey = v => [v.lon, v.lat, v.scale, v.w, v.h].map(x => x.toFixed(2)).join(',');
+const vkey = v => [v.lon, v.lat, v.scale, v.w, v.h].map(x => x.toFixed(3)).join(',');
 function projected(v) {
   const k = vkey(v);
   if (projCache.has(k)) return projCache.get(k);
@@ -185,7 +190,7 @@ function layer(v, key, colorFn) {
 }
 function drawBase(v, alpha = 1) {
   const p = projFor(v), path = d3.geoPath(p, ctx);
-  ctx.save(); ctx.beginPath(); ctx.rect(v.x, v.y, v.w, v.h); ctx.clip(); ctx.translate(v.x, v.y); ctx.globalAlpha = alpha;
+  ctx.save(); ctx.beginPath(); ctx.rect(v.x, v.y, v.w, v.h); ctx.clip(); ctx.translate(v.x, v.y); ctx.globalAlpha *= alpha;
   ctx.beginPath(); path({ type: 'Sphere' }); ctx.fillStyle = '#dfe6ec'; ctx.fill();
   ctx.beginPath(); path(d3.geoGraticule10()); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1; ctx.stroke();
   ctx.beginPath(); path(LANDF); ctx.fillStyle = '#d6d1c4'; ctx.fill(); ctx.strokeStyle = '#a9a394'; ctx.lineWidth = 0.8; ctx.stroke();
@@ -193,18 +198,18 @@ function drawBase(v, alpha = 1) {
 }
 function drawCoast(v, alpha = 0.9) {
   const p = projFor(v), path = d3.geoPath(p, ctx);
-  ctx.save(); ctx.beginPath(); ctx.rect(v.x, v.y, v.w, v.h); ctx.clip(); ctx.translate(v.x, v.y); ctx.globalAlpha = alpha;
+  ctx.save(); ctx.beginPath(); ctx.rect(v.x, v.y, v.w, v.h); ctx.clip(); ctx.translate(v.x, v.y); ctx.globalAlpha *= alpha;
   ctx.beginPath(); path(LANDF); ctx.strokeStyle = '#6f6a5e'; ctx.lineWidth = 1; ctx.stroke();
   ctx.restore();
 }
 function drawLayer(v, key, fn, alpha = 1) {
   if (alpha <= 0.001) return;
-  ctx.save(); ctx.globalAlpha = alpha; ctx.drawImage(layer(v, key, fn), v.x, v.y); ctx.restore();
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.drawImage(layer(v, key, fn), v.x, v.y); ctx.restore();
 }
 function lat50(v, alpha) {
   if (alpha <= 0) return;
   const p = projFor(v), path = d3.geoPath(p, ctx);
-  ctx.save(); ctx.translate(v.x, v.y); ctx.globalAlpha = alpha; ctx.setLineDash([8, 6]);
+  ctx.save(); ctx.translate(v.x, v.y); ctx.globalAlpha *= alpha; ctx.setLineDash([8, 6]);
   ctx.beginPath(); path(d3.geoCircle().center([0, 90]).radius(40)()); ctx.strokeStyle = '#b3261e'; ctx.lineWidth = 2.5; ctx.stroke();
   ctx.restore();
 }
@@ -223,11 +228,12 @@ const VIEW = {
 };
 function mixView(a, b, f) {
   f = ease(f); const o = {};
-  for (const k of ['lon', 'lat', 'x', 'y', 'w', 'h']) o[k] = lerp(a[k], b[k], f);
+  if (f <= 0) return { ...a }; if (f >= 1) return { ...b };
+  for (const k of ['x', 'y', 'w', 'h']) o[k] = Math.round(lerp(a[k], b[k], f));
   o.scale = Math.exp(lerp(Math.log(a.scale), Math.log(b.scale), f));
-  // quantise to keep caches useful
-  o.lon = Math.round(o.lon * 4) / 4; o.lat = Math.round(o.lat * 4) / 4; o.scale = Math.round(o.scale);
-  o.w = Math.round(o.w); o.h = Math.round(o.h); o.x = Math.round(o.x); o.y = Math.round(o.y);
+  // smooth zoom: the target centre moves linearly on screen (no overshoot while the scale grows)
+  const g = clamp(b.scale >= a.scale ? 1 - (1 - f) * a.scale / o.scale : f * b.scale / o.scale);
+  o.lon = lerp(a.lon, b.lon, g); o.lat = lerp(a.lat, b.lat, g);
   return o;
 }
 
@@ -244,12 +250,12 @@ const fIce = k => i => valid(i) ? C.ice(k === 'ci' ? F.ci[i] : F.c1[i]) : null;
 // ---------------- colour bars and charts ----------------
 function colorbar(x, y, w, cmap, lo, hi, label, ticks, alpha = 1) {
   if (alpha <= 0) return;
-  ctx.save(); ctx.globalAlpha = alpha;
-  ctx.fillStyle = 'rgba(255,255,255,0.92)'; rr(x - 16, y - 40, w + 32, 96, 12); ctx.fill();
+  ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.fillStyle = 'rgba(255,255,255,0.92)'; rr(x - 16, y - 44, w + 32, 100, 12); ctx.fill();
   for (let k = 0; k < w; k++) { const c = cmap(lo + (hi - lo) * k / (w - 1)); ctx.fillStyle = `rgb(${c[0]|0},${c[1]|0},${c[2]|0})`; ctx.fillRect(x + k, y, 1.5, 18); }
   ctx.strokeStyle = '#888'; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, 18);
-  ctx.fillStyle = '#16181b'; ctx.font = '700 19px Helvetica Neue, Arial'; ctx.textAlign = 'left'; ctx.fillText(label, x, y - 12);
-  ctx.font = '17px Helvetica Neue, Arial'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#16181b'; rich(label, x, y - 13, 21, 700, 'left');
+  ctx.font = '19px Helvetica Neue, Arial'; ctx.textAlign = 'center';
   for (const t of ticks) { const xx = x + (t - lo) / (hi - lo) * w; ctx.fillText(String(t).replace('-', '−'), xx, y + 40); ctx.fillRect(xx, y + 18, 1, 5); }
   ctx.restore();
 }
@@ -261,15 +267,15 @@ function hist(vals, lo, hi, bw) {
 }
 function axes(x, y, w, h, xlo, xhi, ylo, yhi, xt, yt, xl, yl) {
   const X = v => x + (v - xlo) / (xhi - xlo) * w, Y = v => y + h - (v - ylo) / (yhi - ylo) * h;
-  ctx.save(); ctx.strokeStyle = '#d8d5cc'; ctx.lineWidth = 1; ctx.fillStyle = '#5d6268'; ctx.font = '18px Helvetica Neue, Arial';
+  ctx.save(); ctx.strokeStyle = '#d8d5cc'; ctx.lineWidth = 1; ctx.fillStyle = '#3d4248'; ctx.font = '22px Helvetica Neue, Arial';
   ctx.textAlign = 'right';
-  for (const t of yt) { ctx.beginPath(); ctx.moveTo(x, Y(t)); ctx.lineTo(x + w, Y(t)); ctx.stroke(); ctx.fillText(String(t).replace('-', '−'), x - 10, Y(t) + 6); }
+  for (const t of yt) { ctx.beginPath(); ctx.moveTo(x, Y(t)); ctx.lineTo(x + w, Y(t)); ctx.stroke(); ctx.fillText(String(t).replace('-', '−'), x - 12, Y(t) + 7); }
   ctx.textAlign = 'center';
-  for (const t of xt) ctx.fillText(String(t).replace('-', '−'), X(t), y + h + 28);
+  for (const t of xt) ctx.fillText(String(t).replace('-', '−'), X(t), y + h + 32);
   ctx.strokeStyle = '#16181b'; ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x + w, y + h); ctx.stroke();
-  ctx.font = '600 19px Helvetica Neue, Arial'; ctx.fillStyle = '#16181b';
-  if (xl) ctx.fillText(xl, x + w / 2, y + h + 60);
-  if (yl) { ctx.save(); ctx.translate(x - 62, y + h / 2); ctx.rotate(-Math.PI / 2); ctx.fillText(yl, 0, 0); ctx.restore(); }
+  ctx.fillStyle = '#16181b';
+  if (xl) rich(xl, x + w / 2, y + h + 68, 24, 700, 'center');
+  if (yl) { ctx.save(); ctx.translate(x - 66, y + h / 2); ctx.rotate(-Math.PI / 2); rich(yl, 0, 0, 24, 700, 'center'); ctx.restore(); }
   ctx.restore();
   return { X, Y };
 }
@@ -284,15 +290,37 @@ function bars(ax, h, lo, bw, color, f = 1, outline = false) {
 }
 function vline(ax, v, color, label, alpha, y0, y1, dash) {
   if (alpha <= 0) return;
-  ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = 3; if (dash) ctx.setLineDash(dash);
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.lineWidth = 3; if (dash) ctx.setLineDash(dash);
   ctx.beginPath(); ctx.moveTo(ax.X(v), y0); ctx.lineTo(ax.X(v), y1); ctx.stroke();
-  ctx.setLineDash([]); ctx.fillStyle = color; ctx.font = '700 21px Helvetica Neue, Arial'; ctx.textAlign = 'center';
-  if (label) ctx.fillText(label, ax.X(v), y0 - 10);
+  ctx.setLineDash([]); ctx.fillStyle = color;
+  if (label) rich(label, ax.X(v), y0 - 12, 24, 700, 'center', true);
   ctx.restore();
 }
-function text(s, x, y, size = 22, color = '#16181b', align = 'left', weight = 400, alpha = 1) {
+// canvas text with subscripts: 'T_B', 'T_{p,water}' (sans-serif, subscript at 70 %), optional white halo
+function richParts(s) {
+  const out = []; let last = 0; const re = /_\{([^}]*)\}|_([^\s\[\],=):]+)/g; let m;
+  while ((m = re.exec(s))) { if (m.index > last) out.push([s.slice(last, m.index), 0]); out.push([m[1] ?? m[2], 1]); last = re.lastIndex; }
+  if (last < s.length) out.push([s.slice(last), 0]);
+  return out;
+}
+function richWidth(s, size, weight = 400) {
+  return richParts(s).reduce((w, [t, sub]) => { ctx.font = `${weight} ${sub ? Math.round(size * 0.7) : size}px Helvetica Neue, Arial`; return w + ctx.measureText(t).width; }, 0);
+}
+function rich(s, x, y, size, weight = 400, align = 'left', halo = false) {
+  const parts = richParts(s), w = richWidth(s, size, weight);
+  let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  ctx.save(); ctx.textAlign = 'left';
+  for (const [t, sub] of parts) {
+    ctx.font = `${weight} ${sub ? Math.round(size * 0.7) : size}px Helvetica Neue, Arial`;
+    const yy = sub ? y + size * 0.24 : y;
+    if (halo) { ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 7; ctx.lineJoin = 'round'; ctx.strokeText(t, cx, yy); ctx.restore(); }
+    ctx.fillText(t, cx, yy); cx += ctx.measureText(t).width;
+  }
+  ctx.restore();
+}
+function text(s, x, y, size = 22, color = '#16181b', align = 'left', weight = 400, alpha = 1, halo = false) {
   if (alpha <= 0) return;
-  ctx.save(); ctx.globalAlpha = alpha; ctx.font = `${weight} ${size}px Helvetica Neue, Arial`; ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(s, x, y); ctx.restore();
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.fillStyle = color; rich(s, x, y, size, weight, align, halo); ctx.restore();
 }
 function pulse(x, y, t, color = '#b3261e', r0 = 14) {
   ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 4;
@@ -302,14 +330,15 @@ function pulse(x, y, t, color = '#b3261e', r0 = 14) {
 }
 function callout(x, y, tx, ty, lines, alpha, color = '#16181b') {
   if (alpha <= 0) return;
-  ctx.save(); ctx.globalAlpha = alpha;
-  ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke();
+  ctx.save(); ctx.globalAlpha *= alpha;
+  const w = Math.max(...lines.map((l, k) => richWidth(l, 23, k ? 400 : 700))) + 30, h = 36 * lines.length + 16;
+  let bx = tx < x ? tx - w : tx;
+  bx = clamp(bx, 12, W - w - 12); ty = clamp(ty, h / 2 + 12, H - h / 2 - 12);   // keep the box inside the panel
+  const ax = clamp(x, bx, bx + w), ay = clamp(y, ty - h / 2, ty + h / 2);
+  ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ax, ay); ctx.stroke();
   ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.fill();
-  ctx.font = '700 23px Helvetica Neue, Arial';
-  const w = Math.max(...lines.map(l => ctx.measureText(l).width)) + 28, h = 34 * lines.length + 14;
-  const bx = tx < x ? tx - w : tx;
   ctx.fillStyle = 'rgba(255,255,255,0.95)'; rr(bx, ty - h / 2, w, h, 10); ctx.fill(); ctx.strokeStyle = color; ctx.stroke();
-  ctx.fillStyle = color; lines.forEach((l, k) => { ctx.font = (k ? '400 ' : '700 ') + '22px Helvetica Neue, Arial'; ctx.fillText(l, bx + 14, ty - h / 2 + 32 + 34 * k); });
+  ctx.fillStyle = color; lines.forEach((l, k) => rich(l, bx + 15, ty - h / 2 + 34 + 36 * k, 23, k ? 400 : 700, 'left'));
   ctx.restore();
 }
 
@@ -329,9 +358,17 @@ const STEPS = [
 const stepOf = { intro: -1, data: 0, inputs: 1, filters: 2, clusters: 3, rawsic: 4, rtm: 5, orbitcorr: 5, iterate: 6, result: 7, sens: 8, outro: 9 };
 $('pipe').innerHTML = STEPS.map(([id, l, c], k) => `<div class="ps" id="ps${k}" style="top:${k * 36}px;--c:var(${c})"><span class="dot"></span>${l}</div>`).join('');
 
-const I = (s, k = 'e') => `<span class="in ${k}">${s}</span>`;
+// LaTeX via KaTeX; \inE / \inS / \inC mark ERA5, ESMR and c inputs (same colours as the flowchart)
+const KM = { '\\K': '\\,\\mathrm{K}', '\\pw': 'p,\\mathrm{water}', '\\pi': 'p,\\mathrm{ice}' };
+const KC = { E: ['#fdeedd', '#a4520a'], S: ['#e4eefb', '#2058a0'], C: ['#e4e4e4', '#333333'] };
+const K = (tex, display = false) => katex.renderToString(
+  tex.replace(/\\in([ESC])\{([^{}]*)\}/g, (m, k, x) => `\\colorbox{${KC[k][0]}}{$\\textcolor{${KC[k][1]}}{\\boldsymbol{${x}}}$}`),
+  { throwOnError: false, displayMode: display, macros: { ...KM } });
+const I = (s, k = 'E') => K(`\\in${k}{${s}}`);
 const E = n => `<span class="eqn">${n}</span>`;
+const AR = K('\\rightarrow');
 const ex = D.example, tp = D.day.tp, sd = D.day.std;
+const n1 = x => fmt(x).replace('−', '-');
 // cards per scene: [cue, colour var, title, html]
 const CARDS = {
   intro: [
@@ -340,59 +377,59 @@ const CARDS = {
   ],
   data: [
     ['swath', '--esmr', 'ESMR swath', `<div><b>${NL}</b> scan lines × <b>78</b> scan positions<br>19.35 GHz, horizontal polarisation</div>`],
-    ['tb', '--esmr', 'Measured', `<div class="eq"><i>T</i><sub>B</sub> = brightness temperature [K]</div>`],
+    ['tb', '--esmr', 'Measured', `<div class="eq">${K('T_B = \\text{brightness temperature [K]}')}</div>`],
     ['era5', '--era5', 'ERA5, same pixel', '<div style="font-family:Menlo,monospace;font-size:20px">tcwv · tcw · u10 · v10<br>sst · t2m · siconc</div>'],
   ],
   inputs: [
-    ['V', '--era5', 'Water vapour', `<div class="eq">${I('V')} = tcwv</div>`],
-    ['W', '--era5', 'Wind speed', `<div class="eq">${I('W')} = √(u10² + v10²)</div>`],
-    ['L', '--era5', 'Cloud liquid water', `<div class="eq">${I('L')} = tcw − tcwv</div>`],
-    ['Ts', '--era5', 'Sea surface temp.', `<div class="eq">${I('T<sub>s</sub>')} = sst</div>`],
-    ['Ti', '--era5', 'Ice emitting layer', `<div class="eq">${I('T<sub>i</sub>')} = 0.4·t2m + 0.6·272 K ${E('Eq. 15')}</div>`],
-    ['theta', '--esmr', 'Incidence angle', `<div class="eq">${I('θ', 's')} = f(scan position)</div>`],
+    ['V', '--era5', 'Water vapour', `<div class="eq">${K('\\inE{V} = \\mathrm{tcwv}')}</div>`],
+    ['W', '--era5', 'Wind speed', `<div class="eq">${K('\\inE{W} = \\sqrt{u_{10}^2 + v_{10}^2}')}</div>`],
+    ['L', '--era5', 'Cloud liquid water', `<div class="eq">${K('\\inE{L} = \\mathrm{tcw} - \\mathrm{tcwv}')}</div>`],
+    ['Ts', '--era5', 'Sea surface temp.', `<div class="eq">${K('\\inE{T_s} = \\mathrm{sst}')}</div>`],
+    ['Ti', '--era5', 'Ice emitting layer', `<div class="eq">${K('\\inE{T_i} = 0.4\\,T_{2\\mathrm{m}} + 0.6 \\cdot 272\\K')} ${E('Eq. 15')}</div>`],
+    ['theta', '--esmr', 'Incidence angle', `<div class="eq">${K('\\inS{\\theta} = f(\\text{scan position})')}</div>`],
   ],
   filters: [
-    ['eq1', '--calc', 'Eq. 1', `<div class="eq">90 K &lt; <i>T</i><sub>B</sub> ≤ 273.15 K</div>`],
-    ['edge', '--calc', 'Swath edges', '<div>drop scan positions 1–4 and 75–78<br>keep |θ| ≤ 55.7°</div>'],
-    ['lat', '--calc', 'Latitude', '<div class="eq">|lat| ≥ 50°</div>'],
-    ['land', '--calc', 'ERA5 land', '<div>sst missing <span class="to">→</span> land</div>'],
+    ['eq1', '--calc', 'Eq. 1', `<div class="eq">${K('90\\K < T_B \\le 273.15\\K')}</div>`],
+    ['edge', '--calc', 'Swath edges', `<div>drop scan positions 1–4 and 75–78<br>keep ${K('|\\theta| \\le 55.7^\\circ')}</div>`],
+    ['lat', '--calc', 'Latitude', `<div class="eq">${K('|\\varphi| \\ge 50^\\circ')}</div>`],
+    ['land', '--calc', 'ERA5 land', `<div class="eq">${K('\\mathrm{sst} = \\text{NaN} \;\\Rightarrow\; \\text{land}')}</div>`],
   ],
   clusters: [
-    ['water', '--esmr', 'Water cluster M<sub>w</sub> · Table 2', '<div class="eq">siconc = 0 ∧ sst &gt; 278 K<br>90 K &lt; <i>T</i><sub>B</sub> &lt; 180 K</div>'],
-    ['ice', '--calc', 'Ice cluster M<sub>i</sub> · Table 2', '<div class="eq">siconc &gt; 0.8<br>100 K &lt; <i>T</i><sub>B</sub> &lt; 274 K</div>'],
+    ['water', '--esmr', `Water cluster ${K('M_w')} · Table 2`, `<div class="eq">${K('\\mathrm{siconc} = 0 \\;\\wedge\\; \\mathrm{sst} > 278\\K')}<br>${K('90\\K < T_B < 180\\K')}</div>`],
+    ['ice', '--calc', `Ice cluster ${K('M_i')} · Table 2`, `<div class="eq">${K('\\mathrm{siconc} > 0.8')}<br>${K('100\\K < T_B < 274\\K')}</div>`],
     ['count', '--calc', `Whole day, north (${D.day.n_orbits} orbits)`, `<div><b>${D.day.nw.toLocaleString('en')}</b> water · <b>${D.day.ni.toLocaleString('en')}</b> ice pixels</div>`],
   ],
   rawsic: [
-    ['tp', '--calc', 'Tie points = cluster means', `<div class="eq"><i>T</i><sub>p,water</sub> = ${fmt(tp.water_u)} K<br><i>T</i><sub>p,ice</sub> = ${fmt(tp.ice_u)} K</div>`],
-    ['eq16', '--calc', 'Sea ice concentration', `<div class="eq">SIC = <span style="display:inline-block;vertical-align:middle;text-align:center"><span style="display:block;border-bottom:2px solid;padding:0 4px"><i>T</i><sub>B</sub> − <i>T</i><sub>p,water</sub></span><span style="display:block;padding:0 4px"><i>T</i><sub>p,ice</sub> − <i>T</i><sub>p,water</sub></span></span> ${E('Eq. 16')}</div>`],
-    ['noise', '--res', 'Noise over open water', `<div>std of SIC over M<sub>w</sub> (day): <span class="big">${fmt(sd.w_u)} %</span></div>`],
+    ['tp', '--calc', 'Tie points = cluster means', `<div class="eq">${K(`T_{\\pw} = \\overline{T_B}\\big|_{M_w} = ${n1(tp.water_u)}\\K`)}<br>${K(`T_{\\pi} = \\overline{T_B}\\big|_{M_i} = ${n1(tp.ice_u)}\\K`)}</div>`],
+    ['eq16', '--calc', 'Sea ice concentration', `<div class="eq">${K('\\mathrm{SIC} = \\dfrac{T_B - T_{\\pw}}{T_{\\pi} - T_{\\pw}}')} ${E('Eq. 16')}</div>`],
+    ['noise', '--res', 'Noise over open water', `<div>${K('\\sigma(\\mathrm{SIC})')} over ${K('M_w')} (day): <span class="big">${fmt(sd.w_u)} %</span></div>`],
   ],
   rtm: [
-    ['ref', '--calc', 'Reference state', `<div class="eq"><i>X</i><sub>ref</sub> = (1 − ${I('c', 'c')})·<i>X̄</i><sub>w</sub> + ${I('c', 'c')}·<i>X̄</i><sub>i</sub></div>`],
-    ['dtb', '--rtm', 'Correction', `<div class="eq">Δ<i>T</i><sub>B</sub> = RTM(<i>X</i><sub>ref</sub>) − RTM(<i>X</i><sub>pixel</sub>) ${E('Eq. 14')}</div>`],
-    ['tbc', '--rtm', 'Corrected', `<div class="eq"><i>T</i><sub>B,c</sub> = <i>T</i><sub>B</sub> + Δ<i>T</i><sub>B</sub> ${E('Eq. 13')}</div>`],
+    ['ref', '--calc', 'Reference state', `<div class="eq">${K('X_\\mathrm{ref} = (1 - \\inC{c})\\,\\bar X_w + \\inC{c}\\,\\bar X_i')}</div>`],
+    ['dtb', '--rtm', 'Correction', `<div class="eq">${K('\\Delta T_B = \\mathrm{RTM}(X_\\mathrm{ref}) - \\mathrm{RTM}(X_\\mathrm{pixel})')} ${E('Eq. 14')}</div>`],
+    ['tbc', '--rtm', 'Corrected', `<div class="eq">${K('T_{B,c} = T_B + \\Delta T_B')} ${E('Eq. 13')}</div>`],
   ],
   orbitcorr: [
-    ['dtbmap', '--rtm', 'Every valid ocean pixel', `<div class="eq">Δ<i>T</i><sub>B</sub> = RTM(<i>X</i><sub>ref</sub>) − RTM(<i>X</i><sub>pixel</sub>)</div>`],
-    ['compare', '--res', 'Then', '<div>new tie points from <i>T</i><sub>B,c</sub> <span class="to">→</span> SIC<sub>c</sub> with Eq. 16</div>'],
+    ['dtbmap', '--rtm', 'Every valid ocean pixel', `<div class="eq">${K('\\Delta T_B = \\mathrm{RTM}(X_\\mathrm{ref}) - \\mathrm{RTM}(X_\\mathrm{pixel})')}</div>`],
+    ['compare', '--res', 'Then', `<div>new tie points from ${K('T_{B,c}')} ${AR} ${K('\\mathrm{SIC}_c')} with Eq. 16</div>`],
   ],
   iterate: [
-    ['c0', '--era5', 'Iteration 1', `<div class="eq">${I('c', 'c')} = ERA5 siconc</div>`],
-    ['c1', '--rtm', 'Iteration 2', `<div class="eq">${I('c', 'c')} = clip(SIC<sub>c</sub>, 0, 1), &lt; 0.15 <span class="to">→</span> 0</div>`],
+    ['c0', '--era5', 'Iteration 1', `<div class="eq">${K('\\inC{c} = \\mathrm{siconc}_\\mathrm{ERA5}')}</div>`],
+    ['c1', '--rtm', 'Iteration 2', `<div class="eq">${K('\\inC{c} = \\mathrm{clip}(\\mathrm{SIC}_c,\\,0,\\,1),\\quad c < 0.15 \\rightarrow 0')}</div>`],
     ['tps', '--calc', 'Tie points [K]', `<table class="vt" style="font-size:22px"><tr><th></th><th>raw</th><th>it. 1</th><th>it. 2</th></tr><tr><td>water</td><td>${fmt(tp.water_u)}</td><td>${fmt(tp.water_1)}</td><td>${fmt(tp.water_2)}</td></tr><tr><td>ice</td><td>${fmt(tp.ice_u)}</td><td>${fmt(tp.ice_1)}</td><td>${fmt(tp.ice_2)}</td></tr></table>`],
   ],
   result: [
-    ['narrow', '--res', '5 Feb, north, water', `<div>std SIC <b>${fmt(sd.w_u)} %</b> <span class="to">→</span> <b>${fmt(sd.w_2)} %</b></div>`],
-    ['month', '--res', 'Feb 1973 (w/o 28 Feb)', '<div>water: N 10.5 <span class="to">→</span> <b>8.2 %</b>, S 14.3 <span class="to">→</span> <b>11.0 %</b><br><b>−23 %</b> in both hemispheres</div>'],
-    ['ice', '--calc', 'Ice cluster', '<div>N 14.6 <span class="to">→</span> 13.0 %, S 44.3 <span class="to">→</span> 40.5 %</div>'],
+    ['narrow', '--res', '5 Feb, north, water', `<div>std SIC <b>${fmt(sd.w_u)} %</b> ${AR} <b>${fmt(sd.w_2)} %</b></div>`],
+    ['month', '--res', 'Feb 1973 (w/o 28 Feb)', `<div>water: N 10.5 ${AR} <b>8.2 %</b>, S 14.3 ${AR} <b>11.0 %</b><br><b>−23 %</b> in both hemispheres</div>`],
+    ['ice', '--calc', 'Ice cluster', `<div>N 14.6 ${AR} 13.0 %, S 44.3 ${AR} 40.5 %</div>`],
   ],
   sens: [
-    ['setup', '--calc', 'Sensitivity', `<div class="eq">Δ<i>T</i><sub>B</sub>(θ) = RTM(<i>X̄</i> + σ<sub><i>X</i></sub>) − RTM(<i>X̄</i>)</div><div style="font-size:19px;color:#5d6268">one input at a time, base = Feb 1973 cluster means</div>`],
-    ['water', '--res', 'Water, θ = 50°, per +1σ', '<div>V <b>7.3 K</b> · W <b>3.1 K</b> · Ts −0.2 K<br><span style="color:#5d6268">L 10.4 K (not corrected)</span></div>'],
+    ['setup', '--calc', 'Sensitivity', `<div class="eq">${K('\\Delta T_B(\\theta) = \\mathrm{RTM}(\\bar X + \\sigma_X) - \\mathrm{RTM}(\\bar X)')}</div><div style="font-size:19px;color:#5d6268">one input at a time, base = Feb 1973 cluster means</div>`],
+    ['water', '--res', `Water, ${K('\\theta = 50^\\circ')}, per +1σ`, '<div>V <b>7.3 K</b> · W <b>3.1 K</b> · Ts −0.2 K<br><span style="color:#5d6268">L 10.4 K (not corrected)</span></div>'],
     ['iceside', '--res', 'Ice, per +1σ', '<div>Ti <b>3.6–3.8 K</b> · V, L &lt; 0.4 K</div>'],
   ],
   outro: [
-    ['all', '--rtm', 'Method', '<div style="font-size:21px">filter <span class="to">→</span> clusters <span class="to">→</span> RTM correction towards the mean weather <span class="to">→</span> iterate c <span class="to">→</span> Eq. 16 with corrected tie points</div>'],
+    ['all', '--rtm', 'Method', `<div style="font-size:21px">filter ${AR} clusters ${AR} RTM correction towards the mean weather ${AR} iterate c ${AR} Eq. 16 with corrected tie points</div>`],
     ['numbers', '--res', 'Task 1', '<div>noise over water <b>−23 %</b></div>'],
     ['next', '--calc', 'Next', '<div>Task 3: std of SIC vs. incidence angle</div>'],
   ],
@@ -427,7 +464,7 @@ function ov(id, html, x, y, w, alpha, cls = 'ovbox') {   // overlay box inside t
   if (!e) { e = document.createElement('div'); e.className = cls; $('ov').appendChild(e); OVS[id] = e; e._h = null; }
   if (e._h !== html) { e.innerHTML = html; e._h = html; }
   e.style.left = x + 'px'; e.style.top = y + 'px'; if (w) e.style.width = w + 'px';
-  e.style.opacity = clamp(alpha); e.style.transform = `translateY(${(1 - ease(clamp(alpha))) * 12}px)`;
+  e.style.opacity = clamp(alpha); e.style.transform = `${e.classList.contains('ctr') ? 'translateX(-50%) ' : ''}translateY(${(1 - ease(clamp(alpha))) * 12}px)`;
   e.style.display = alpha <= 0 ? 'none' : 'block';
   return e;
 }
@@ -442,6 +479,12 @@ S.intro = (s, t, c) => {
   drawLayer(v, 'tb', fTB, fade(c('orbit'), 1.2));
   text('NIMBUS 5 ESMR · 19.35 GHz', 40, 60, 26, '#16181b', 'left', 700, 1 - fade(c('orbit'), 1));
 };
+// demo pixels for the water/ice labels: cluster pixels closest to fixed screen spots in the 'north' view
+const DEMO_PX = [[idx.mw, 820, 560], [idx.mi, 430, 330]].map(([list, X, Y]) => {
+  const xy = projected(VIEW.north); let best = list[0], bd = Infinity;
+  for (const i of list) { const d = (xy[2 * i] - X) ** 2 + (xy[2 * i + 1] - Y) ** 2; if (d < bd) { bd = d; best = i; } }
+  return best;
+});
 S.data = (s, t, c) => {
   const f = clamp((c('swath') + 0.5) / 2.5);
   const v = mixView(VIEW.globe, VIEW.north, f);
@@ -466,10 +509,10 @@ S.data = (s, t, c) => {
   }
   colorbar(60, 720, 360, C.tb, 120, 265, 'Brightness temperature T_B [K]', [120, 150, 180, 210, 240], fade(c('tb')));
   if (c('contrast') > 0) {
-    const iw = idx.mw[Math.floor(idx.mw.length * 0.8)], ii = idx.mi[Math.floor(idx.mi.length * 0.3)];
+    const [iw, ii] = DEMO_PX;
     const pw = pt(v, F.lon[iw], F.lat[iw]), pi = pt(v, F.lon[ii], F.lat[ii]);
     if (pw) callout(pw[0], pw[1], pw[0] - 90, pw[1] + 120, ['open water', `T_B ≈ ${Math.round(tp.water_u)} K`], fade(c('contrast')), '#12305e');
-    if (pi) callout(pi[0], pi[1], pi[0] + 110, pi[1] - 110, ['sea ice', `T_B ≈ ${Math.round(tp.ice_u)} K`], fade(c('contrast') - 1.5), '#16181b');
+    if (pi) callout(pi[0], pi[1], pi[0] + 130, pi[1] + 40, ['sea ice', `T_B ≈ ${Math.round(tp.ice_u)} K`], fade(c('contrast') - 1.5), '#16181b');
   }
 };
 S.inputs = (s, t, c) => {
@@ -529,31 +572,39 @@ S.clusters = (s, t, c) => {
 };
 const tbW = idx.mw.map(i => F.tb[i]), tbI = idx.mi.map(i => F.tb[i]);
 const hW = hist(tbW, 90, 280, 3), hI = hist(tbI, 90, 280, 3);
+// peak bin centre of a histogram
+const peakX = (h, lo, bw) => lo + (h.indexOf(Math.max(...h)) + 0.5) * bw;
 S.rawsic = (s, t, c) => {
-  const toMap = fade(c('map'), 0.9);
-  if (toMap < 1) {
-    ctx.save(); ctx.globalAlpha = 1 - toMap;
-    const ax = axes(130, 120, 960, 470, 90, 280, 0, Math.max(...hW, ...hI) * 1.1, [100, 130, 160, 190, 220, 250, 280], [], 'T_B [K]', 'pixels');
+  // sequential switch: chart fades out completely, then the map fades in
+  const histA = 1 - fade(c('map'), 0.5), toMap = fade(c('map') - 0.5, 0.6);
+  if (histA > 0) {
+    ctx.save(); ctx.globalAlpha = histA;
+    const top = Math.max(...hW, ...hI);
+    const ax = axes(150, 110, 940, 480, 90, 280, 0, top * 1.55, [100, 130, 160, 190, 220, 250, 280], [], 'brightness temperature T_B [K]', 'number of pixels');
     bars(ax, hW, 90, 3, '#1f5fa8', fade(c('hist')));
     bars(ax, hI, 90, 3, '#78d6ec', fade(c('hist') - 0.6));
-    text('water cluster', ax.X(tp.water_u) - 20, 180, 22, '#1f5fa8', 'right', 700, fade(c('hist')));
-    text('ice cluster', ax.X(tp.ice_u) + 30, 180, 22, '#3a9fbf', 'left', 700, fade(c('hist') - 0.6));
-    vline(ax, tp.water_u, '#16181b', `T_p,water = ${fmt(tp.water_u)} K`, fade(c('tp')), 240, 590, [8, 6]);
-    vline(ax, tp.ice_u, '#16181b', `T_p,ice = ${fmt(tp.ice_u)} K`, fade(c('tp') - 1.2), 240, 590, [8, 6]);
+    // cluster names above their peaks, tie-point labels in a separate row above the bars
+    text('water cluster', ax.X(tp.water_u) - 14, ax.Y(Math.max(...hW)) - 18, 26, '#1f5fa8', 'right', 700, fade(c('hist')), true);
+    text('ice cluster', ax.X(tp.ice_u) + 14, ax.Y(Math.max(...hI)) - 18, 26, '#2b86a8', 'left', 700, fade(c('hist') - 0.6), true);
+    const yl = 128;
+    vline(ax, tp.water_u, '#16181b', '', fade(c('tp')), yl + 30, 590, [8, 6]);
+    vline(ax, tp.ice_u, '#16181b', '', fade(c('tp') - 1.2), yl + 30, 590, [8, 6]);
+    ov('tpw', K(`T_{\\pw} = ${n1(tp.water_u)}\\K`), 150 + (tp.water_u - 90) / 190 * 940, yl - 26, 0, histA * fade(c('tp')), 'lab ctr');
+    ov('tpi', K(`T_{\\pi} = ${n1(tp.ice_u)}\\K`), 150 + (tp.ice_u - 90) / 190 * 940, yl - 26, 0, histA * fade(c('tp') - 1.2), 'lab ctr');
     // SIC axis under the T_B axis
     const a = fade(c('eq16'));
     if (a > 0) {
-      ctx.save(); ctx.globalAlpha = a * (1 - toMap);
-      const x0 = ax.X(tp.water_u), x1 = ax.X(tp.ice_u), y = 700;
+      ctx.save(); ctx.globalAlpha *= a;
+      const x0 = ax.X(tp.water_u), x1 = ax.X(tp.ice_u), y = 714;
       for (let k = 0; k < 200; k++) { const q = k / 199, cc = C.sic(q * 100); ctx.fillStyle = `rgb(${cc[0]|0},${cc[1]|0},${cc[2]|0})`; ctx.fillRect(x0 + q * (x1 - x0), y, (x1 - x0) / 199 + 1, 22); }
       ctx.strokeStyle = '#555'; ctx.strokeRect(x0, y, x1 - x0, 22);
       ctx.restore();
-      text('SIC = 0 %', x0, y + 52, 22, '#16181b', 'center', 700, a);
-      text('SIC = 100 %', x1, y + 52, 22, '#16181b', 'center', 700, a);
-      text('Eq. 16: linear between the tie points', (x0 + x1) / 2, y - 14, 20, '#5d6268', 'center', 400, a);
+      text('SIC = 0 %', x0, y + 54, 24, '#16181b', 'center', 700, a);
+      text('SIC = 100 %', x1, y + 54, 24, '#16181b', 'center', 700, a);
+      text('Eq. 16: linear between the tie points', (x0 + x1) / 2, y - 18, 22, '#5d6268', 'center', 400, a);
     }
     ctx.restore();
-  }
+  } else { ov('tpw', '', 0, 0, 0, 0, 'lab ctr'); ov('tpi', '', 0, 0, 0, 0, 'lab ctr'); }
   if (toMap > 0) {
     const v = VIEW.north; ctx.save(); ctx.globalAlpha = toMap; drawBase(v); ctx.restore();
     const noise = fade(c('noise'), 0.8);
@@ -575,20 +626,21 @@ S.rtm = (s, t, c) => {
   if (dim > 0) { ctx.save(); ctx.fillStyle = `rgba(246,245,241,${0.82 * dim})`; ctx.fillRect(0, 0, W, H); ctx.restore(); }
   if (p) pulse(p[0], p[1], t, '#e8a33d', 12);
   // overlays
-  ov('raw', `<h4>this pixel · lat ${fmt(ex.lat)}° lon ${fmt(ex.lon - 360)}° · θ = ${fmt(Math.abs(ex.theta))}°</h4><div style="font-size:30px"><i>T</i><sub>B</sub> = <b>${fmt(ex.tb)} K</b> &nbsp;<span class="to">→</span>&nbsp; raw SIC = <b style="color:#a8261d">${fmt(ex.sic_u)} %</b></div>`,
-     40, 30, 720, fade(c('raw')));
+  ov('raw', `<h4>this pixel · lat ${fmt(ex.lat)}° lon ${fmt(ex.lon - 360)}° · θ = ${fmt(Math.abs(ex.theta))}°</h4><div style="font-size:30px">${K(`T_B = \\mathbf{${n1(ex.tb)}\\K}`)} &nbsp;${AR}&nbsp; raw ${K(`\\mathrm{SIC} = \\textcolor{#a8261d}{\\mathbf{${n1(ex.sic_u)}\\,\\%}}`)}</div>`,
+     40, 30, 760, fade(c('raw')));
   const hlL = c('lnote') >= 0 && c('tbc') < 0;
   const row = (k, lab, u, d = 1) => `<tr class="${k === 'L' && hlL ? 'hl' : ''}"><td>${lab}</td><td>${fmt(ex[k], d)}</td><td style="opacity:${fade(c('ref'))}">${fmt(ex.ref[k], d)}</td><td style="color:#5d6268;font-size:18px">${u}</td></tr>`;
   ov('tab', `<table class="vt"><tr><th>input</th><th>pixel</th><th style="opacity:${fade(c('ref'))}">reference</th><th></th></tr>
-    ${row('V', I('V'), 'kg/m²')}${row('W', I('W'), 'm/s')}${row('L', I('L'), 'kg/m²', 2)}${row('Ts', I('T<sub>s</sub>'), 'K')}${row('Ti', I('T<sub>i</sub>'), 'K')}
-    <tr><td>${I('c', 'c')}</td><td>${fmt(ex.c, 2)}</td><td style="opacity:${fade(c('ref'))}">${fmt(ex.c, 2)}</td><td></td></tr></table>`,
+    ${row('V', I('V'), 'kg/m²')}${row('W', I('W'), 'm/s')}${row('L', I('L'), 'kg/m²', 2)}${row('Ts', I('T_s'), 'K')}${row('Ti', I('T_i'), 'K')}
+    <tr><td>${I('c', 'C')}</td><td>${fmt(ex.c, 2)}</td><td style="opacity:${fade(c('ref'))}">${fmt(ex.c, 2)}</td><td></td></tr></table>`,
      40, 150, 480, fade(c('inputs')));
   const runA = fade(c('run')), runB = fade(c('run') - 2.5);
-  ov('r1', `<h4>RTM with reference weather</h4><div style="font-size:24px">RTM(<i>X</i><sub>ref</sub>, <i>L</i><sub>ref</sub>, c, θ)</div><div class="big" style="color:#2e8b48">${fmt(ex.rtm_ref)} K</div>`, 580, 150, 540, runA);
-  ov('r2', `<h4>RTM with this pixel's weather</h4><div style="font-size:24px">RTM(<i>V, W, T</i><sub>s</sub><i>, T</i><sub>i</sub>, <b style="background:${hlL ? '#fff3c4' : 'none'}"><i>L</i><sub>ref</sub></b>, c, θ)</div><div class="big" style="color:#2e8b48">${fmt(ex.rtm_pix)} K</div>`, 580, 320, 540, runB);
-  ov('d', `<h4>correction · Eq. 14</h4><div class="big" style="font-size:36px">Δ<i>T</i><sub>B</sub> = ${fmt(ex.rtm_ref)} − ${fmt(ex.rtm_pix)} = <span style="color:#1d4f91">${fmt(ex.dtb)} K</span></div>`, 580, 490, 560, fade(c('dtb')));
-  ov('l', `<div style="font-size:21px"><b>L is not corrected:</b> both runs use <i>L</i><sub>ref</sub> = ${fmt(ex.ref.L, 2)} kg/m² (pixel: ${fmt(ex.L, 2)})</div>`, 40, 470, 480, fade(c('lnote')) * (1 - fade(c('tbc') - 0.2)));
-  ov('c', `<h4>Eq. 13 and Eq. 16 with corrected tie points</h4><div style="font-size:30px"><i>T</i><sub>B,c</sub> = ${fmt(ex.tb)} ${fmt(ex.dtb).replace('−', '− ')} = <b>${fmt(ex.tb + ex.dtb)} K</b><span style="opacity:${fade(c('sicc'))}"> &nbsp;<span class="to">→</span>&nbsp; SIC = <b style="color:#2e8b48">${fmt(Math.abs(ex.sic2) < 0.05 ? 0 : ex.sic2)} %</b></span></div>`, 40, 660, 1100, fade(c('tbc')));
+  ov('r1', `<h4>RTM with reference weather</h4><div style="font-size:24px">${K('\\mathrm{RTM}(X_\\mathrm{ref},\\ L_\\mathrm{ref},\\ c,\\ \\theta)')}</div><div class="big" style="color:#2e8b48">${fmt(ex.rtm_ref)} K</div>`, 580, 150, 540, runA);
+  ov('r2', `<h4>RTM with this pixel's weather</h4><div style="font-size:24px">${K(`\\mathrm{RTM}(V,\\ W,\\ T_s,\\ T_i,\\ ${hlL ? '\\colorbox{#fff3c4}{$L_\\mathrm{ref}$}' : 'L_\\mathrm{ref}'},\\ c,\\ \\theta)`)}</div><div class="big" style="color:#2e8b48">${fmt(ex.rtm_pix)} K</div>`, 580, 320, 540, runB);
+  ov('d', `<h4>correction · Eq. 14</h4><div style="font-size:34px">${K(`\\Delta T_B = ${n1(ex.rtm_ref)} - ${n1(ex.rtm_pix)} = \\textcolor{#1d4f91}{\\mathbf{${n1(ex.dtb)}\\K}}`)}</div>`, 580, 490, 560, fade(c('dtb')));
+  ov('l', `<div style="font-size:21px"><b>L is not corrected:</b> both runs use ${K(`L_\\mathrm{ref} = ${fmt(ex.ref.L, 2)}`)} kg/m² (pixel: ${fmt(ex.L, 2)})</div>`, 40, 470, 480, fade(c('lnote')) * (1 - fade(c('tbc') - 0.2)));
+  const sic2 = Math.abs(ex.sic2) < 0.05 ? 0 : ex.sic2;
+  ov('c', `<h4>Eq. 13 and Eq. 16 with corrected tie points</h4><div style="font-size:30px">${K(`T_{B,c} = ${n1(ex.tb)} ${n1(ex.dtb).replace('-', '- ')} = \\mathbf{${n1(ex.tb + ex.dtb)}\\K}`)}<span style="opacity:${fade(c('sicc'))}"> &nbsp;${AR}&nbsp; ${K(`\\mathrm{SIC}_c = \\textcolor{#2e8b48}{\\mathbf{${n1(sic2)}\\,\\%}}`)}</span></div>`, 40, 660, 1100, fade(c('tbc')));
 };
 S.orbitcorr = (s, t, c) => {
   const split = fade(c('compare') - 0.2, 1.2);
@@ -605,38 +657,42 @@ S.orbitcorr = (s, t, c) => {
   if (c('storm') > 0 && split === 0) { const p = pt(v, ex.lon, ex.lat); if (p) callout(p[0], p[1], p[0] + 150, p[1] + 110, ['our example pixel', `ΔT_B = ${fmt(ex.dtb)} K`], fade(c('storm') - 0.5)); }
 };
 S.iterate = (s, t, c) => {
-  const toChart = fade(c('tps') - 0.2, 0.9);
-  if (toChart < 1) {
-    ctx.save(); ctx.globalAlpha = 1 - toChart;
+  // maps stay until 'std'; then they fade out completely before the chart fades in (no cross-fade)
+  const p = c('std'), mapA = 1 - fade(p, 0.5), chartA = fade(p - 0.5, 0.5);
+  if (mapA > 0) {
+    ctx.save(); ctx.globalAlpha = mapA;
     const sp = fade(c('c1'), 1.2);
     const v = mixView(VIEW.north, VIEW.L2, sp), v2 = { ...VIEW.R2, x: Math.round(lerp(1180, 590, ease(sp))) };
     drawBase(v); drawLayer(v, 'ci', fIce('ci'), fade(c('c0'))); drawLayer(v, 'sicu', fSIC('sic_u'), 1 - fade(c('c0'))); drawCoast(v, 0.6);
-    if (sp > 0) { drawBase(v2); drawLayer(v2, 'c1', fIce('c1')); drawCoast(v2, 0.6); ctx.fillStyle = '#fff'; ctx.fillRect(588, 0, 4, H);
-      ctx.globalAlpha = (1 - toChart) * fade(c('c1') - 1); panelLabel(v, 'iteration 1: c = ERA5 siconc'); panelLabel(v2, 'iteration 2: c = our SIC'); ctx.globalAlpha = 1 - toChart; }
+    if (sp > 0) {
+      drawBase(v2); drawLayer(v2, 'c1', fIce('c1')); drawCoast(v2, 0.6); ctx.fillStyle = '#fff'; ctx.fillRect(588, 0, 4, H);
+      ctx.save(); ctx.globalAlpha *= fade(c('c1') - 1);
+      panelLabel(v, 'iteration 1: c = ERA5 siconc'); panelLabel(v2, 'iteration 2: c = our SIC'); ctx.restore();
+    }
     colorbar(60, 720, 360, C.ice, 0, 1, 'ice fraction c used in the RTM', [0, 0.15, 0.5, 1], fade(c('c0')));
     ctx.restore();
   }
-  if (toChart > 0) {
-    ctx.save(); ctx.globalAlpha = toChart;
-    const ax = axes(200, 150, 760, 460, 0, 3, 0, 12.5, [], [0, 2, 4, 6, 8, 10, 12], '', 'std of SIC over water [%]');
+  if (chartA > 0) {
+    ctx.save(); ctx.globalAlpha = chartA;
+    const ax = axes(220, 150, 760, 460, 0, 3, 0, 12.5, [], [0, 2, 4, 6, 8, 10, 12], '', 'std of SIC over water [%]');
     const vals = [[sd.w_u, 'raw'], [sd.w_1, 'iteration 1'], [sd.w_2, 'iteration 2']];
     vals.forEach(([v, l], k) => {
-      const g = fade(c('std') - 0.3 - 1.6 * k, 0.8);
+      const g = fade(p - 1.0 - 1.6 * k, 0.8);
       const x0 = ax.X(k + 0.2), x1 = ax.X(k + 0.8), y = ax.Y(v * g);
       ctx.fillStyle = k ? '#2e8b48' : '#8d9298'; ctx.fillRect(x0, y, x1 - x0, ax.Y(0) - y);
-      text(l, (x0 + x1) / 2, ax.Y(0) + 34, 22, '#16181b', 'center', 700);
+      text(l, (x0 + x1) / 2, ax.Y(0) + 36, 24, '#16181b', 'center', 700);
       text(`${fmt(v * g)} %`, (x0 + x1) / 2, y - 14, 30, '#16181b', 'center', 700, g);
     });
-    text('5 Feb 1973, north, water cluster', 580, 110, 22, '#5d6268', 'center', 700);
-    text('iteration 3: < 0.4 % change → stop after 2', 580, 730, 24, '#2e8b48', 'center', 700, fade(c('stop')));
+    text('5 Feb 1973, north, water cluster', 600, 100, 24, '#5d6268', 'center', 700);
+    text('iteration 3: < 0.4 % change → stop after 2', 600, 740, 26, '#2e8b48', 'center', 700, fade(c('stop')));
     ctx.restore();
   }
 };
 const hu = D.day.hist_u, h2 = D.day.hist_2, he = D.day.hist_edges;
 S.result = (s, t, c) => {
-  const toMonth = fade(c('month') - 0.2, 0.9);
-  if (toMonth < 1) {
-    ctx.save(); ctx.globalAlpha = 1 - toMonth;
+  const histA = 1 - fade(c('month'), 0.5), toMonth = fade(c('month') - 0.5, 0.5);
+  if (histA > 0) {
+    ctx.save(); ctx.globalAlpha = histA;
     const ax = axes(130, 110, 960, 500, -40, 60, 0, Math.max(...hu, ...h2) * 1.08, [-40, -20, 0, 20, 40, 60], [], 'SIC over the water cluster [%]  (5 Feb, north, all orbits)', 'pixels');
     bars(ax, hu, -40, 2, 'rgba(141,146,152,0.55)', fade(c('histo')));
     bars(ax, h2, -40, 2, '#2e8b48', fade(c('histo') - 1.5), true);
@@ -652,7 +708,7 @@ S.result = (s, t, c) => {
       const rows = D.month.filter(m => m.hemi === h && m.day !== '0228');
       const y0 = 70 + r * 360, ax = axes(130, y0, 980, 250, 0, rows.length, 0, h === 'N' ? 16 : 22, [], h === 'N' ? [0, 5, 10, 15] : [0, 10, 20], '', 'std SIC [%]');
       text(h === 'N' ? 'North · water cluster' : 'South · water cluster', 140, y0 - 14, 22, '#16181b', 'left', 700);
-      const g = fade(c('month') - 0.8 - r * 1.5, 1.5);
+      const g = fade(c('month') - 1.1 - r * 1.5, 1.5);
       rows.forEach((m, k) => {
         const x = ax.X(k + 0.15), w = ax.X(k + 0.85) - x;
         ctx.fillStyle = 'rgba(141,146,152,0.6)'; ctx.fillRect(x, ax.Y(m.w_u), w, ax.Y(0) - ax.Y(m.w_u));
@@ -754,8 +810,11 @@ if (!CAPTURE) {
   addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); $('play').click(); } });
   (function loop() { if (playing) { seek.value = aud.currentTime; renderAt(aud.currentTime); } $('tt').textContent = (+seek.value).toFixed(1) + ' s'; requestAnimationFrame(loop); })();
 }
-renderAt(0);
-window.READY = true;
+// load the KaTeX fonts before the first frame: render every card once off-screen
+const pre = document.createElement('div'); pre.style.cssText = 'position:absolute;left:-9999px;top:0;width:540px';
+pre.innerHTML = Object.values(CARDS).flat().map(x => x[3] + x[2]).join('') + K('\\mathbf{1}\\textcolor{red}{x}');
+document.body.appendChild(pre);
+document.fonts.ready.then(() => { pre.remove(); lastScene = null; renderAt(0); window.READY = true; });
 </script>
 </body>
 </html>
