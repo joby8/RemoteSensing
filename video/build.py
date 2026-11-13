@@ -120,8 +120,13 @@ async def render(t0=None, t1=None, fps=25, still=None):
                                str(vid)], stdin=subprocess.PIPE)
         n = int((t1 - t0) * fps)
         for i in range(n):
-            await pg.evaluate(f'renderAt({t0 + i / fps})')
-            ff.stdin.write(await pg.screenshot(type='jpeg', quality=92))
+            for attempt in range(5):   # survives a short stall (e.g. the laptop sleeping)
+                try:
+                    await pg.evaluate(f'renderAt({t0 + i / fps})')
+                    ff.stdin.write(await pg.screenshot(type='jpeg', quality=92, timeout=120000)); break
+                except Exception as e:
+                    print('retry frame', i, attempt, str(e).splitlines()[0], flush=True)
+                    if attempt == 4: raise
             if i % (fps * 10) == 0:
                 print(f'frame {i}/{n}  t = {t0 + i / fps:.1f} s', flush=True)
         ff.stdin.close(); ff.wait()
