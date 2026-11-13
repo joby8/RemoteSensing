@@ -2,10 +2,11 @@
 %   ESMR_globe.html        page (libraries + coastlines inlined, works offline by double-click)
 %   days/MMDD.js           one data file per day, loaded when the day is selected
 % Per pixel: lat, lon, raw TB, scan position and a code byte:
-%   bits 0-1 class (0 other, 1 water tie point, 2 ice tie point), bit 2 ERA5 land (sst NaN),
+%   bits 0-1 class (0 other, 1 water tie point, 2 ice tie point; ice = siconc > 0.8 as in Table 2), bit 2 ERA5 land (sst NaN),
 %   bit 3 fails Eq. 1, bit 4 swath edge (scan pos 1-4/75-78), bit 5 |lat| < 50.
+%   dtb = RTM correction (A6b method, iteration 2, via correct_day.m) in 0.1 K, -32768 where not corrected.
 % Pixels with |lat| < 50 are thinned (every 4th scan line and position) to keep the files small.
-% Daily tie points per hemisphere as in a5_sic.m.
+% Daily tie points per hemisphere (Table 2 clusters, uncorrected and corrected) from correct_day.m.
 % Run from the project root:  matlab -batch "run('src/matlab/globe_html.m')"
 % Only some days:             matlab -batch "days=[""0201"",""0202""]; run('src/matlab/globe_html.m')"
 cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
@@ -21,39 +22,28 @@ edge = false(1, 78); edge([1:4, 75:78]) = true;
 man = struct('day', {}, 'label', {}, 'n_orbits', {}, 'tp', {});
 for d = days(:)'
     fi = find(fday == d);
-    D = struct('day', char(d), 'orbits', struct('name', {}, 'lat', {}, 'lon', {}, 'tb', {}, 'code', {}, 'spos', {}));
-    wtb = {[], []}; itb = {[], []};
-    for k = fi
-        o = load_orbit(fullfile(files(k).folder, files(k).name));
+    fn = arrayfun(@(k) fullfile(files(k).folder, files(k).name), fi, 'UniformOutput', false);
+    [O, tp] = correct_day(fn, 2);                     % A6b method, iteration 2, all valid ocean pixels
+    D = struct('day', char(d), 'orbits', struct('name', {}, 'lat', {}, 'lon', {}, 'tb', {}, 'code', {}, 'spos', {}, 'dtb', {}));
+    for j = 1:numel(fi)
+        o = O(j);
         [nl, np] = size(o.tb);
-        eq1   = ~isnan(o.tb_f);
+        eq1    = ~isnan(o.tb_f);
         isedge = repmat(edge, nl, 1);
         lowlat = abs(o.lat) < 50;
-        valid = eq1 & ~isedge & ~lowlat;
-        tb    = o.tb_f;
-        water = valid & o.siconc == 0    & o.sst > 278 & tb > 90  & tb < 180;
-        ice   = valid & o.siconc >= 0.95 &                tb > 100 & tb < 274;
-        for h = 1:2
-            hs = (o.lat > 0) == (h == 1);
-            wtb{h} = [wtb{h}; tb(water & hs)];
-            itb{h} = [itb{h}; tb(ice & hs)];
-        end
-        code = uint8(water) + 2*uint8(ice) + 4*uint8(isnan(o.sst)) + 8*uint8(~eq1) + 16*uint8(isedge) + 32*uint8(lowlat);
+        code = uint8(o.mw) + 2*uint8(o.mi) + 4*uint8(isnan(o.sst)) + 8*uint8(~eq1) + 16*uint8(isedge) + 32*uint8(lowlat);
         [L, P] = ndgrid(1:nl, 1:np);
         keep = ~isnan(o.lat) & ~isnan(o.lon) & (~lowlat | (mod(L, 4) == 1 & mod(P, 4) == 1));
         tbr = o.tb; tbr(isnan(tbr)) = -3276.8;                    % -32768 = no value
-        t = regexp(files(k).name, 't(\d{2})(\d{2})', 'tokens', 'once');
+        dt  = o.dtb; dt(isnan(dt)) = -3276.8;
+        t = regexp(files(fi(j)).name, 't(\d{2})(\d{2})', 'tokens', 'once');
         D.orbits(end+1) = struct('name', sprintf('%s:%s UTC', t{1}, t{2}), ...
             'lat',  b64(int16(round(o.lat(keep) * 100))), ...
             'lon',  b64(int16(round(wrapTo180(o.lon(keep)) * 100))), ...
             'tb',   b64(int16(round(tbr(keep) * 10))), ...
             'code', b64(code(keep)), ...
-            'spos', b64(uint8(P(keep))));
-    end
-    for h = 'NS'
-        j = (h == 'S') + 1;
-        tp.(h) = struct('water', mean(wtb{j}), 'ice', mean(itb{j}), 'nw', numel(wtb{j}), 'ni', numel(itb{j}), ...
-                        'sic_std', 100 * std((wtb{j} - mean(wtb{j})) / (mean(itb{j}) - mean(wtb{j}))));
+            'spos', b64(uint8(P(keep))), ...
+            'dtb',  b64(int16(round(max(min(dt(keep), 3000), -3276.8) * 10))));
     end
     D.tp = tp;
     fid = fopen(fullfile(ddir, [char(d) '.js']), 'w');

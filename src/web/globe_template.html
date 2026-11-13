@@ -42,9 +42,11 @@ select { width: 100%; min-width: 0; }
 button:hover, select:hover { border-color: var(--accent); }
 button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .dayrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; }
-.seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
 .seg button { border: 0; border-radius: 0; background: transparent; padding: 7px 4px; font-size: 13px; }
-.seg button + button { border-left: 1px solid var(--line); }
+.seg button { border-left: 1px solid var(--line); border-top: 1px solid var(--line); }
+.seg button:nth-child(3n+1) { border-left: 0; }
+.seg button:nth-child(-n+3) { border-top: 0; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
 .row { display: flex; gap: 6px; flex-wrap: wrap; }
 .row button { flex: 1; }
@@ -91,7 +93,9 @@ th { font-family: var(--sans); font-weight: 500; color: var(--muted); }
           <button id="m-tb" aria-pressed="true">T<sub>B</sub></button>
           <button id="m-th" aria-pressed="false">θ</button>
           <button id="m-mask" aria-pressed="false">Masks</button>
-          <button id="m-sic" aria-pressed="false">SIC</button>
+          <button id="m-sic" aria-pressed="false">SIC raw</button>
+          <button id="m-dtb" aria-pressed="false">ΔT<sub>B</sub></button>
+          <button id="m-sicc" aria-pressed="false">SIC corr.</button>
         </div>
         <div id="legend"></div>
         <div class="row"><button id="v-n">Arctic</button><button id="v-s">Antarctic</button></div>
@@ -104,9 +108,9 @@ th { font-family: var(--sans); font-weight: 500; color: var(--muted); }
         <div class="note">Counts for the selected orbit(s). Pixels with |lat| &lt; 50° are stored thinned (every 4th scan line and position), so their counts are scaled by 16 (≈).</div>
       </div>
       <div class="box">
-        <div class="label">Daily tie points (A5)</div>
+        <div class="label">Daily tie points (A6b)</div>
         <table id="tp"></table>
-        <div class="note">SIC = (T<sub>B</sub> − T<sub>p,water</sub>) / (T<sub>p,ice</sub> − T<sub>p,water</sub>), uncorrected, not clipped. Tie points from pixels left after step 3.</div>
+        <div class="note">SIC = (T<sub>B</sub> − T<sub>p,water</sub>) / (T<sub>p,ice</sub> − T<sub>p,water</sub>), not clipped. Clusters as in Table 2 (|lat| ≥ 50°). Corrected: RTM correction with c<sub>ice</sub> from ERA5, one iteration (A6b), L not corrected.</div>
       </div>
     </aside>
   </div>
@@ -157,19 +161,20 @@ function loadDay(d) {
   });
 }
 function prep(o) {
-  const lat = dec(o.lat, Int16Array), lon = dec(o.lon, Int16Array), tb = dec(o.tb, Int16Array), code = dec(o.code, Uint8Array), spos = dec(o.spos, Uint8Array);
+  const lat = dec(o.lat, Int16Array), lon = dec(o.lon, Int16Array), tb = dec(o.tb, Int16Array), code = dec(o.code, Uint8Array), spos = dec(o.spos, Uint8Array), dtb = dec(o.dtb, Int16Array);
   const n = lat.length, x = new Float32Array(n), y = new Float32Array(n), z = new Float32Array(n), stage = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     const p = lat[i] / 100 * RAD, l = lon[i] / 100 * RAD;
     x[i] = Math.cos(p) * Math.cos(l); y[i] = Math.cos(p) * Math.sin(l); z[i] = Math.sin(p);
     stage[i] = stageOf(code[i]);
   }
-  return { name: o.name, n, lat, lon, tb, code, spos, stage, x, y, z, col: new Uint32Array(n) };
+  return { name: o.name, n, lat, lon, tb, code, spos, dtb, stage, x, y, z, col: new Uint32Array(n) };
 }
 
 // ---- colour maps ----------------------------------------------------------
 const VIRIDIS = ['#440154','#482878','#3e4989','#31688e','#26828e','#1f9e89','#35b779','#6ece58','#b5de2b','#fde725'];
 const ICE = [[-20,'#3a1c71'],[0,'#0b2e5c'],[25,'#1f5f9a'],[50,'#4f93c7'],[75,'#a6cde6'],[100,'#f5f9fc'],[120,'#f2a9bf']];
+const DTB = [[-15,'#2166ac'],[-7.5,'#67a9cf'],[0,'#f7f7f7'],[7.5,'#ef8a62'],[15,'#b2182b']];
 const THETA = [[-64,'#7a2d8f'],[-32,'#c58ad6'],[0,'#f2f2f2'],[32,'#7fc4a6'],[64,'#13705a']];
 const hex = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
 const pack = ([r,g,b]) => (255 << 24) | (b << 16) | (g << 8) | r;   // little-endian RGBA
@@ -185,12 +190,14 @@ const TB_STOPS = VIRIDIS.map((c, i) => [100 + i * 180 / (VIRIDIS.length - 1), c]
 const LUT_TB = Array.from({length: 181}, (_, i) => pack(lerpStops(TB_STOPS, 100 + i)));
 const LUT_SIC = Array.from({length: 141}, (_, i) => pack(lerpStops(ICE, -20 + i)));
 const LUT_TH = SPOS.map(t => pack(lerpStops(THETA, t)));
+const LUT_DTB = Array.from({length: 301}, (_, i) => pack(lerpStops(DTB, -15 + i / 10)));
 
 // ---- state ------------------------------------------------------------------
 let cur = null, dayIdx = 0, sel = 'all', mode = 'tb', step = 3, showRm = true;
 let rot = [50, -62], zoom = 1;
 const selected = () => !cur ? [] : sel === 'all' ? cur.orbits : [cur.orbits[sel]];
-function sicOf(o, i) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S; return 100 * (o.tb[i] / 10 - t.water) / (t.ice - t.water); }
+function sicOf(o, i) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S; return 100 * (o.tb[i] / 10 - t.water_u) / (t.ice_u - t.water_u); }
+function sicCorr(o, i) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S; return 100 * ((o.tb[i] + o.dtb[i]) / 10 - t.water_c) / (t.ice_c - t.water_c); }
 let RM = [];
 function recolor() {
   const C = [pack(hex(css('--other'))), pack(hex(css('--water'))), pack(hex(css('--ice')))];
@@ -201,6 +208,11 @@ function recolor() {
     else if (tbv === -32768) o.col[i] = 0;
     else if (mode === 'tb') o.col[i] = LUT_TB[Math.max(0, Math.min(180, Math.round(tbv / 10 - 100)))];
     else if (mode === 'sic') o.col[i] = LUT_SIC[Math.max(0, Math.min(140, Math.round(sicOf(o, i) + 20)))];
+    else if (mode === 'dtb' || mode === 'sicc') {
+      if (o.dtb[i] === -32768) o.col[i] = 0;
+      else if (mode === 'dtb') o.col[i] = LUT_DTB[Math.max(0, Math.min(300, o.dtb[i] + 150))];
+      else o.col[i] = LUT_SIC[Math.max(0, Math.min(140, Math.round(sicCorr(o, i) + 20)))];
+    }
     else o.col[i] = C[o.code[i] & 3];
   }
 }
@@ -302,8 +314,10 @@ function doHover(e) {
   if (!bo || km > maxKm) { ro.textContent = `${pos}\nno ESMR pixel`; return; }
   const st = bo.stage[bi], tbv = bo.tb[bi];
   const status = st <= step ? `removed: ${STEPS[st].name}` : ['kept', 'kept, water tie point', 'kept, ice tie point'][bo.code[bi] & 3];
-  ro.textContent = `${pos}   ${bo.name}\nscan pos ${bo.spos[bi]}  θ ${SPOS[bo.spos[bi]-1].toFixed(1)}°  T_B ${tbv === -32768 ? '–' : (tbv/10).toFixed(1) + ' K'}\n` +
-    `SIC ${tbv === -32768 ? '–' : sicOf(bo, bi).toFixed(1) + ' %'}   ${status}${bo.code[bi] & 4 ? ' (ERA5 land)' : ''}`;
+  const dv = bo.dtb[bi], hasC = dv !== -32768;
+  ro.textContent = `${pos}   ${bo.name}\nscan pos ${bo.spos[bi]}  θ ${SPOS[bo.spos[bi]-1].toFixed(1)}°  T_B ${tbv === -32768 ? '–' : (tbv/10).toFixed(1) + ' K'}` +
+    `${hasC ? `  ΔT_B ${dv > 0 ? '+' : ''}${(dv/10).toFixed(1)} K` : ''}\n` +
+    `SIC raw ${tbv === -32768 ? '–' : sicOf(bo, bi).toFixed(1) + ' %'}${hasC ? `  corr. ${sicCorr(bo, bi).toFixed(1)} %` : ''}\n${status}${bo.code[bi] & 4 ? ' (ERA5 land)' : ''}`;
 }
 
 // ---- controls ---------------------------------------------------------------
@@ -336,7 +350,7 @@ async function setDay(i) {
   recolor(); tpTable(); steps(); redraw();
 }
 
-const btn = { tb: 'm-tb', th: 'm-th', mask: 'm-mask', sic: 'm-sic' };
+const btn = { tb: 'm-tb', th: 'm-th', mask: 'm-mask', sic: 'm-sic', dtb: 'm-dtb', sicc: 'm-sicc' };
 for (const [m, id] of Object.entries(btn)) $(id).onclick = () => setMode(m);
 function setMode(m) {
   mode = m;
@@ -347,12 +361,14 @@ function legend() {
   const L = $('legend');
   if (mode === 'mask') {
     L.innerHTML = `<div class="keys"><span class="sw" style="--c:var(--water)">water tie point (siconc = 0, SST &gt; 278 K, 90 &lt; T<sub>B</sub> &lt; 180 K)</span>
-      <span class="sw" style="--c:var(--ice)">ice tie point (siconc ≥ 0.95, 100 &lt; T<sub>B</sub> &lt; 274 K)</span><span class="sw" style="--c:var(--other)">other kept pixels</span></div>`;
+      <span class="sw" style="--c:var(--ice)">ice tie point (siconc &gt; 0.8, 100 &lt; T<sub>B</sub> &lt; 274 K)</span><span class="sw" style="--c:var(--other)">other kept pixels</span></div>`;
     return;
   }
   const cfg = {
     tb:  [100, 280, TB_STOPS, [100, 145, 190, 235, 280], 'T<sub>B</sub> in K'],
-    sic: [-20, 120, ICE, [-20, 0, 50, 100, 120], 'SIC in %, uncorrected; values &lt; 0 % and &gt; 100 % are noise'],
+    sic: [-20, 120, ICE, [-20, 0, 50, 100, 120], 'SIC in %, uncorrected T<sub>B</sub> and tie points; values &lt; 0 % and &gt; 100 % are noise'],
+    sicc: [-20, 120, ICE, [-20, 0, 50, 100, 120], 'SIC in %, corrected T<sub>B</sub> and tie points (A6b); only ocean pixels after step 3'],
+    dtb: [-15, 15, DTB, [-15, -7.5, 0, 7.5, 15], 'RTM correction ΔT<sub>B</sub> in K (added to T<sub>B</sub>); negative = pixel had more vapour/wind than the daily mean'],
     th:  [-64, 64, THETA, [-64, -32, 0, 32, 64], 'incidence angle θ in degrees (negative = left side of swath)'],
   }[mode];
   const [lo, hi, stops, ticks, note] = cfg;
@@ -378,12 +394,13 @@ function steps() {
 }
 function tpTable() {
   const t = cur.tp, f = (v, d = 1) => v.toFixed(d);
-  $('tp').innerHTML = `<tr><th></th><th>North</th><th>South</th></tr>
-    <tr><td>T<sub>p,water</sub> [K]</td><td>${f(t.N.water)}</td><td>${f(t.S.water)}</td></tr>
-    <tr><td>T<sub>p,ice</sub> [K]</td><td>${f(t.N.ice)}</td><td>${f(t.S.ice)}</td></tr>
-    <tr><td>water pixels</td><td>${fmt(t.N.nw)}</td><td>${fmt(t.S.nw)}</td></tr>
-    <tr><td>ice pixels</td><td>${fmt(t.N.ni)}</td><td>${fmt(t.S.ni)}</td></tr>
-    <tr><td>std SIC water [%]</td><td>${f(t.N.sic_std)}</td><td>${f(t.S.sic_std)}</td></tr>`;
+  const uc = (a, b) => `${f(a)} → ${f(b)}`;
+  $('tp').innerHTML = `<tr><th>raw → corrected</th><th>North</th><th>South</th></tr>
+    <tr><td>T<sub>p,water</sub> [K]</td><td>${uc(t.N.water_u, t.N.water_c)}</td><td>${uc(t.S.water_u, t.S.water_c)}</td></tr>
+    <tr><td>T<sub>p,ice</sub> [K]</td><td>${uc(t.N.ice_u, t.N.ice_c)}</td><td>${uc(t.S.ice_u, t.S.ice_c)}</td></tr>
+    <tr><td>std SIC water [%]</td><td>${uc(t.N.w_std_u, t.N.w_std_c)}</td><td>${uc(t.S.w_std_u, t.S.w_std_c)}</td></tr>
+    <tr><td>std SIC ice [%]</td><td>${uc(t.N.i_std_u, t.N.i_std_c)}</td><td>${uc(t.S.i_std_u, t.S.i_std_c)}</td></tr>
+    <tr><td>water / ice pixels</td><td>${fmt(t.N.nw)} / ${fmt(t.N.ni)}</td><td>${fmt(t.S.nw)} / ${fmt(t.S.ni)}</td></tr>`;
 }
 
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { recolor(); legend(); steps(); redraw(); });

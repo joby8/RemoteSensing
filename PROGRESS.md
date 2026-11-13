@@ -94,3 +94,4 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
 - 2026-11-13 · A6 done: RTM ported to MATLAB (vectorised, validated), corrected SIC std −17 % · next: B1 (Task 2), B2 (Task 3)
 - 2026-11-13 · feedback session; A6b iterative correction done (water std −23 %) · next: B1 RTM sensitivity (Task 2), B2 std vs. θ (Task 3)
 - 2026-11-13 · B1 sensitivity study (Task 2) as static version of the animation · next: B2 std vs. θ (Task 3)
+- 2026-11-13 · globe viewer: A6b correction for all valid ocean pixels (`correct_day.m`), new modes ΔT_B and SIC corrected
