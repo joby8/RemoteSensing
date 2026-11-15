@@ -1,42 +1,77 @@
 clear
 close all
  
-% A = readNetCDFStruct("..\ESMR_colocated_filtered\Nimbus5-ESMR_1973m0201t022301_DS32.nc");
-% load("spos2ia.mat")
-% A.variables.incidence = abs(repmat(spos2ia',1, A.dimensions.Time));
-
 readAllFiles;
 projectdir = '..\ESMR_colocated_filtered';
 dinfo = dir(fullfile(projectdir));
-dinfo([dinfo.isdir]) = [];     %get rid of all directories including . and ..
+dinfo([dinfo.isdir]) = [];
 nfiles = length(dinfo);
+
+init;
+
+
+% DataOfDay(length(cdffiles)) = struct();
+for day = 1:27
+cdffiles = day_indices(1,day):day_indices(2,day);     
+fileindex = 1;
+for j = cdffiles
+  % Read single NetCDF File  
+  filename = fullfile(projectdir, dinfo(j).name);
+  Data = readNetCDFStruct(filename);
+
+  % Add Incidence Angle to Data Struct
+  Data.variables.incidence = abs(repmat(spos2ia',1, Data.dimensions.Time));
+   
+  % Initial Filtering
+  Tbfilt = filterTb(Data);
+  Data.variables.Tbfilt = Tbfilt;
+    
+  % Determine Tie Points
+  TP = getTiePoints(Data);
+  Data.TP = TP;
   
-load("spos2ia.mat")
+  % Calculate Mean and STD of 4 Tie Points
+  TPstats = meanAndStdTP(TP, TPstats);
+
+  DataOfDay(fileindex) = Data;
+  clear Data
+  fileindex = fileindex+1;
+end
+
+% Calculate Mean and STD of complete Day for uncorrected Data
+Uncorrected.Ant_ice_mean(end+1) = mean(TPstats.ant_ice_mean,'omitnan');
+Uncorrected.Arc_ice_mean(end+1) = mean(TPstats.arc_ice_mean,'omitnan');
+Uncorrected.Ant_ocean_mean(end+1) = mean(TPstats.ant_ocean_mean,'omitnan');
+Uncorrected.Arc_ocean_mean(end+1) = mean(TPstats.arc_ocean_mean,'omitnan');
+
+Uncorrected.Ant_ice_std(end+1) = mean(TPstats.ant_ice_std,'omitnan');
+Uncorrected.Arc_ice_std(end+1) = mean(TPstats.arc_ice_std,'omitnan');
+Uncorrected.Ant_ocean_std(end+1) = mean(TPstats.ant_ocean_std,'omitnan');
+Uncorrected.Arc_ocean_std(end+1) = mean(TPstats.arc_ocean_std,'omitnan');
 
 TPstats = [];
 
-Day1 = 1:12;
+% Correct Data with Differential RTM
+applyRTM;
 
-for j = Day1
-  filename = fullfile(projectdir, dinfo(j).name);
-  Dataname = strjoin(["File", j],'');
-  Data = readNetCDFStruct(filename);
-  varName = "omega";
-  assignin('caller', Dataname, Data);
-
-
-    Data.variables.incidence = abs(repmat(spos2ia',1, Data.dimensions.Time));
-  
-    
-    Tbfilt = filterTb(Data);
-    Data.variables.Tbfilt = Tbfilt;
-    
-    deltaTb = applyRTM(Data);
-    
-    TP = getTiePoints(Data);
-    
-    TPstats = meanAndStdTP(TP, TPstats);
-
+for j = 1:length(cdffiles)
+    TPstatsCorrected = meanAndStdTP(DataOfDay(j).Corrected, TPstatsCorrected);
 end
 
-% ImagescPlots;
+% Calculate Mean and STD of complete Day for Corrected Data
+Corrected.Ant_ice_mean(end+1) = mean(TPstatsCorrected.ant_ice_mean,'omitnan');
+Corrected.Arc_ice_mean(end+1) = mean(TPstatsCorrected.arc_ice_mean,'omitnan');
+Corrected.Ant_ocean_mean(end+1) = mean(TPstatsCorrected.ant_ocean_mean,'omitnan');
+Corrected.Arc_ocean_mean(end+1) = mean(TPstatsCorrected.arc_ocean_mean,'omitnan');
+
+Corrected.Ant_ice_std(end+1) = mean(TPstatsCorrected.ant_ice_std,'omitnan');
+Corrected.Arc_ice_std(end+1) = mean(TPstatsCorrected.arc_ice_std,'omitnan');
+Corrected.Ant_ocean_std(end+1) = mean(TPstatsCorrected.ant_ocean_std,'omitnan');
+Corrected.Arc_ocean_std(end+1) = mean(TPstatsCorrected.arc_ocean_std,'omitnan');
+
+TPstatsCorrected = [];
+clear DataOfDay
+
+fprintf('\rCompleted Day %.0f', day)
+end
+fprintf('\n')

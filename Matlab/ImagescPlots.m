@@ -60,7 +60,7 @@ clim([80,280])
 % ylabel("Across track")
 % clim([80,280])
 
-if 1
+if 0
 
 % Assuming Lon, Lat, and DataMatrix are all 2D matrices of the same size (e.g., M x N)
 R = 1; % Radius of the sphere

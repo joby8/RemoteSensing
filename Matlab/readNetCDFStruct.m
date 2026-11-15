@@ -103,7 +103,7 @@ function S = readNetCDFStruct(filename)
 
     end
 
-    fprintf('Successfully read NetCDF file: %s\n', filename);
-    fprintf('Number of variables: %d\n', length(info.Variables));
+    % fprintf('Successfully read NetCDF file: %s\n', filename);
+    % fprintf('Number of variables: %d\n', length(info.Variables));
 
 end
