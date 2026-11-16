@@ -15,6 +15,7 @@ Use them as the writing plan for the report (due 6 Dec) and the seminar (4 Dec).
 | D1 Task 1 with Axel's pipeline (bugs fixed) – cross-check | [D1_concept_task1.md](D1_concept_task1.md) | Results: Task 1 (robustness / appendix) |
 | B1 RTM sensitivity + sweep + exclusion test (Task 2) | [B1_sensitivity.md](B1_sensitivity.md) | Results: Task 2 |
 | B1 Writing plan for the sensitivity part (Task 2) | [B1_writing_plan.md](B1_writing_plan.md) | Report: Task 2 section |
+| Reference: how Tonboe et al. (2022) plot sensitivity / geophysical noise | [ref_Tonboe2022_plots.md](ref_Tonboe2022_plots.md) | Task 2 figures, citations |
 | B2 Std vs. incidence angle, whole swath (Task 3) | [B2_angle.md](B2_angle.md) | Results: Task 3 |
 | Session 2026-11-13 | [questions_2026-11-13.md](questions_2026-11-13.md) | decisions |
 | C1 Reference book NASA SP-459 (Zwally et al. 1983): map overlay + extent comparison | [C1_SP459_comparison.md](C1_SP459_comparison.md), step-by-step page [C1_sp459_steps.html](C1_sp459_steps.html) | Discussion / validation |

@@ -34,7 +34,7 @@ Length target: about 1–1.5 pages, plus 2 figures (a 3rd one is optional).
   - Then compare the daily std of the open-water SIC with the full correction.
 - **Note:** L is never corrected, as in Kolbe et al. (2024, Sect. 4.1). In (a) and (b) we still show it, to quantify the noise that remains.
 
-**Cite:** Kolbe et al. (2024) Sect. 4.1 (correction scheme); Wentz (1997) for the RTM (modified for 0–60° and sea ice, provided code); Eq. 15 for Ti.
+**Cite:** Kolbe et al. (2024) Sect. 4.1 (correction scheme); Wentz (1997) for the RTM (modified for 0–60° and sea ice, provided code); Eq. 15 for Ti; **Tonboe et al. (2022)** for the term "geophysical noise" and the "sensitivity × 1σ" measure (see the reference section below).
 
 ### 2. Results: model view (≈ 1–2 paragraphs + Fig. A)
 **Key message:** over water V > W ≫ Ts; over ice only Ti matters; everything over water grows with θ.
@@ -101,6 +101,38 @@ Before using them:
 - **Figure B:** check that the bar labels are readable at report size (maybe only the water column in the report, ice in the appendix).
 
 ---
+
+---
+
+## Reference: Tonboe et al. (2022) – how the supervisor shows sensitivity
+Tonboe, R. T., et al. (2022): Simulated Geophysical Noise in Sea Ice Concentration Estimates of Open Water and Snow-Covered Sea Ice. IEEE JSTARS 15, 1309–1326, doi:10.1109/JSTARS.2021.3134021. Local copy: `docs/literature/Tonboe/relevant/`. Read 2026-11-16.
+
+**What they do:** simulate top-of-atmosphere T_B along realistic model runs (Bellingshausen Sea open water, Ross Sea FYI, Lincoln Sea MYI). Then compute c_ice with 8 algorithms, **including an ESMR algorithm** (one channel, 18.7 GHz H, fixed θ = 55°).
+
+| Figure | Plot type | Use for us |
+|---|---|---|
+| **Fig. 12** | Open water: **scatter of c_ice vs. total water vapour WV** (0–20 kg/m²), one panel per algorithm (ESMR panel included), y = SIC −1…1 | closest to our V sweep |
+| **Fig. 13** | Open water: scatter of c_ice vs. **cloud liquid water CLW** (0–0.8 kg/m²), same layout | L sweep |
+| Fig. 7 / 10 | 100 % ice: scatter of c_ice vs. snow–ice interface temperature T_si | our Ti sweep |
+| Fig. 8 / 9 | Bars of **partial correlations** of c_ice with 10 snow/ice/atmosphere parameters | alternative to the exclusion test |
+
+**How they quantify it** (same idea as our tornado):
+- They fit a line to each cluster, and the slope is the sensitivity, e.g. per kg/m² or per K.
+- **Slope × 1 std of the parameter** gives the bias per 1σ. Example, ESMR over MYI: 0.007/K × 8.7 K = 0.061.
+- So our "±1σ in % SIC" (tornado) uses exactly their measure. Cite it as such.
+
+**Statements we can cite:**
+- "Over OW, … NASA Team, Bristol, TUD, and ESMR have moderate sensitivity [to WV and CLW]" (conclusions).
+- Single-channel algorithms incl. ESMR "are sensitive to variations in the snow ice interface temperature T_si" (conclusions). This matches our finding that over ice only Ti matters.
+- "the atmospheric c_ice noise plays a minor role over sea ice". Matches our ice side.
+- **Wind was not investigated** in their study ("wind not investigated in this study"). Our wind sweep and exclusion test therefore add something new. Say so.
+- CLW is "very difficult to quantify adequately in NWP and re-analysis models at the spatial and temporal scale of satellite radiometer measurements". This supports why L is not corrected.
+
+**Consequence for our figures:**
+- Our **sweep** (model curves) is the smooth model version of their scatter plots. Our **tornado** uses their "slope × 1σ" measure.
+- Wording: "following Tonboe et al. (2022), we express the sensitivity as the SIC change per 1σ of each parameter".
+- Optional Tonboe-style figure from our **real data**: scatter of the uncorrected and corrected open-water SIC per pixel vs. ERA5 V (and W, L), with fitted slopes. If the correction works, the V and W slopes go to ≈ 0, but the L slope stays. Not built yet.
+- Do not compare numbers directly. Their ESMR runs at fixed θ = 55° on simulated T_B; we use real 1973 T_B at 0–55.7°. Only compare the qualitative ranking.
 
 ## Words and notation
 - Use "water vapour V (tcwv)", "wind speed W (|u10, v10|)", "cloud liquid L (tcw − tcwv)", "SST Ts", "ice temperature Ti (Eq. 15)". Define each once and keep it.
