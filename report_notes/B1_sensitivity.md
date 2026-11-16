@@ -4,6 +4,8 @@
 **Code:** `src/matlab/b1_sensitivity.m` (needs `output/A6b_pixels.mat` from `a6b_iterative.m`; runs in seconds)
 **Output:** `output/B1_sensitivity.png`, `output/B1_sensitivity.csv` (ΔT_B per unit and per +1σ at θ = 0/30/50/55.5°)
 **Tornado:** `src/matlab/b1b_tornado.m` → `output/B1_tornado.png`, `output/B1_tornado.csv` (±1σ at θ = 50°, in % SIC and K)
+**Sweep (model, full range):** `src/matlab/b1d_sweep.m` → `output/B1d_sweep.png`, `output/B1d_sweep.csv` (see section below)
+**Exclusion test (data):** `src/matlab/b1c_exclusion.m` → `output/B1c_exclusion.png`, `output/B1c_exclusion.csv` (see section below)
 **Status:** first version 2026-11-13
 
 ## Agreed with Tonboe (session 2026-11-13)
@@ -89,7 +91,65 @@ Ideas 1 + 4 + 5 from above: one bar per input, −1σ (light) and +1σ (dark), s
 Caption idea: "RTM sensitivity at the mean Feb 1973 tie-point weather (θ = 50°). Each bar moves one input by ±1σ of its observed spread in the tie-point clusters, all others at the mean. Over water, V and the uncorrected L dominate; over ice, only the ice temperature matters."
 Still open: heatmap (idea 2) for the θ dependence, noise budget (3) for the seminar.
 
+## Exclusion test with the data (built 2026-11-16, `b1c_exclusion.m`)
+This is the literal Task 2 wording: "evaluate by exclusion which ERA5 parameters are most important for the correction".
+- **Method:**
+  - Same correction as A6b iteration 2: reference values mixed by c_ice, L not corrected.
+  - One input at a time (V, W, Ts, Ti) is **left out**: in the "actual" RTM run it gets its reference value, so it corrects nothing.
+  - Then the corrected tie points, the SIC and the std per day and hemisphere are computed again. The table shows the mean over 1–27 Feb.
+- **Check:** the case "all inputs" reproduces A6b exactly (max difference 0.0000 %), as does "no correction".
+- Also computed: "only X" (correction with a single input), stored in the csv.
+
+| std of SIC [%] (increase vs. full) | Arctic water | Arctic ice | Antarctic water | Antarctic ice |
+|---|---|---|---|---|
+| no RTM correction | 10.54 (+2.39) | 14.56 (+1.54) | 14.25 (+3.28) | 44.26 (+3.77) |
+| **full correction (V, W, Ts, Ti)** | **8.15** | **13.02** | **10.97** | **40.50** |
+| without V | 9.33 (**+1.18**) | 13.37 (+0.35) | 13.36 (**+2.39**) | 43.49 (+2.99) |
+| without W | 9.28 (**+1.14**) | 13.04 (+0.02) | 11.72 (+0.75) | 41.58 (+1.09) |
+| without Ts | 8.13 (−0.01) | 12.88 (−0.14) | 10.89 (−0.08) | 39.60 (−0.89) |
+| without Ti | 8.32 (+0.17) | 14.28 (**+1.26**) | 11.12 (+0.15) | 40.87 (+0.37) |
+
+**Interpretation**
+- **Water: V is the most important input, W second.**
+  - In the Arctic both are about equal (+1.2 / +1.1 %).
+  - In the Antarctic, V clearly dominates (+2.4 vs. +0.75 %).
+  - This confirms the RTM ranking V > W ≫ Ts with real pixels.
+- **Ts brings nothing.** Leaving it out is even slightly better everywhere (−0.01 to −0.9 %). The effect is largest on the Antarctic ice side, where the SST under the ice is a fixed fill value (271.35 K) or near freezing. → Task 4: the correction can drop Ts.
+- **Ti matters only on the ice side**, most in the Arctic (+1.26 %). This matches the sensitivity study: over ice only Ti matters.
+- **Antarctic ice reacts to V (+3.0 %).** Pure ice should hardly react to V, so this shows that the Antarctic ice cluster (siconc > 0.8) contains many pixels with low c_ice, which behave like water. This is the same weak point as in A6b.
+- The single increases do not add up to the total (RTM not linear, inputs correlated), so the ranking is reported, not a budget.
+
+For the report: `B1c_exclusion.png` (rows Arctic/Antarctic, columns water/ice) as the data figure for Task 2 next to the tornado chart (model figure). Caption idea: "Std of the SIC when one ERA5 input is left out of the correction (1–27 Feb 1973). Water vapour is the most important input, wind second; leaving out SST does not increase the noise."
+
+## Sweep over the full input range (built 2026-11-16, `b1d_sweep.m`)
+Tonboe asked for a sweep, e.g. over wind speed.
+- **Method:**
+  - One input at a time is swept over its physical range: V 0–30 kg/m², W 0–25 m/s, L 0–1 kg/m², Ts 271–290 K, Ti 240–273 K.
+  - All other inputs stay at the 1–27 Feb mean of the A6b tie-point cluster of that hemisphere.
+  - Shown is ΔT_B relative to the mean state, for water (c = 0) and ice (c = 1) at θ = 0°, 30° and 50°.
+  - Grey band = observed 5–95 % range. The right axis shows the same ΔT_B in % SIC (Arctic 1 % = 0.81 K, Antarctic 0.60 K).
+- **Figure:** rows Arctic/Antarctic, columns V, W, L, Ts, Ti, with the fixed colours of B1.
+
+ΔT_B between the observed 5 % and 95 % values (θ = 50°), i.e. the full noise range each input can cause:
+
+| Input | Arctic water | Antarctic water | Arctic ice | Antarctic ice |
+|---|---|---|---|---|
+| V | **21.0 K (26 % SIC)** | **21.9 K (36 %)** | 0.9 K (1 %) | 1.2 K (2 %) |
+| W | **12.1 K (15 %)** | **9.9 K (16 %)** | 0 | 0 |
+| L (not corrected) | 25.4 K (31 %) | 25.2 K (42 %) | 0.6 K (1 %) | 1.0 K (2 %) |
+| Ts | −0.6 K (−0.7 %) | −0.5 K (−0.8 %) | 0 | 0 |
+| Ti | 0 | 0 | **8.2 K (10 %)** | **3.6 K (6 %)** |
+
+**What the sweep adds to the ±1σ figures:**
+- **Almost linear in V, W and L over the observed range.** The ±1σ tornado is therefore a fair summary, and the correction (a difference of two RTM runs) does not depend much on where the reference sits.
+- **Wind:** slightly concave, the slope drops at high wind. This comes from the roughness cap σ² ≤ 0.07 above ≈ 19.5 m/s. Wind has **no** effect over ice.
+- **Angle:** all water curves get steeper with θ, by a factor of about 1.5–2 from 0° to 50°. The ice curves hardly depend on θ. → Task 3: the open-water noise should grow towards the swath edge.
+- **Ts:** flat (< 1 K over the whole range), and slightly negative (warmer water is less emissive at 19 GHz H). This explains why leaving Ts out does not hurt (exclusion test).
+- **Ti:** the only ice term, linear, about 0.9 K per K. In the Antarctic the observed Ti range is narrow (268.5–272.7 K), because Eq. 15 with a mild t2m keeps Ti close to 272 K.
+- **Same unit, different SIC:** the same ΔT_B is about 35 % more SIC in the Antarctic (smaller ice–water contrast).
+
+Caption idea: "RTM sweep: change of T_B when one ERA5 input is varied over its full range, all others at the Feb 1973 tie-point mean (solid water, dashed ice; θ = 0/30/50°). Grey: observed 5–95 % range."
+
 ## Next / open
-- Optional cross-check with the data: exclusion test (correction with one input fixed at its mean, see how much the std of the corrected SIC grows). This would confirm the ranking V > W ≫ Ts with real pixels.
 - Check Ti from Eq. 15 vs. ERA5 `istl1` on the ice side.
 - Task 3 (B2): std of SIC vs. θ from `A6b_pixels.mat`. Expectation from this figure: noise rises towards the edge, correction helps most there.

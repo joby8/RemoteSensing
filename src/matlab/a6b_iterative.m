@@ -11,7 +11,8 @@
 %     -> next iteration (paper iterates once; we run NIT iterations to show convergence)
 %   - std per day and hemisphere for the water AND the ice tie-point pixels (raw SIC, not clipped)
 % Run from the project root:  matlab -batch "run('src/matlab/a6b_iterative.m')"
-% Outputs: output/A6b_iterative.csv, output/A6b_iterative.png, output/A6b_hist.png, output/A6b_pixels.mat (iteration FINAL = 2)
+% Outputs: output/A6b_iterative.csv, output/A6b_iterative.png, output/A6b_hist.png,
+%          output/A6b_pixels.mat (iteration FINAL = 2; per pixel incl. tb and c_used = c_ice of that iteration)
 cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
 addpath(fullfile('src','matlab'));
 files = dir(fullfile('ESMR_colocated_filtered','*.nc'));
@@ -25,7 +26,7 @@ inp  = {'V','W','L','Ts','Ti'};
 hemi = ["N","S"];
 
 rows = {}; P = struct('day', {}, 'hemi', {}, 'cls', {}, 'th', {}, 'sic_u', {}, 'sic_c', {}, 'dtb', {}, ...
-                      'V', {}, 'W', {}, 'L', {}, 'Ts', {}, 'Ti', {}, 'ci', {});
+                      'V', {}, 'W', {}, 'L', {}, 'Ts', {}, 'Ti', {}, 'ci', {}, 'tb', {}, 'c_used', {});
 for d = days(:)'
     fi = find(fday == d);
     G = repmat({struct()}, 2, 2);                       % G{h, 1} water, G{h, 2} ice
@@ -62,14 +63,14 @@ for d = days(:)'
                 100*std(su_i), 100*std(sc_i), 100*mean(sc_i), std(c.tb), std(c.tb + dc), ...
                 100*mean(abs(clipc(sc_w) - cw)), 100*mean(abs(clipc(sc_i) - cc))}; %#ok<SAGROW>
             cw_new = clipc(sc_w); cc_new = clipc(sc_i);
-            if it == FINAL, fw = sc_w; fi_ = sc_i; fdw = dw; fdc = dc; end
+            if it == FINAL, fw = sc_w; fi_ = sc_i; fdw = dw; fdc = dc; fcw = cw; fcc = cc; end
             cw = cw_new; cc = cc_new;
         end
         for t = 1:2
-            s = G{h, t}; if t == 1, su = su_w; sc = fw; dt = fdw; else, su = su_i; sc = fi_; dt = fdc; end
+            s = G{h, t}; if t == 1, su = su_w; sc = fw; dt = fdw; cu = fcw; else, su = su_i; sc = fi_; dt = fdc; cu = fcc; end
             P(end+1) = struct('day', d, 'hemi', hemi(h), 'cls', t, 'th', single(s.th), 'sic_u', single(su), ...
                 'sic_c', single(sc), 'dtb', single(dt), 'V', single(s.V), 'W', single(s.W), 'L', single(s.L), ...
-                'Ts', single(s.Ts), 'Ti', single(s.Ti), 'ci', single(s.ci)); %#ok<SAGROW>
+                'Ts', single(s.Ts), 'Ti', single(s.Ti), 'ci', single(s.ci), 'tb', single(s.tb), 'c_used', single(cu)); %#ok<SAGROW>
         end
     end
     fprintf('%s done (%d orbits)\n', d, numel(fi));
