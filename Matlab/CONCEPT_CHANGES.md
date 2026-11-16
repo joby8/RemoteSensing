@@ -26,4 +26,4 @@ Removed: `calcSIC.m` (old copy of calculateSIC, undefined `File1`), `readAllFile
 ## Output
 `results_concept/Uncorrected.mat`, `results_concept/Corrected.mat`,
 `results_concept/compare_tiepoint_mean.png`, `results_concept/compare_tiepoint_std.png`
-(first version vs. concept, uncorrected and corrected, per class and day).
+(Axel original code vs. fixed code, each without and with RTM correction, per class and day).

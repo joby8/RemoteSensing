@@ -48,7 +48,7 @@ The ERA5 clouds and water vapour do not match the 1973 scenes pixel by pixel. On
 
 ### 3. Result: std of the tie-point Tb, mean over 28 days [K]
 
-| Class | First version, uncorr. | First version, corr. | Concept, uncorr. | Concept, corr. |
+| Class | Axel original, no RTM | Axel original, with RTM | Fixed code, no RTM | Fixed code, with RTM (result) |
 |---|---|---|---|---|
 | Arctic sea ice | 10.81 | 10.85 | 11.40 | **10.88** |
 | Arctic ocean | 6.08 | 4.96 | 7.78 | **6.03** |
@@ -57,7 +57,22 @@ The ERA5 clouds and water vapour do not match the 1973 scenes pixel by pixel. On
 
 - **Over the ocean**, the correction lowers the std by 1.2–1.8 K. This is where the weather terms matter.
 - **Over ice**, the correction changes the std very little. This is expected, because over ice only Ti matters (see B1 sensitivity).
-- The first and the concept columns cannot be compared directly, because the day statistics are now computed differently (finding 4).
+- The "Axel original" and "fixed code" columns cannot be compared directly, because the day statistics are now computed differently (finding 4).
+
+#### How to read the plots
+
+Each figure has one panel per tie-point class. The x-axis is the day in February 1973. The y-axis is the std (or mean) of the Tb of all tie-point pixels of that day.
+
+| Line | Legend | Data |
+|---|---|---|
+| grey dotted | Axel original code, no RTM correction | `Uncorrected.mat` from commit 9e76b44 (old code) |
+| orange dashed | Axel original code, with RTM correction (bugs) | `Corrected.mat` from commit 9e76b44, includes the L sign bug |
+| grey solid | fixed code, no RTM correction | `results_concept/Uncorrected.mat` (this branch) |
+| blue thick | fixed code, with RTM correction (result) | `results_concept/Corrected.mat` (this branch) |
+
+- **Grey solid vs. blue** shows the effect of the RTM correction. This is the comparison that matters.
+- **Grey dotted vs. orange** shows what the old correction did. For Antarctic ice it pulled the mean down by 3–5 K because of the L sign bug.
+- **Dotted/dashed vs. solid** are not directly comparable. The old lines average per-orbit statistics, the new lines pool all pixels of a day (finding 4), so the new lines are higher.
 
 ![std per day](results_concept/compare_tiepoint_std.png)
 ![mean per day](results_concept/compare_tiepoint_mean.png)

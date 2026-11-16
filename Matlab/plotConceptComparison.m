@@ -1,4 +1,4 @@
-% Extra plot: Axel's first version vs. the concept-branch fixes
+% Extra plot: Axel original code vs. fixed code (branch axel-concept)
 % Needs: Uncorrected.mat / Corrected.mat (first version, in this folder)
 %        results_concept/*.mat (from main.m on this branch)
 close all
@@ -19,19 +19,19 @@ for stat = ["mean","std"]
     for k = 1:4
         nexttile; hold on; grid on
         fld = cls(k) + "_" + stat;
-        plot(dOld, oldU.(fld), ':',  'Color',[.6 .6 .6], 'LineWidth',1.5, 'DisplayName','first version, uncorrected')
-        plot(dOld, oldC.(fld), '--', 'Color',[.85 .33 .10], 'LineWidth',2, 'DisplayName','first version, corrected')
-        plot(dNew, newU.(fld), '-',  'Color',[.3 .3 .3], 'LineWidth',1.5, 'DisplayName','concept, uncorrected')
-        plot(dNew, newC.(fld), '-',  'Color',[0 .45 .74], 'LineWidth',2.5, 'DisplayName','concept, corrected')
+        plot(dOld, oldU.(fld), ':',  'Color',[.6 .6 .6], 'LineWidth',1.5, 'DisplayName','Axel original code, no RTM correction')
+        plot(dOld, oldC.(fld), '--', 'Color',[.85 .33 .10], 'LineWidth',2, 'DisplayName','Axel original code, with RTM correction (bugs)')
+        plot(dNew, newU.(fld), '-',  'Color',[.3 .3 .3], 'LineWidth',1.5, 'DisplayName','fixed code, no RTM correction')
+        plot(dNew, newC.(fld), '-',  'Color',[0 .45 .74], 'LineWidth',2.5, 'DisplayName','fixed code, with RTM correction (result)')
         title(titles(k)); xlim([1 28]); xlabel('Day in February 1973'); ylabel("Tb " + stat + " [K]")
-        if k == 1, legend('Location','best'); end
+        if k == 1, legend('Location','best','FontSize',9); end
     end
-    title(tl, "Tie-point Tb " + stat + " per day: first version vs. concept branch", 'FontWeight','bold')
+    title(tl, {"Tie-point Tb " + stat + " per day: Axel original code vs. fixed code (branch axel-concept)", "Compare grey solid vs. blue = effect of the RTM correction. Original and fixed lines use different day statistics (per-orbit average vs. all pixels pooled)."}, 'FontWeight','bold')
     exportgraphics(f, fullfile("results_concept", "compare_tiepoint_" + stat + ".png"), 'Resolution', 130)
 end
 
 % Table: std reduction by the correction (mean over days)
-fprintf('\n%-20s %12s %12s %12s %12s\n','class','old uncorr','old corr','new uncorr','new corr')
+fprintf('\n%-20s %12s %12s %12s %12s\n','class','orig noRTM','orig RTM','fixed noRTM','fixed RTM')
 for k = 1:4
     fld = cls(k) + "_std";
     fprintf('%-20s %12.2f %12.2f %12.2f %12.2f\n', titles(k), mean(oldU.(fld),'omitnan'), ...
