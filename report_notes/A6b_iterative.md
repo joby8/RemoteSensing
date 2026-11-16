@@ -2,7 +2,8 @@
 
 **Report section:** Method → SIC algorithm and noise reduction; Results → Task 1
 **Code:** `src/matlab/a6b_iterative.m` (uses `esmr_rtm_vec.m`; all of Feb 1973 in ~70 s, 3 iterations)
-**Output:** `output/A6b_iterative.csv` (per day, hemisphere and iteration), `output/A6b_iterative.png` (daily std, water and ice, N and S), `output/A6b_pixels.mat` (per-pixel data of both clusters, last iteration)
+**Output:** `output/A6b_iterative.csv` (per day, hemisphere and iteration), `output/A6b_iterative.png` (daily std; rows Arctic/Antarctic, columns water/ice), `output/A6b_hist.png` (open-water SIC histogram, Arctic top, Antarctic bottom), `output/A6b_pixels.mat` (per-pixel data of both clusters, **iteration 2**)
+**Figures and means:** 1–27 Feb; 28 Feb is left out (only 1 orbit). Since 2026-11-16 the figure and the pixel file use iteration 2 (before: the figure showed iteration 3, 0.1–0.4 % higher).
 **Status:** done 2026-11-13; replaces A6 as the main method (A6 = simple version with fixed c = 0/1, keep as comparison)
 
 ## Agreed in the feedback session (2026-11-13)
@@ -58,6 +59,7 @@
 - In the North the ice cluster is fine (std 13 %, 79 k pixels per day).
 
 ## For the report
+- Task 1 figures: `A6b_iterative.png` (daily std) and `A6b_hist.png` (histogram: mean 0 %, std N 10.6 → 8.2 %, S 14.3 → 11.0 %, all pixels pooled). Antarctic histogram: small shoulder at +12…16 % after correction. Possible cause, not tested: the c < 0.15 → 0 step of the iteration, so pixels just above 15 % get a different reference.
 - Method: describe steps 1–5 as the final algorithm. One sentence on A6 as a simpler variant (fixed c = 0/1) giving similar water results (−17 % with siconc ≥ 0.95).
 - Results Task 1: the table and the 4-panel figure (daily std, water and ice, N and S).
 - Discussion:

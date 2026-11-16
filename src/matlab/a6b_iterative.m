@@ -11,13 +11,14 @@
 %     -> next iteration (paper iterates once; we run NIT iterations to show convergence)
 %   - std per day and hemisphere for the water AND the ice tie-point pixels (raw SIC, not clipped)
 % Run from the project root:  matlab -batch "run('src/matlab/a6b_iterative.m')"
-% Outputs: output/A6b_iterative.csv, output/A6b_iterative.png, output/A6b_pixels.mat
+% Outputs: output/A6b_iterative.csv, output/A6b_iterative.png, output/A6b_hist.png, output/A6b_pixels.mat (iteration FINAL = 2)
 cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
 addpath(fullfile('src','matlab'));
 files = dir(fullfile('ESMR_colocated_filtered','*.nc'));
 fday  = string(regexp({files.name}, '1973m(\d{4})t', 'tokens', 'once'));
 if ~exist('days','var') || isempty(days), days = unique(fday); end
 if ~exist('NIT','var') || isempty(NIT), NIT = 3; end
+FINAL = min(2, NIT);   % iteration used for figures and pixel file (iteration 2 = final, see report_notes/A6b)
 edge = false(1, 78); edge([1:4, 75:78]) = true;
 vars = {'tb','th','V','W','L','Ts','Ti','ci'};
 inp  = {'V','W','L','Ts','Ti'};
@@ -61,10 +62,11 @@ for d = days(:)'
                 100*std(su_i), 100*std(sc_i), 100*mean(sc_i), std(c.tb), std(c.tb + dc), ...
                 100*mean(abs(clipc(sc_w) - cw)), 100*mean(abs(clipc(sc_i) - cc))}; %#ok<SAGROW>
             cw_new = clipc(sc_w); cc_new = clipc(sc_i);
+            if it == FINAL, fw = sc_w; fi_ = sc_i; fdw = dw; fdc = dc; end
             cw = cw_new; cc = cc_new;
         end
         for t = 1:2
-            s = G{h, t}; if t == 1, su = su_w; sc = sc_w; dt = dw; else, su = su_i; sc = sc_i; dt = dc; end
+            s = G{h, t}; if t == 1, su = su_w; sc = fw; dt = fdw; else, su = su_i; sc = fi_; dt = fdc; end
             P(end+1) = struct('day', d, 'hemi', hemi(h), 'cls', t, 'th', single(s.th), 'sic_u', single(su), ...
                 'sic_c', single(sc), 'dtb', single(dt), 'V', single(s.V), 'W', single(s.W), 'L', single(s.L), ...
                 'Ts', single(s.Ts), 'Ti', single(s.Ti), 'ci', single(s.ci)); %#ok<SAGROW>
@@ -95,27 +97,50 @@ writetable(T, fullfile('output', 'A6b_iterative.csv'));
 save(fullfile('output', 'A6b_pixels.mat'), 'P', 'NIT', '-v7.3');
 fprintf('saved output/A6b_iterative.csv, output/A6b_pixels.mat\n');
 
-% ---- figure: daily std per hemisphere, water and ice tie points, before/after (last iteration) ----
-fig = figure('Visible','off','Position',[100 100 1500 900]);
-tiledlayout(2, 2, 'TileSpacing', 'compact');
-col = [0.10 0.35 0.80; 0.85 0.30 0.10];
-lbl = {'water tie points', 'ice tie points'};
-for t = 1:2
-    for h = 1:2
-        nexttile; hold on;
-        s = T(T.hemi == hemi(h) & T.iter == NIT & ok, :);
+% ---- Task 1 figures (iteration FINAL, 1-27 Feb; 28 Feb has only 1 orbit) ----
+% Rows: Arctic (top), Antarctic (bottom). Columns: water, ice tie points.
+hn  = ["Arctic","Antarctic"];
+lbl = ["water tie points","ice tie points"];
+cU = [.55 .55 .55]; cC = [0 .45 .74];
+fig = figure('Visible','off','Color','w','Position',[100 100 1500 950]);
+tl = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+for h = 1:2
+    for t = 1:2
+        nexttile; hold on; grid on; box on
+        s = T(T.hemi == hemi(h) & T.iter == FINAL & ok, :);
         tt = datetime(1973, 2, str2double(extractAfter(s.day, 2)));
         if t == 1, u = s.w_sic_std_u; c = s.w_sic_std_c; else, u = s.i_sic_std_u; c = s.i_sic_std_c; end
-        plot(tt, u, ':o', 'Color', col(h,:), 'LineWidth', 1.0);
-        plot(tt, c, '-o', 'Color', col(h,:), 'LineWidth', 1.6, 'MarkerFaceColor', col(h,:));
-        legend({sprintf('uncorrected (mean %.1f %%)', mean(u)), sprintf('corrected (mean %.1f %%)', mean(c))}, 'Location', 'best');
-        ylabel('std of SIC [%]'); grid on; box on;
-        hn = ["Northern","Southern"];
-        title(sprintf('%s, %s hemisphere', lbl{t}, hn(h)));
+        plot(tt, u, ':o', 'Color', cU, 'LineWidth', 1.4, 'MarkerSize', 4);
+        plot(tt, c, '-o', 'Color', cC, 'LineWidth', 2.2, 'MarkerSize', 4, 'MarkerFaceColor', cC);
+        legend({sprintf('no RTM correction (mean %.1f %%)', mean(u)), ...
+                sprintf('with RTM correction (mean %.1f %%)', mean(c))}, 'Location', 'best');
+        ylabel('std of SIC [%]');
+        title(sprintf('%s: %s', hn(h), lbl(t)));
     end
 end
+title(tl, 'Task 1: std of the SIC per day, 1-27 Feb 1973 (28 Feb left out: only 1 orbit)', 'FontWeight', 'bold');
 exportgraphics(fig, fullfile('output', 'A6b_iterative.png'), 'Resolution', 150);
-fprintf('saved output/A6b_iterative.png\n');
+
+% histogram of the open-water SIC, all pixels of 1-27 Feb
+fig = figure('Visible','off','Color','w','Position',[100 100 1100 1000]);
+tl = tiledlayout(2, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
+edges = -60:2:80;
+for h = 1:2
+    nexttile; hold on; grid on; box on
+    q = P([P.hemi] == hemi(h) & [P.cls] == 1 & [P.day] ~= "0228");
+    su = 100*double(vertcat(q.sic_u)); sc = 100*double(vertcat(q.sic_c));
+    histogram(su, edges, 'Normalization', 'pdf', 'DisplayStyle', 'stairs', 'EdgeColor', cU, 'LineWidth', 1.6, ...
+        'DisplayName', sprintf('no RTM correction: mean %.2f %%, std %.1f %%', mean(su), std(su)));
+    histogram(sc, edges, 'Normalization', 'pdf', 'FaceColor', cC, 'FaceAlpha', .35, 'EdgeColor', cC, ...
+        'DisplayName', sprintf('with RTM correction: mean %.2f %%, std %.1f %%', mean(sc), std(sc)));
+    xline(0, 'k-', 'HandleVisibility', 'off');
+    xlabel('SIC of open-water tie-point pixels [%]'); ylabel('probability density');
+    title(sprintf('%s, 1-27 Feb 1973 (%d pixels)', hn(h), numel(su)));
+    legend('Location', 'northeast');
+end
+title(tl, {'Task 1: open-water SIC, all pixels of 1-27 Feb 1973', 'Ideal: narrow peak at 0 %'}, 'FontWeight', 'bold');
+exportgraphics(fig, fullfile('output', 'A6b_hist.png'), 'Resolution', 150);
+fprintf('saved output/A6b_iterative.png, output/A6b_hist.png\n');
 
 % ---------------------------------------------------------------------------
 function M = means(s)
