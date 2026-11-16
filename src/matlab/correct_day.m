@@ -7,9 +7,11 @@ function [O, TP] = correct_day(fnames, NIT)
 %   iteration 1: c = ERA5 siconc; reference = (1-c)*mean_water + c*mean_ice; L mean in both runs
 %   tie points = cluster means of TB + dTB; new c = SIC clipped to 0..1, < 0.15 -> 0
 % Returns
-%   O(k): struct per orbit with fields valid, dtb (NaN where not corrected: invalid or ERA5 land), plus
-%         the orbit data from load_orbit (lat, lon, tb_f, siconc, sst, theta, ...)
-%   TP.N / TP.S: water_u, ice_u, water_c, ice_c, nw, ni, w_std_u, w_std_c, i_std_u, i_std_c (std SIC in %)
+%   O(k): struct per orbit with fields valid, dtb (NaN where not corrected: invalid or ERA5 land),
+%         c (ice fraction used in the last iteration), dV, dW, dL, dTs, dTi (part of dtb from each input,
+%         dL = not applied), plus the orbit data from load_orbit (lat, lon, tb_f, siconc, sst, theta, L, Tsx ...)
+%   TP.N / TP.S: water_u, ice_u, water_c, ice_c, nw, ni, w_std_u, w_std_c, i_std_u, i_std_c (std SIC in %),
+%         Mw, Mi (cluster means of V, W, L, Ts, Ti: the reference is (1-c)*Mw + c*Mi)
 if nargin < 2 || isempty(NIT), NIT = 2; end
 edge = false(1, 78); edge([1:4, 75:78]) = true;
 inp = {'V','W','L','Ts','Ti'};
@@ -46,13 +48,28 @@ for h = 1:2
     su = (X.tb - tpw_u) / (tpi_u - tpw_u);
     TP.(hn(h)) = struct('water_u', tpw_u, 'ice_u', tpi_u, 'water_c', tpw_c, 'ice_c', tpi_c, ...
         'nw', nnz(isw), 'ni', nnz(isi), 'w_std_u', 100*std(su(isw)), 'w_std_c', 100*std(sic(isw)), ...
-        'i_std_u', 100*std(su(isi)), 'i_std_c', 100*std(sic(isi)));
-    % scatter dtb back into the orbits
+        'i_std_u', 100*std(su(isi)), 'i_std_c', 100*std(sic(isi)), 'Mw', Mw, 'Mi', Mi);
+    % share of each input in dtb (last iteration): swap only that input from reference to pixel value.
+    % L is not corrected (both runs use Lr); its part is what a correction with ERA5 L would add.
+    % The parts do not add up exactly to dtb (the model is non-linear); the rest is small.
+    ref = struct('V', r('V'), 'W', r('W'), 'L', Lr, 'Ts', r('Ts'), 'Ti', r('Ti'));
+    T0 = esmr_rtm_vec(ref.V, ref.W, ref.L, ref.Ts, ref.Ti, c, X.th);
+    part = struct();
+    for v = inp
+        a = ref; a.(v{1}) = X.(v{1});
+        part.(v{1}) = T0 - esmr_rtm_vec(a.V, a.W, a.L, a.Ts, a.Ti, c, X.th);
+    end
+    % scatter dtb, c and the parts back into the orbits
     pos = 0;
     for k = 1:numel(O)
-        if h == 1, O(k).dtb = nan(size(O(k).tb_f)); end
-        m = O(k).corr & hs{k}; n = nnz(m);
-        O(k).dtb(m) = dtb(pos + (1:n)); pos = pos + n;
+        if h == 1
+            O(k).dtb = nan(size(O(k).tb_f)); O(k).c = O(k).dtb;
+            for v = inp, O(k).(['d' v{1}]) = O(k).dtb; end
+        end
+        m = O(k).corr & hs{k}; n = nnz(m); ix = pos + (1:n);
+        O(k).dtb(m) = dtb(ix); O(k).c(m) = c(ix);
+        for v = inp, O(k).(['d' v{1}])(m) = part.(v{1})(ix); end
+        pos = pos + n;
     end
 end
 end
