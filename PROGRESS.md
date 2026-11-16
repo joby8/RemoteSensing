@@ -32,8 +32,8 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
 - [x] A6b Iterative correction (session 2026-11-13): Table 2 clusters (ice siconc > 0.8, |lat| ≥ 50°), c_ice from ERA5 → iterate, reference values mixed by c_ice; std per day N/S for water and ice. **Main method for Task 1.**
 
 ### Phase B: tasks
-- [x] B1 Task 2 (agreed 2026-11-13: **RTM sensitivity study**): `b1_sensitivity.m` → `output/B1_sensitivity.png` = static report version of the learning-page animation (θ on x axis, ΔT_B per +1σ of each input). Optional: data exclusion test as cross-check.
-- [ ] B2 Task 3: std of SIC per θ bin, uncorrected vs corrected (like Fig. 5, but in % SIC).
+- [x] B1 Task 2 (agreed 2026-11-13: **RTM sensitivity study**): `b1_sensitivity.m` → `output/B1_sensitivity.png` = static report version of the learning-page animation (θ on x axis, ΔT_B per +1σ of each input). Exclusion test with the data done 2026-11-16: `b1c_exclusion.m` → `output/B1c_exclusion.png` (V > W ≫ Ts; Ts can be dropped; Ti only for ice).
+- [x] B2 Task 3: std of SIC per scan position over the whole swath, uncorrected vs corrected (`b2_angle.m` → `output/B2_std_vs_angle.png`, edge |θ| > 55.7° dashed). Water noise flat to ~40°, then rises (Arctic corrected 7.8 → 9.3 → 11.1 %); ice flat. Notes: `report_notes/B2_angle.md`
 - [ ] B3 Scale up to all of Feb 1973, both hemispheres. Vectorise the RTM (NumPy) if the loop is too slow.
 - [ ] B4 Task 4: recommendation (angle cut-off, which variables, ice side, clouds).
 - [ ] B5 Seminar slides (length tbc) · B6 Report.
