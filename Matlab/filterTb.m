@@ -34,7 +34,7 @@ for i = 1:T-6
 end
 
 % Filter outer
-Tbfilt = Tb(5:N-5,:);
+Tbfilt = Tb(5:N-4,:);
 
 % Check Results
 % figure();

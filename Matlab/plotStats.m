@@ -1,9 +1,9 @@
 close all
 
-load("Uncorrected.mat")
-load("Corrected.mat")
+load("Uncorrected3.mat")
+load("Corrected3.mat")
 
-figure('Position',[25,50, 1200,800])
+figure('Position',[25,50, 1200,600])
 hold on
 plot(Corrected.Arc_ice_mean, 'LineStyle','-',"DisplayName","Arctic Sea Ice", 'LineWidth',2,'Color','b')
 plot(Corrected.Arc_ocean_mean, 'LineStyle','-',"DisplayName","Arctic Ocean", 'LineWidth',2,'Color','r')
@@ -21,7 +21,7 @@ xlim([1,27])
 legend("NumColumns",2,'FontSize',18)
 grid
 
-figure('Position',[25,50, 1200,800])
+figure('Position',[25,50, 1200,600])
 hold on
 plot(Corrected.Arc_ice_std, 'LineStyle','-',"DisplayName","Arctic Sea Ice", 'LineWidth',2,'Color','b')
 plot(Corrected.Arc_ocean_std, 'LineStyle','-',"DisplayName","Arctic Ocean", 'LineWidth',2,'Color','r')

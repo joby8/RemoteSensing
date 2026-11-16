@@ -1,25 +1,14 @@
-function [A] = PlotOnGlobe(Data)
-land = (Data.variables.lsm.data(5:end-5, :) > 0.5);
-
-sic_arc = (Data.variables.Tbfilt - Arc_ocean_mean)/(Arc_ice_mean - Arc_ocean_mean);
-sic_arc(sic_arc>0.95) = 1;
-sic_arc(sic_arc<0) = 0;
-sic_arc(Data.variables.Latitude.data(5:end-5,:) < 50) = NaN;
-sic_arc(Data.variables.Latitude.data(5:end-5,:) > 90) = NaN;
-sic_arc(land) = NaN;
+function [A] = PlotOnGlobe(DataStruct)
+Latitude = DataStruct.variables.Latitude.data(5:end-4,:);
+Longitude = DataStruct.variables.Longitude.data(5:end-4,:);
 
 
-sic_ant = (Data.variables.Tbfilt - Ant_ocean_mean)/(Ant_ice_mean - Ant_ocean_mean);
-sic_ant(sic_ant>0.95) = 1;
-sic_ant(sic_ant<0) = 0;
-sic_ant(Data.variables.Latitude.data(5:end-5,:)> -50) = NaN;
-sic_ant(Data.variables.Latitude.data(5:end-5,:)< -90) = NaN;
-sic_ant(land) = NaN;
 
-Latitude = Data.variables.Latitude.data(5:end-5,:);
-Longitude = Data.variables.Longitude.data(5:end-5,:);
+idx = isnan(DataStruct.TP.TbArcIce);
+Data = DataStruct.TP.TbArcIce;
+Data(idx) = DataStruct.TP.TbArcOcean(idx);
 
-% sic_ant = Data.variables.siconc.data(5:end-5,:);
+% sic_ant = Data.variables.siconc.data(5:end-4,:);
 
 figure('Color','w','Position',[100 100 1400 650]);
 
@@ -40,15 +29,15 @@ framem on
 gridm on
 hold on
 
-% valid_N = isfinite(Latitude) & ...
-%           isfinite(Longitude) & ...
-%           isfinite(sic_arc) & ...
-%           Latitude >= 50 & Latitude <= 90;
+valid_N = isfinite(Latitude) & ...
+          isfinite(Longitude) & ...
+          isfinite(Data) & ...
+          Latitude >= 50 & Latitude <= 90;
 
 % Ungültige Werte auf NaN setzen
 lat_N = Latitude;
 lon_N = Longitude;
-sic_N = sic_arc;
+sic_N = Data+0;
 
 % lat_N(~valid_N) = NaN;
 % lon_N(~valid_N) = NaN;
@@ -61,7 +50,9 @@ load coastlines
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
 colormap(gca,cmap)
-clim([0 1])
+% clim([0 1])
+clim([80,280])
+
 
 title('Arctic Sea Ice Concentration', ...
     'FontSize',14,'FontWeight','bold');
@@ -82,14 +73,18 @@ framem on
 gridm on
 hold on
 
+idx = isnan(DataStruct.TP.TbAntIce);
+Data = DataStruct.TP.TbAntIce;
+Data(idx) = DataStruct.TP.TbAntOcean(idx);
+
 valid_S = isfinite(Latitude) & ...
           isfinite(Longitude) & ...
-          isfinite(sic_ant) & ...
+          isfinite(Data) & ...
           Latitude <= -50 & Latitude >= -90;
 
 lat_S = Latitude;
 lon_S = Longitude;
-sic_S = sic_ant;
+sic_S = Data+0;
 
 % lat_S(~valid_S) = NaN;
 % lon_S(~valid_S) = NaN;
@@ -101,7 +96,9 @@ pcolorm(lat_S, lon_S, sic_S);
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
 colormap(gca,cmap)
-clim([0 1])
+% clim([0 1])
+clim([80,280])
+
 
 title('Antarctic Sea Ice Concentration', ...
     'FontSize',14,'FontWeight','bold');

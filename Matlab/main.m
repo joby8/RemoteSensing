@@ -1,17 +1,11 @@
 clear
 close all
  
-readAllFiles;
-projectdir = '..\ESMR_colocated_filtered';
-dinfo = dir(fullfile(projectdir));
-dinfo([dinfo.isdir]) = [];
-nfiles = length(dinfo);
-
 init;
 
 
 % DataOfDay(length(cdffiles)) = struct();
-for day = 1:27
+for day = 1:1
 cdffiles = day_indices(1,day):day_indices(2,day);     
 fileindex = 1;
 for j = cdffiles
@@ -27,7 +21,7 @@ for j = cdffiles
   Data.variables.Tbfilt = Tbfilt;
     
   % Determine Tie Points
-  TP = getTiePoints(Data);
+  TP = getTiePoints2(Data);
   Data.TP = TP;
   
   % Calculate Mean and STD of 4 Tie Points
@@ -49,7 +43,6 @@ Uncorrected.Arc_ice_std(end+1) = mean(TPstats.arc_ice_std,'omitnan');
 Uncorrected.Ant_ocean_std(end+1) = mean(TPstats.ant_ocean_std,'omitnan');
 Uncorrected.Arc_ocean_std(end+1) = mean(TPstats.arc_ocean_std,'omitnan');
 
-TPstats = [];
 
 % Correct Data with Differential RTM
 applyRTM;
@@ -69,9 +62,9 @@ Corrected.Arc_ice_std(end+1) = mean(TPstatsCorrected.arc_ice_std,'omitnan');
 Corrected.Ant_ocean_std(end+1) = mean(TPstatsCorrected.ant_ocean_std,'omitnan');
 Corrected.Arc_ocean_std(end+1) = mean(TPstatsCorrected.arc_ocean_std,'omitnan');
 
-TPstatsCorrected = [];
+clear TPstats TPstatsCorrected;
 clear DataOfDay
 
-fprintf('\rCompleted Day %.0f', day)
+fprintf('Completed Day %.0f\n', day)
 end
 fprintf('\n')

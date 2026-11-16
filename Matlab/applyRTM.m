@@ -14,35 +14,35 @@ for j = 1:length(cdffiles)
 
     
     % Water vapor
-    V = DataOfDay(j).variables.tcwv.data(5:end-5,:);
+    V = DataOfDay(j).variables.tcwv.data(5:end-4,:);
     Vsingle(j,1) = meanOfWeather(V,ArcIce);
     Vsingle(j,2) = meanOfWeather(V,ArcOcean);
     Vsingle(j,3) = meanOfWeather(V,AntIce);
     Vsingle(j,4) = meanOfWeather(V,AntOcean);
     
     % Wind speed
-    W = sqrt(DataOfDay(j).variables.v10.data(5:end-5,:).^2 + DataOfDay(j).variables.u10.data(5:end-5,:).^2);
+    W = sqrt(DataOfDay(j).variables.v10.data(5:end-4,:).^2 + DataOfDay(j).variables.u10.data(5:end-4,:).^2);
     Wsingle(j,1) = meanOfWeather(W,ArcIce);
     Wsingle(j,2) = meanOfWeather(W,ArcOcean);
     Wsingle(j,3) = meanOfWeather(W,AntIce);
     Wsingle(j,4) = meanOfWeather(W,AntOcean);
 
     % Cloud Liquid Water
-    L = V- DataOfDay(j).variables.tcw.data(5:end-5,:);
+    L = DataOfDay(j).variables.tcw.data(5:end-4,:) - V;
     Lsingle(j,1) = meanOfWeather(L,ArcIce);
     Lsingle(j,2) = meanOfWeather(L,ArcOcean);
     Lsingle(j,3) = meanOfWeather(L,AntIce);
     Lsingle(j,4) = meanOfWeather(L,AntOcean);
     
     % Sea Surface Temperature
-    Ts = DataOfDay(j).variables.sst.data(5:end-5,:);
+    Ts = DataOfDay(j).variables.sst.data(5:end-4,:);
     Tssingle(j,1) = meanOfWeather(Ts,ArcIce);
     Tssingle(j,2) = meanOfWeather(Ts,ArcOcean);
     Tssingle(j,3) = meanOfWeather(Ts,AntIce);
     Tssingle(j,4) = meanOfWeather(Ts,AntOcean);
 
     % Ice Temperature
-    Ti = 0.4 * DataOfDay(j).variables.t2m.data(5:end-5,:) + 0.6*272;
+    Ti = 0.4 * DataOfDay(j).variables.t2m.data(5:end-4,:) + 0.6*272;
     Tisingle(j,1) = meanOfWeather(Ti,ArcIce);
     Tisingle(j,2) = meanOfWeather(Ti,ArcOcean);
     Tisingle(j,3) = meanOfWeather(Ti,AntIce);
@@ -65,59 +65,59 @@ for j = 1:length(cdffiles)
     AntIce = DataOfDay(j).TP.AntIce;
     AntOcean = DataOfDay(j).TP.AntOcean;
 
-    theta = spos2ia(5:end-5);
+    theta = spos2ia(5:end-4);
     theta = repmat(abs(theta'), [1,DataOfDay(j).dimensions.Time]);
 
-    SIC_ArcIce = DataOfDay(j).SIC.Arc;
-    % SIC_ArcIce = 1;
-    SIC_ArcIce(isnan(ArcIce)) = NaN;
-    SIC_ArcOcean = DataOfDay(j).SIC.Arc;
-    % SIC_ArcOcean = 0;
-    SIC_ArcOcean(isnan(ArcOcean)) = NaN;
-    SIC_AntIce = DataOfDay(j).SIC.Ant;
-    % SIC_AntIce = 1;
-    SIC_AntIce(isnan(AntIce)) = NaN;
-    SIC_AntOcean = DataOfDay(j).SIC.Ant;
-    % SIC_AntOcean = 0;
-    SIC_AntOcean(isnan(AntOcean)) = NaN;
+    % SIC_ArcIce = DataOfDay(j).SIC.Arc;
+    SIC_ArcIce = 1;
+    % SIC_ArcIce(isnan(ArcIce)) = NaN;
+    % SIC_ArcOcean = DataOfDay(j).SIC.Arc;
+    SIC_ArcOcean = 0;
+    % SIC_ArcOcean(isnan(ArcOcean)) = NaN;
+    % SIC_AntIce = DataOfDay(j).SIC.Ant;
+    SIC_AntIce = 1;
+    % SIC_AntIce(isnan(AntIce)) = NaN;
+    % SIC_AntOcean = DataOfDay(j).SIC.Ant;
+    SIC_AntOcean = 0;
+    % SIC_AntOcean(isnan(AntOcean)) = NaN;
 
-    V = DataOfDay(j).variables.tcwv.data(5:end-5,:);
+    V = DataOfDay(j).variables.tcwv.data(5:end-4,:);
     VArcIce = V;
     VArcIce(isnan(ArcIce)) = NaN;
     VArcOcean = V;
     VArcOcean(isnan(ArcOcean)) = NaN;  
     VAntIce = V;
-    VAntIce(isnan(ArcIce)) = NaN;  
+    VAntIce(isnan(AntIce)) = NaN;  
     VAntOcean = V;
     VAntOcean(isnan(AntOcean)) = NaN;
 
-    W = sqrt(DataOfDay(j).variables.v10.data(5:end-5,:).^2 + DataOfDay(j).variables.u10.data(5:end-5,:).^2);
+    W = sqrt(DataOfDay(j).variables.v10.data(5:end-4,:).^2 + DataOfDay(j).variables.u10.data(5:end-4,:).^2);
     WArcIce = W;
     WArcIce(isnan(ArcIce)) = NaN;
     WArcOcean = W;
     WArcOcean(isnan(ArcOcean)) = NaN;  
     WAntIce = W;
-    WAntIce(isnan(ArcIce)) = NaN;  
+    WAntIce(isnan(AntIce)) = NaN;  
     WAntOcean = W;
     WAntOcean(isnan(AntOcean)) = NaN;
 
-    Ts = DataOfDay(j).variables.sst.data(5:end-5,:);
+    Ts = DataOfDay(j).variables.sst.data(5:end-4,:);
     TsArcIce = Ts;
     TsArcIce(isnan(ArcIce)) = NaN;
     TsArcOcean = Ts;
     TsArcOcean(isnan(ArcOcean)) = NaN;  
     TsAntIce = Ts;
-    TsAntIce(isnan(ArcIce)) = NaN;  
+    TsAntIce(isnan(AntIce)) = NaN;  
     TsAntOcean = Ts;
     TsAntOcean(isnan(AntOcean)) = NaN;
 
-    Ti = 0.4 * DataOfDay(j).variables.t2m.data(5:end-5,:) + 0.6*272;
+    Ti = 0.4 * DataOfDay(j).variables.t2m.data(5:end-4,:) + 0.6*272;
     TiArcIce = Ti;
     TiArcIce(isnan(ArcIce)) = NaN;
     TiArcOcean = Ti;
     TiArcOcean(isnan(ArcOcean)) = NaN;  
     TiAntIce = Ti;
-    TiAntIce(isnan(ArcIce)) = NaN;  
+    TiAntIce(isnan(AntIce)) = NaN;  
     TiAntOcean = Ti;
     TiAntOcean(isnan(AntOcean)) = NaN;
 
@@ -128,7 +128,31 @@ for j = 1:length(cdffiles)
     RTMday_AntOcean = esmr_rtm(Vday(4),Wday(4),Lday(4),Tsday(4),Tiday(4),SIC_AntOcean,theta);
 
     % Model for individual measurement
-    if ~any(ignore(j,:))
+    if ignore(j,1)
+        VArcIce = Vday(1);
+        VArcOcean = Vday(2);
+        VAntIce = Vday(3);
+        VAntOcean = Vday(4);
+    end  
+    if ignore(j,2)
+        WArcIce = Wday(1);
+        WArcOcean = Wday(2);
+        WAntIce = Wday(3);
+        WAntOcean = Wday(4);
+    end
+    if ignore(j,3)
+        TsArcIce = Tsday(1);
+        TsArcOcean = Tsday(2);
+        TsAntIce = Tsday(3);
+        TsAntOcean = Tsday(4);
+    end
+    if ignore(j,4)
+        TiArcIce = Tiday(1);
+        TiArcOcean = Tiday(2);
+        TiAntIce = Tiday(3);
+        TiAntOcean = Tiday(4);
+    end
+    
     RTM_ArcIce = esmr_rtm(VArcIce,WArcIce, Lday(1),TsArcIce,TiArcIce,SIC_ArcIce,theta);
     RTM_ArcOcean = esmr_rtm(VArcOcean,WArcOcean,Lday(2),TsArcOcean,TiArcOcean,SIC_ArcOcean,theta);
     RTM_AntIce = esmr_rtm(VAntIce,WAntIce,Lday(3),TsAntIce,TiAntIce,SIC_AntIce,theta);
@@ -145,18 +169,12 @@ for j = 1:length(cdffiles)
     DataOfDay(j).Corrected.TbArcOcean = DataOfDay(j).TP.TbArcOcean + DeltaTb_ArcOcean;
     DataOfDay(j).Corrected.TbAntIce = DataOfDay(j).TP.TbAntIce + DeltaTb_AntIce;
     DataOfDay(j).Corrected.TbAntOcean = DataOfDay(j).TP.TbAntOcean + DeltaTb_AntOcean;
-    else
-    DataOfDay(j).Corrected.TbArcIce = NaN;
-    DataOfDay(j).Corrected.TbArcOcean = NaN;
-    DataOfDay(j).Corrected.TbAntIce = NaN;
-    DataOfDay(j).Corrected.TbAntOcean = NaN;
-    end
 
 end
 
 function mPara = meanOfWeather(Para, Mask)
 
-    Para(~Mask) = NaN;
-    mPara = mean(mean(Para,'omitnan'),'omitnan');
+    Para(isnan(Mask)) = NaN;
+    mPara = mean(Para,'all','omitnan');
 
 end

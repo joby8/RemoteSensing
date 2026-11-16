@@ -38,3 +38,10 @@ SIC.Lat = [];
 SIC.Lon = [];
 
 TPnames = ["ArcIce", "ArcOcean","AntIce","AntOcean"];
+
+readAllFiles;
+projectdir = '..\ESMR_colocated_filtered';
+dinfo = dir(fullfile(projectdir));
+dinfo([dinfo.isdir]) = [];
+nfiles = length(dinfo);
+
