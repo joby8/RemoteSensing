@@ -35,3 +35,11 @@ Remove pixels that are physically implausible or not useful before computing tie
 ## Open
 
 - Eq. 2–4 of the paper (further quality filters) not implemented; only if Tonboe asks for them.
+- **Correction: `brightness_temperature_filtered` is not Eq. 1 alone.** It also removes **whole scan lines** around single-pixel spikes (orbit 1973-02-01 04:21):
+  - 3 712 px are outside 90–273.15 K, but 20 980 px *inside* that range are removed as well.
+  - 276 of 1 483 rows are fully removed (50 blocks); 177 of these rows contain no out-of-range pixel. Rows with a bad pixel outside these blocks (281) keep their other pixels.
+  - 48 of 50 blocks sit around an along-track spike (Eq. 3, > 150 K): mostly spike row ± 1 (3 rows), 5–7 rows for repeated spikes, 16–18 rows in 8 cases (likely a whole data record). 2 blocks of 16 rows have no spike at all.
+  - Example: row 386 has 2 pixels at −77 K (rest ≈ 140 K) → rows 373–388 removed.
+  - Paper Eq. 2 (row mean |ΔT_B| > 50 K) flags no row on the raw data, so this is DMI's implementation, not the equation as written.
+  - The viewer step "Eq. 1" and the text above are therefore mislabelled (fix after asking Tonboe).
+- **Question for Tonboe:** is removing whole rows intended, or should we filter per pixel (Eq. 1 + Eq. 3) and keep ≈ 18 % more data? Our notes from 2026-11-10 only say "use the filtered field". Compare with the less aggressive filter in Tellefsen et al. 2026.

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SP-459 Map Comparison</title>
+<style>
+:root {
+  --ink: #0b0b0b; --muted: #52514e; --rule: #d9d8d4; --surface: #fcfcfb; --card: #f4f3f0;
+  --ice: #2a78d6; --ours: #eb6834; --sp: #1baf7a; --land: #a8a7a2; --line: #eb6834;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--surface); color: var(--ink); margin: 0; }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.5; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.3px; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 28px; }
+nav a { text-decoration: none; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+nav a:hover { border-color: var(--ink); }
+section { border-top: 1px solid var(--rule); padding: 22px 0 8px; }
+h2 { font-size: 19px; margin: 0 0 6px; display: flex; gap: 10px; align-items: baseline; }
+h2 .n { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--surface); font-size: 14px; flex: none; }
+p { margin: 6px 0 10px; max-width: 75ch; }
+.why { color: var(--muted); font-size: 14px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 10px 0; }
+@media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+figure { margin: 0; background: #fff; border: 1px solid var(--rule); border-radius: 8px; padding: 8px; }
+figure img { width: 100%; height: auto; display: block; border-radius: 4px; }
+figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.key { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; margin: 6px 0 10px; }
+.key span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,.25); display: inline-block; flex: none; }
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; margin: 10px 0; }
+.chip { font-size: 12px; text-align: center; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: #fff; }
+.chip i { display: block; height: 26px; }
+.chip b { display: block; font-weight: 500; padding: 2px 0; }
+.chip.flag { outline: 2px solid var(--ours); outline-offset: -2px; }
+table { border-collapse: collapse; margin: 10px 0; font-size: 14px; width: 100%; max-width: 760px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--rule); }
+th { font-weight: 600; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.take { background: var(--card); border-left: 4px solid var(--ink); padding: 10px 14px; border-radius: 4px; margin: 12px 0; max-width: 80ch; }
+code { font-size: 13px; background: var(--card); padding: 1px 4px; border-radius: 3px; }
+.foot { color: var(--muted); font-size: 13px; margin-top: 30px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Comparing our map with NASA SP-459 (1983)</h1>
+<p class="sub">Step by step: how the printed February 1973 sea ice map from Zwally et al. (1983) was turned into something we can lay over our own ESMR result. Script: <code>src/matlab/c1_sp459_compare.m</code> · Notes: <code>C1_SP459_comparison.md</code></p>
+
+<nav>
+  <a href="#s0">0 Idea</a><a href="#s1">1 Georeference</a><a href="#s2">2 Colours to classes</a>
+  <a href="#s3">3 Onto the grid</a><a href="#s4">4 Our map</a><a href="#s5">5 Overlay</a><a href="#s6">6 Numbers</a><a href="#s7">7 Meaning</a>
+</nav>
+
+<section id="s0">
+  <h2><span class="n">0</span>The idea</h2>
+  <p>The book analysed the <b>same instrument</b> (Nimbus-5 ESMR, 19 GHz) for the <b>same month</b> (February 1973), but with the 1983 method: fixed tie points and no atmospheric correction. If our pipeline works, the <b>ice edge</b> should be in roughly the same place. The book only exists as a printed colour map, so we cannot just load its numbers.</p>
+  <p class="why">Decision: we do <b>not</b> try to read concentration values from the colours (not asked in the task, and unreliable for a 50-year-old print). We only take <b>ice / no ice</b> from the map and compare the edge and the extent. For the ice area we use the number printed in the book (Table 3-2).</p>
+  <div class="grid2">
+    <figure><img src="../docs/sp459/fig5-2a_feb1973.jpg" alt="SP-459 Fig. 5-2a, February 1973"><figcaption>Input: Fig. 5-2a (p. 96), February 1973 panel, cut from the NASA scan at 300 dpi.</figcaption></figure>
+    <figure><img src="../output/C1_steps/s4_our_sic.png" alt="Our mean SIC February 1973"><figcaption>What we want to compare it with: our mean SIC for February 1973 (step 4).</figcaption></figure>
+  </div>
+</section>
+
+<section id="s1">
+  <h2><span class="n">1</span>Georeference: which pixel of the scan is which latitude/longitude?</h2>
+  <p>The map has a printed grid (circles every 5° of latitude, lines every 45° of longitude, 0° at the top). We measured where these printed lines are in the image (129 points on the 55–70°S circles, 87 points on the meridians) and fitted a <b>polar stereographic</b> projection to them. The scan turned out to be slightly stretched (1.6 % taller than wide), so we fitted an affine transformation.</p>
+  <p>Check: the <span style="color:var(--line);font-weight:600">orange lines</span> are <i>our</i> computed grid. They lie on the printed lines. Remaining error: <b>1.6 px ≈ 9 km</b>, less than a third of a 30 km grid cell.</p>
+  <div class="grid2">
+    <figure><img src="../output/C1_steps/s1_georef.png" alt="Fitted graticule over scan"><figcaption>Full map with the fitted grid (orange). Dashed box = zoom on the right.</figcaption></figure>
+    <figure><img src="../output/C1_steps/s1_georef_zoom.png" alt="Zoom of fitted graticule"><figcaption>Zoom (Weddell Sea): the orange lines sit on the printed grey-green lines.</figcaption></figure>
+  </div>
+</section>
+
+<section id="s2">
+  <h2><span class="n">2</span>Colours → classes: ice, water, land, or printed line?</h2>
+  <p>The legend has 23 colour classes. We measured each legend colour in the scan, and gave every image pixel the class of the <b>nearest</b> colour. We also added "land" (black) and "printed grid line" so that the grid lines are not counted as ice.</p>
+  <div class="chips" aria-label="legend colours measured in the scan">
+    <div class="chip"><i style="background:rgb(186,195,190)"></i><b>≥98 %</b></div>
+    <div class="chip"><i style="background:rgb(116,86,78)"></i><b>96</b></div>
+    <div class="chip"><i style="background:rgb(205,114,87)"></i><b>92</b></div>
+    <div class="chip"><i style="background:rgb(208,140,121)"></i><b>88</b></div>
+    <div class="chip"><i style="background:rgb(207,188,174)"></i><b>84</b></div>
+    <div class="chip"><i style="background:rgb(206,209,194)"></i><b>80</b></div>
+    <div class="chip"><i style="background:rgb(56,63,59)"></i><b>76</b></div>
+    <div class="chip"><i style="background:rgb(71,77,67)"></i><b>72</b></div>
+    <div class="chip"><i style="background:rgb(134,133,103)"></i><b>68</b></div>
+    <div class="chip"><i style="background:rgb(184,182,143)"></i><b>64</b></div>
+    <div class="chip"><i style="background:rgb(196,136,88)"></i><b>60</b></div>
+    <div class="chip"><i style="background:rgb(211,159,87)"></i><b>56</b></div>
+    <div class="chip"><i style="background:rgb(210,183,93)"></i><b>52</b></div>
+    <div class="chip"><i style="background:rgb(214,221,177)"></i><b>48</b></div>
+    <div class="chip"><i style="background:rgb(60,87,70)"></i><b>44</b></div>
+    <div class="chip"><i style="background:rgb(62,129,94)"></i><b>40</b></div>
+    <div class="chip"><i style="background:rgb(71,160,126)"></i><b>36</b></div>
+    <div class="chip flag"><i style="background:rgb(164,195,186)"></i><b>32 ⚠</b></div>
+    <div class="chip"><i style="background:rgb(57,91,101)"></i><b>28</b></div>
+    <div class="chip"><i style="background:rgb(49,127,132)"></i><b>24</b></div>
+    <div class="chip"><i style="background:rgb(36,170,174)"></i><b>20</b></div>
+    <div class="chip"><i style="background:rgb(70,184,193)"></i><b>16</b></div>
+    <div class="chip flag"><i style="background:rgb(170,205,201)"></i><b>&lt;14 water</b></div>
+    <div class="chip"><i style="background:rgb(21,27,25)"></i><b>land</b></div>
+    <div class="chip"><i style="background:rgb(116,160,162)"></i><b>grid line</b></div>
+  </div>
+  <p class="why">⚠ "32 %" and "&lt;14 % water" look almost the same. A simple "is it water-coloured?" threshold would punch holes into the pack ice, which is why we match against all colours. Every class from 16 % upwards counts as <b>ice</b>.</p>
+  <div class="key">
+    <span><i class="sw" style="background:var(--ice)"></i>ice (any class ≥ 16 %)</span>
+    <span><i class="sw" style="background:#fcfcfb"></i>water (&lt; 14 %)</span>
+    <span><i class="sw" style="background:var(--land)"></i>land</span>
+    <span><i class="sw" style="background:var(--line)"></i>printed grid line / blurred colour edge (ignored)</span>
+  </div>
+  <div class="grid2">
+    <figure><img src="../output/C1_steps/s2_scan.png" alt="Scan zoom Weddell Sea"><figcaption>Scan, Weddell Sea.</figcaption></figure>
+    <figure><img src="../output/C1_steps/s2_classes.png" alt="Pixel classes Weddell Sea"><figcaption>Same area after classification. Grid lines (orange) are recognised and ignored. Some very dark ice (72–76 % class) near the coast looks like land: those cells are left out of the comparison.</figcaption></figure>
+  </div>
+</section>
+
+<section id="s3">
+  <h2><span class="n">3</span>Onto our 30 km grid</h2>
+  <p>We use the same <b>30 km polar stereographic grid</b> as the book. For each grid cell we look at the 7×7 scan pixels around its centre and take the <b>majority</b> class, leaving out the grid-line pixels. Then we remove single isolated "ice" cells: an ice cell needs at least 3 ice neighbours. These come from light speckles in the printed water that happen to match the "≥ 98 %" colour.</p>
+  <div class="key">
+    <span><i class="sw" style="background:var(--ice)"></i>ice (SP-459)</span>
+    <span><i class="sw" style="background:#fcfcfb"></i>water</span>
+    <span><i class="sw" style="background:var(--land)"></i>land</span>
+  </div>
+  <div class="grid2">
+    <figure><img src="../output/C1_steps/s3_mask_before.png" alt="SP-459 mask before filter"><figcaption>Before the speckle filter: dots along the printed circles and noise in the open ocean.</figcaption></figure>
+    <figure><img src="../output/C1_steps/s3_mask_after.png" alt="SP-459 mask after filter"><figcaption>After: the SP-459 ice mask we compare with.</figcaption></figure>
+  </div>
+</section>
+
+<section id="s4">
+  <h2><span class="n">4</span>Our map on the same grid</h2>
+  <p>For every day: A6b correction (<code>correct_day.m</code>), SIC per pixel with that day's corrected South tie points. All pixels of the month are averaged per 30 km cell. Ice = mean SIC ≥ 15 %. Land = ERA5.</p>
+  <div class="grid2">
+    <figure><img src="../output/C1_steps/s4_our_sic.png" alt="Our mean SIC"><figcaption>This work: mean SIC February 1973, South.</figcaption></figure>
+    <figure><img src="../output/C1_steps/s3_mask_after.png" alt="SP-459 mask"><figcaption>SP-459 ice mask (from step 3), same grid, same frame.</figcaption></figure>
+  </div>
+</section>
+
+<section id="s5">
+  <h2><span class="n">5</span>Overlay and agreement</h2>
+  <p>Left: our map with <b>both</b> ice edges. Right: cell by cell, who sees ice.</p>
+  <div class="key">
+    <span><i class="sw" style="background:var(--ice)"></i>both see ice</span>
+    <span><i class="sw" style="background:var(--ours)"></i>ice only in our map</span>
+    <span><i class="sw" style="background:var(--sp)"></i>ice only in SP-459</span>
+  </div>
+  <figure><img src="../output/C1_sp459_overlay.png" alt="Overlay and agreement map"><figcaption>(a) orange line = SP-459 ice edge, black line = our 15 % edge. (b) agreement on the common cells (lat ≤ −52°, both have ocean).</figcaption></figure>
+  <p style="margin-top:14px">And the direct visual comparison: our map painted with the <b>book's own colour classes</b>, in the book's projection and frame.</p>
+  <figure><img src="../output/C1_sp459_side_by_side.png" alt="Side by side SP-459 and our map"><figcaption>Left: SP-459 Fig. 5-2a. Right: this work in the same colour classes (black = land from ERA5, white = no data).</figcaption></figure>
+</section>
+
+<section id="s6">
+  <h2><span class="n">6</span>Numbers</h2>
+  <table>
+    <thead><tr><th></th><th>SP-459 (1983)</th><th>This work</th><th>Difference</th></tr></thead>
+    <tbody>
+      <tr><td>Ice extent (cells with ice), common cells</td><td class="num">5.72 × 10⁶ km²</td><td class="num">5.51 × 10⁶ km²</td><td class="num">−4 %</td></tr>
+      <tr><td>Same classification (both ice or both water)</td><td class="num" colspan="2">95.7 % of the common area</td><td></td></tr>
+      <tr><td>Ice area (Σ SIC × cell area)</td><td class="num">2.71 × 10⁶ km² (Table 3-2)</td><td class="num">3.86 × 10⁶ km²</td><td class="num">+42 %</td></tr>
+      <tr><td>Open-water tie point</td><td class="num">135 K (fixed)</td><td class="num">140.9 K (daily, corrected)</td><td></td></tr>
+      <tr><td>100 % ice brightness temperature</td><td class="num">≈ 0.92 · T<sub>i</sub> ≈ 240–245 K</td><td class="num">201.0 K</td><td></td></tr>
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th>Sector (SP-459 definition)</th><th>Extent SP-459</th><th>Extent ours</th></tr></thead>
+    <tbody>
+      <tr><td>Weddell (60°W–20°E)</td><td class="num">1.63</td><td class="num">1.73</td></tr>
+      <tr><td>Indian Ocean (20–90°E)</td><td class="num">0.84</td><td class="num">0.59</td></tr>
+      <tr><td>Pacific (90–160°E)</td><td class="num">0.82</td><td class="num">0.75</td></tr>
+      <tr><td>Ross (160°E–130°W)</td><td class="num">1.10</td><td class="num">1.18</td></tr>
+      <tr><td>Bellingshausen-Amundsen (130–60°W)</td><td class="num">1.33</td><td class="num">1.26</td></tr>
+    </tbody>
+  </table>
+  <p class="why">10⁶ km², common cells. Full table: <code>output/C1_sp459_extent.csv</code>.</p>
+</section>
+
+<section id="s7">
+  <h2><span class="n">7</span>What it means</h2>
+  <div class="take"><b>The ice edge agrees.</b> 96 % of the common area is classified the same and the extent differs by only 4 %. Most of the "only SP-459" cells (0.83 of 0.98 × 10⁶ km²) sit directly at the coast, where the 1983 land mask and ERA5 differ (ice shelves) and a 1-cell position error matters. Our edge is about one cell further out (thin orange ring).</div>
+  <div class="take"><b>Our concentrations are higher.</b> Inside the pack we mostly get ≥ 98 %, the book mostly 50–65 %, and our ice area is 42 % larger. Reason: our 100 % ice tie point (201 K) comes from the ERA5 "siconc &gt; 0.8" pixels in summer (wet snow, melt), which is much lower than the book's ≈ 240 K, so the same T<sub>B</sub> gives a higher SIC. The extent depends on the <i>water</i> tie point and hardly changes, but the area depends strongly on the <i>ice</i> tie point. This is a good discussion point for the report: the summer ice tie point is the weak spot, and SP-459 itself calls the summer area uncertain (p. 67–68).</div>
+</section>
+
+<p class="foot">Source: Zwally, Comiso, Parkinson, Campbell, Carsey, Gloersen (1983), <i>Antarctic Sea Ice, 1973–1976: Satellite Passive-Microwave Observations</i>, NASA SP-459, Fig. 5-2a and Table 3-2. Images are created by <code>c1_sp459_compare.m</code> in <code>output/</code>; run the script first if they are missing.</p>
+</main>
+</body>
+</html>

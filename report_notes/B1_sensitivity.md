@@ -3,6 +3,7 @@
 **Report section:** Results → Task 2 (which ERA5 parameters matter); figure also supports Task 3 (angle dependence)
 **Code:** `src/matlab/b1_sensitivity.m` (needs `output/A6b_pixels.mat` from `a6b_iterative.m`; runs in seconds)
 **Output:** `output/B1_sensitivity.png`, `output/B1_sensitivity.csv` (ΔT_B per unit and per +1σ at θ = 0/30/50/55.5°)
+**Tornado:** `src/matlab/b1b_tornado.m` → `output/B1_tornado.png`, `output/B1_tornado.csv` (±1σ at θ = 50°, in % SIC and K)
 **Status:** first version 2026-11-13
 
 ## Agreed with Tonboe (session 2026-11-13)
@@ -66,6 +67,27 @@ Current figure = line plot ΔT_B vs. θ. Jo: wants more colour and easier to rea
 5. **Fixed colour per input in every figure** (V blue, W orange, L green + hatched/dashed = not corrected, Ts purple, Ti red), also for Task 2/3 figures and slides.
 
 **Recommendation:** report = tornado (1) in % SIC (4) with fixed colours (5) as main figure + heatmap (2) for the θ dependence (together they replace the line plot). Seminar/discussion = noise budget (3) because it tells the L story in one picture. Decision pending (Jo).
+
+## Tornado chart (built 2026-11-13, `b1b_tornado.m`)
+Ideas 1 + 4 + 5 from above: one bar per input, −1σ (light) and +1σ (dark), sorted by size, water and ice panels, θ = 50°, fixed colours, L light + dashed = not corrected.
+- **Unit % SIC:** ΔT_B divided by the ice–water contrast of the corrected A6b tie points (last iteration, mean over days without 28 Feb): **N 81.3 K**, S 60.2 K. Figure uses North → 1 % SIC = 0.81 K. (In the South the same ΔT_B is ~35 % more SIC, mention in text.)
+- **−1σ is computed separately** (RTM is not linear), so the bars are not exactly symmetric. For L the −1σ value is clipped at 0 kg/m² (mean 0.20 − σ 0.32 < 0), so its −1σ bar is smaller (−8.4 % vs. +12.8 %).
+
+| Water, θ = 50° | −1σ | +1σ |
+|---|---|---|
+| L (not corrected) | −8.4 % (−6.8 K) | +12.8 % (+10.4 K) |
+| V | −9.4 % (−7.6 K) | +9.0 % (+7.3 K) |
+| W | −4.1 % (−3.4 K) | +3.8 % (+3.1 K) |
+| Ts | +0.2 % | −0.2 % |
+
+| Ice, θ = 50° | −1σ | +1σ |
+|---|---|---|
+| Ti | −4.5 % (−3.6 K) | +4.5 % (+3.6 K) |
+| V | −0.4 % | +0.5 % |
+| L | −0.2 % | +0.5 % |
+
+Caption idea: "RTM sensitivity at the mean Feb 1973 tie-point weather (θ = 50°). Each bar moves one input by ±1σ of its observed spread in the tie-point clusters, all others at the mean. Over water, V and the uncorrected L dominate; over ice, only the ice temperature matters."
+Still open: heatmap (idea 2) for the θ dependence, noise budget (3) for the seminar.
 
 ## Next / open
 - Optional cross-check with the data: exclusion test (correction with one input fixed at its mean, see how much the std of the corrected SIC grows). This would confirm the ranking V > W ≫ Ts with real pixels.

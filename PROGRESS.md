@@ -57,6 +57,7 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
   - Report the **std per day, north and south**, for the ice and water tie points.
   - Use the ERA5 algorithm: **ERA5 SIC for the T_B model**, criteria as in **Table 2** (interpretation still to confirm).
   - Task 2 = **sensitivity study with the RTM**.
+- **Open question for Tonboe: whole scan lines in `brightness_temperature_filtered`.** The field removes whole rows around single-pixel spikes (Kolbe Eq. 3 outliers): usually spike row ± 1, sometimes 16–18 rows. Orbit 1973-02-01 04:21: 276 of 1483 rows removed, 177 of them without any out-of-range pixel; ≈ 21 000 plausible pixels (≈ 18 %) lost. Example: row 386 has 2 pixels at −77 K → rows 373–388 removed. Not the paper's Eq. 2 (> 50 K row mean) as written. Ask: is dropping whole rows intended, or should we filter per pixel (Eq. 1 + Eq. 3)? Our meeting notes (2026-11-10) only say "use the filtered field"; compare with the less aggressive filter in Tellefsen et al. 2026. Details: `report_notes/A3_filters.md` → Open.
 - Still to check: seminar length (newer paper from Tonboe's mail is optional reading).
 - `esmr_rtm.py` ice emissivity table (0.93) ≠ paper Table 1 (0.91); irrelevant over open water.
 - `provided/esmr_rtm.m` is scalar-only and uses `endif` (Octave syntax, not valid in MATLAB): needs a fixed/vectorised copy in `src/matlab/` before A5/A6. `interp1` returns NaN outside −5…25 °C.
