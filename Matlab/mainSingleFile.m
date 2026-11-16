@@ -1,22 +1,16 @@
 clear
 close all
- 
-A = readNetCDFStruct("..\ESMR_colocated_filtered\Nimbus5-ESMR_1973m0201t144349_DS32.nc");
+
+A = readNetCDFStruct(fullfile('..','ESMR_colocated_filtered', ...
+    'Nimbus5-ESMR_1973m0201t144349_DS32.nc'));
 load("spos2ia.mat")
-A.variables.incidence = abs(repmat(spos2ia',1, A.dimensions.Time));
 
-TPstats = [];
-
-A.variables.incidence = abs(repmat(spos2ia',1, A.dimensions.Time));
-
-Tbfilt = filterTb(A);
-A.variables.Tbfilt = Tbfilt;
-
-% deltaTb = applyRTM(A);
+A.variables.Tbfilt = filterTb(A);
 
 TP = getTiePoints(A);
 
-TPstats = meanAndStdTP(TP, TPstats);
+% Tie points of this single file (same statistics as main.m)
+TPstats = poolStats(struct(), TP);
 
 ImagescPlots;
-PlotOnGlobe(A)
+PlotOnGlobe(A, TPstats)

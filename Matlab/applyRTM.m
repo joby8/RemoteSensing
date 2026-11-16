@@ -1,162 +1,81 @@
-V = zeros(length(cdffiles),4);
-W = zeros(length(cdffiles),4);
-L = zeros(length(cdffiles),4);
-Ts = zeros(length(cdffiles),4);
-Ti = zeros(length(cdffiles),4);
+% Differential RTM correction for one day (script, runs inside main.m).
+% Needs: DataOfDay (struct array of the day's files), Uncorrected, spos2ia, TPnames
+%
+% Tb_corr = Tb + ( RTM(day-mean weather) - RTM(pixel weather) )
+% L is NOT corrected: the day-mean L goes into both runs (paper Sect. 4.1;
+% ERA5 clouds do not match the 1973 clouds pixel by pixel, see report_notes/A6).
 
+nF   = numel(DataOfDay);
+hemi = ["Arc","Arc","Ant","Ant"];      % SIC field per tie-point class
 
-for j = 1:length(cdffiles)    
+% --- 1) mean weather per file and class (fresh arrays every day) ---------
+Vsingle  = NaN(nF,4);
+Wsingle  = NaN(nF,4);
+Lsingle  = NaN(nF,4);
+Tssingle = NaN(nF,4);
+Tisingle = NaN(nF,4);
+
+for j = 1:nF
     DataOfDay(j).SIC = calculateSIC(DataOfDay(j), Uncorrected);
-    ArcIce = DataOfDay(j).TP.ArcIce;
-    ArcOcean = DataOfDay(j).TP.ArcOcean;
-    AntIce = DataOfDay(j).TP.AntIce;
-    AntOcean = DataOfDay(j).TP.AntOcean;
-
-    
-    % Water vapor
-    V = DataOfDay(j).variables.tcwv.data(5:end-5,:);
-    Vsingle(j,1) = meanOfWeather(V,ArcIce);
-    Vsingle(j,2) = meanOfWeather(V,ArcOcean);
-    Vsingle(j,3) = meanOfWeather(V,AntIce);
-    Vsingle(j,4) = meanOfWeather(V,AntOcean);
-    
-    % Wind speed
-    W = sqrt(DataOfDay(j).variables.v10.data(5:end-5,:).^2 + DataOfDay(j).variables.u10.data(5:end-5,:).^2);
-    Wsingle(j,1) = meanOfWeather(W,ArcIce);
-    Wsingle(j,2) = meanOfWeather(W,ArcOcean);
-    Wsingle(j,3) = meanOfWeather(W,AntIce);
-    Wsingle(j,4) = meanOfWeather(W,AntOcean);
-
-    % Cloud Liquid Water
-    L = V- DataOfDay(j).variables.tcw.data(5:end-5,:);
-    Lsingle(j,1) = meanOfWeather(L,ArcIce);
-    Lsingle(j,2) = meanOfWeather(L,ArcOcean);
-    Lsingle(j,3) = meanOfWeather(L,AntIce);
-    Lsingle(j,4) = meanOfWeather(L,AntOcean);
-    
-    % Sea Surface Temperature
-    Ts = DataOfDay(j).variables.sst.data(5:end-5,:);
-    Tssingle(j,1) = meanOfWeather(Ts,ArcIce);
-    Tssingle(j,2) = meanOfWeather(Ts,ArcOcean);
-    Tssingle(j,3) = meanOfWeather(Ts,AntIce);
-    Tssingle(j,4) = meanOfWeather(Ts,AntOcean);
-
-    % Ice Temperature
-    Ti = 0.4 * DataOfDay(j).variables.t2m.data(5:end-5,:) + 0.6*272;
-    Tisingle(j,1) = meanOfWeather(Ti,ArcIce);
-    Tisingle(j,2) = meanOfWeather(Ti,ArcOcean);
-    Tisingle(j,3) = meanOfWeather(Ti,AntIce);
-    Tisingle(j,4) = meanOfWeather(Ti,AntOcean);    
+    wx = weatherFields(DataOfDay(j));
+    for k = 1:4
+        mask = DataOfDay(j).TP.(TPnames(k));
+        Vsingle(j,k)  = meanOfWeather(wx.V,  mask);
+        Wsingle(j,k)  = meanOfWeather(wx.W,  mask);
+        Lsingle(j,k)  = meanOfWeather(wx.L,  mask);
+        Tssingle(j,k) = meanOfWeather(wx.Ts, mask);
+        Tisingle(j,k) = meanOfWeather(wx.Ti, mask);
+    end
 end
 
-% Calculate mean of weather paramters for the day
-
-ignore = (isnan(Vsingle) | isnan(Wsingle) | isnan(Tssingle) | isnan(Tisingle));
-
-Vday = mean(Vsingle, 1,'omitnan');
-Wday = mean(Wsingle, 1,'omitnan');
-Lday = mean(Lsingle, 1,'omitnan');
-Tsday = mean(Tssingle, 1,'omitnan');
+% --- 2) reference weather = mean over the day ----------------------------
+Vday  = mean(Vsingle, 1,'omitnan');
+Wday  = mean(Wsingle, 1,'omitnan');
+Lday  = mean(Lsingle, 1,'omitnan');
+Tsday = mean(Tssingle,1,'omitnan');
 Tiday = mean(Tisingle,1,'omitnan');
 
-for j = 1:length(cdffiles)
-    ArcIce = DataOfDay(j).TP.ArcIce;
-    ArcOcean = DataOfDay(j).TP.ArcOcean;
-    AntIce = DataOfDay(j).TP.AntIce;
-    AntOcean = DataOfDay(j).TP.AntOcean;
+% --- 3) correct every pixel, class by class ------------------------------
+theta1 = abs(reshape(spos2ia(5:end-4), [], 1));   % same crop as filterTb
 
-    theta = spos2ia(5:end-5);
-    theta = repmat(abs(theta'), [1,DataOfDay(j).dimensions.Time]);
+for j = 1:nF
+    theta = repmat(theta1, [1, DataOfDay(j).dimensions.Time]);
+    wx = weatherFields(DataOfDay(j));
+    C = struct();
+    for k = 1:4
+        name = TPnames(k);
+        mask = DataOfDay(j).TP.(name);           % logical mask
+        TbTP = DataOfDay(j).TP.("Tb" + name);
+        refOK = all(~isnan([Vday(k) Wday(k) Lday(k) Tsday(k) Tiday(k)]));
 
-    SIC_ArcIce = DataOfDay(j).SIC.Arc;
-    % SIC_ArcIce = 1;
-    SIC_ArcIce(isnan(ArcIce)) = NaN;
-    SIC_ArcOcean = DataOfDay(j).SIC.Arc;
-    % SIC_ArcOcean = 0;
-    SIC_ArcOcean(isnan(ArcOcean)) = NaN;
-    SIC_AntIce = DataOfDay(j).SIC.Ant;
-    % SIC_AntIce = 1;
-    SIC_AntIce(isnan(AntIce)) = NaN;
-    SIC_AntOcean = DataOfDay(j).SIC.Ant;
-    % SIC_AntOcean = 0;
-    SIC_AntOcean(isnan(AntOcean)) = NaN;
+        if any(mask(:)) && refOK
+            c = DataOfDay(j).SIC.(hemi(k));  c(~mask) = NaN;
+            V = wx.V;   V(~mask)  = NaN;
+            W = wx.W;   W(~mask)  = NaN;
+            Ts = wx.Ts; Ts(~mask) = NaN;
+            Ti = wx.Ti; Ti(~mask) = NaN;
 
-    V = DataOfDay(j).variables.tcwv.data(5:end-5,:);
-    VArcIce = V;
-    VArcIce(isnan(ArcIce)) = NaN;
-    VArcOcean = V;
-    VArcOcean(isnan(ArcOcean)) = NaN;  
-    VAntIce = V;
-    VAntIce(isnan(ArcIce)) = NaN;  
-    VAntOcean = V;
-    VAntOcean(isnan(AntOcean)) = NaN;
-
-    W = sqrt(DataOfDay(j).variables.v10.data(5:end-5,:).^2 + DataOfDay(j).variables.u10.data(5:end-5,:).^2);
-    WArcIce = W;
-    WArcIce(isnan(ArcIce)) = NaN;
-    WArcOcean = W;
-    WArcOcean(isnan(ArcOcean)) = NaN;  
-    WAntIce = W;
-    WAntIce(isnan(ArcIce)) = NaN;  
-    WAntOcean = W;
-    WAntOcean(isnan(AntOcean)) = NaN;
-
-    Ts = DataOfDay(j).variables.sst.data(5:end-5,:);
-    TsArcIce = Ts;
-    TsArcIce(isnan(ArcIce)) = NaN;
-    TsArcOcean = Ts;
-    TsArcOcean(isnan(ArcOcean)) = NaN;  
-    TsAntIce = Ts;
-    TsAntIce(isnan(ArcIce)) = NaN;  
-    TsAntOcean = Ts;
-    TsAntOcean(isnan(AntOcean)) = NaN;
-
-    Ti = 0.4 * DataOfDay(j).variables.t2m.data(5:end-5,:) + 0.6*272;
-    TiArcIce = Ti;
-    TiArcIce(isnan(ArcIce)) = NaN;
-    TiArcOcean = Ti;
-    TiArcOcean(isnan(ArcOcean)) = NaN;  
-    TiAntIce = Ti;
-    TiAntIce(isnan(ArcIce)) = NaN;  
-    TiAntOcean = Ti;
-    TiAntOcean(isnan(AntOcean)) = NaN;
-
-    % Model for whole day
-    RTMday_ArcIce = esmr_rtm(Vday(1),Wday(1),Lday(1),Tsday(1),Tiday(1),SIC_ArcIce,theta);
-    RTMday_ArcOcean = esmr_rtm(Vday(2),Wday(2),Lday(2),Tsday(2),Tiday(2),SIC_ArcOcean,theta);
-    RTMday_AntIce = esmr_rtm(Vday(3),Wday(3),Lday(3),Tsday(3),Tiday(3),SIC_AntIce,theta);
-    RTMday_AntOcean = esmr_rtm(Vday(4),Wday(4),Lday(4),Tsday(4),Tiday(4),SIC_AntOcean,theta);
-
-    % Model for individual measurement
-    if ~any(ignore(j,:))
-    RTM_ArcIce = esmr_rtm(VArcIce,WArcIce, Lday(1),TsArcIce,TiArcIce,SIC_ArcIce,theta);
-    RTM_ArcOcean = esmr_rtm(VArcOcean,WArcOcean,Lday(2),TsArcOcean,TiArcOcean,SIC_ArcOcean,theta);
-    RTM_AntIce = esmr_rtm(VAntIce,WAntIce,Lday(3),TsAntIce,TiAntIce,SIC_AntIce,theta);
-    RTM_AntOcean = esmr_rtm(VAntOcean,WAntOcean,Lday(4),TsAntOcean,TiAntOcean,SIC_AntOcean,theta);
-
-    % DeltaTb
-    DeltaTb_ArcIce = RTMday_ArcIce - RTM_ArcIce;
-    DeltaTb_ArcOcean = RTMday_ArcOcean - RTM_ArcOcean;
-    DeltaTb_AntIce = RTMday_AntIce - RTM_AntIce;
-    DeltaTb_AntOcean = RTMday_AntOcean - RTM_AntOcean;
-
-    % Correct Tb
-    DataOfDay(j).Corrected.TbArcIce = DataOfDay(j).TP.TbArcIce + DeltaTb_ArcIce;
-    DataOfDay(j).Corrected.TbArcOcean = DataOfDay(j).TP.TbArcOcean + DeltaTb_ArcOcean;
-    DataOfDay(j).Corrected.TbAntIce = DataOfDay(j).TP.TbAntIce + DeltaTb_AntIce;
-    DataOfDay(j).Corrected.TbAntOcean = DataOfDay(j).TP.TbAntOcean + DeltaTb_AntOcean;
-    else
-    DataOfDay(j).Corrected.TbArcIce = NaN;
-    DataOfDay(j).Corrected.TbArcOcean = NaN;
-    DataOfDay(j).Corrected.TbAntIce = NaN;
-    DataOfDay(j).Corrected.TbAntOcean = NaN;
+            RTMref = esmr_rtm(Vday(k),Wday(k),Lday(k),Tsday(k),Tiday(k),c,theta);
+            RTMact = esmr_rtm(V,W,Lday(k),Ts,Ti,c,theta);
+            C.("Tb" + name) = TbTP + (RTMref - RTMact);
+        else
+            % this class has no pixels in this file (or none on this day)
+            C.("Tb" + name) = NaN(size(TbTP));
+        end
     end
+    DataOfDay(j).Corrected = C;
+end
 
+function wx = weatherFields(D)
+    v = D.variables;
+    wx.V  = v.tcwv.data(5:end-4,:);                               % water vapour [mm]
+    wx.W  = sqrt(v.u10.data(5:end-4,:).^2 + v.v10.data(5:end-4,:).^2); % wind [m/s]
+    wx.L  = max(v.tcw.data(5:end-4,:) - v.tcwv.data(5:end-4,:), 0);  % cloud water [mm] (tcw - tcwv)
+    wx.Ts = v.sst.data(5:end-4,:);                                % SST [K]
+    wx.Ti = 0.4 * v.t2m.data(5:end-4,:) + 0.6*272;                % ice temperature [K]
 end
 
 function mPara = meanOfWeather(Para, Mask)
-
     Para(~Mask) = NaN;
-    mPara = mean(mean(Para,'omitnan'),'omitnan');
-
+    mPara = mean(Para,'all','omitnan');
 end

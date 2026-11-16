@@ -1,77 +1,54 @@
 clear
 close all
- 
-readAllFiles;
-projectdir = '..\ESMR_colocated_filtered';
-dinfo = dir(fullfile(projectdir));
-dinfo([dinfo.isdir]) = [];
+
+projectdir = fullfile('..','ESMR_colocated_filtered');
+dinfo = dir(fullfile(projectdir, '*.nc'));
 nfiles = length(dinfo);
 
 init;
 
+% Day of every file from its name (..._1973mMMDDtHHMMSS_...)
+tok = regexp({dinfo.name}, '\d{4}m(\d{4})t', 'tokens', 'once');
+dayKey = cellfun(@(c) c{1}, tok, 'UniformOutput', false);
+[dayList, ~, dayOfFile] = unique(dayKey);
+nDays = numel(dayList);
 
-% DataOfDay(length(cdffiles)) = struct();
-for day = 1:27
-cdffiles = day_indices(1,day):day_indices(2,day);     
-fileindex = 1;
-for j = cdffiles
-  % Read single NetCDF File  
-  filename = fullfile(projectdir, dinfo(j).name);
-  Data = readNetCDFStruct(filename);
+for day = 1:nDays
+    cdffiles = find(dayOfFile == day)';
+    clear DataOfDay
+    fileindex = 1;
+    for j = cdffiles
+        % Read single NetCDF File
+        filename = fullfile(projectdir, dinfo(j).name);
+        Data = readNetCDFStruct(filename);
 
-  % Add Incidence Angle to Data Struct
-  Data.variables.incidence = abs(repmat(spos2ia',1, Data.dimensions.Time));
-   
-  % Initial Filtering
-  Tbfilt = filterTb(Data);
-  Data.variables.Tbfilt = Tbfilt;
-    
-  % Determine Tie Points
-  TP = getTiePoints(Data);
-  Data.TP = TP;
-  
-  % Calculate Mean and STD of 4 Tie Points
-  TPstats = meanAndStdTP(TP, TPstats);
+        % Initial Filtering
+        Data.variables.Tbfilt = filterTb(Data);
 
-  DataOfDay(fileindex) = Data;
-  clear Data
-  fileindex = fileindex+1;
+        % Determine Tie Points
+        Data.TP = getTiePoints(Data);
+
+        DataOfDay(fileindex) = Data; %#ok<SAGROW>
+        clear Data
+        fileindex = fileindex+1;
+    end
+
+    % Day statistics of the uncorrected tie points (all pixels pooled)
+    Uncorrected = poolStats(Uncorrected, [DataOfDay.TP]);
+
+    % Correct Data with Differential RTM
+    applyRTM;
+
+    % Day statistics of the corrected tie points
+    Corrected = poolStats(Corrected, [DataOfDay.Corrected]);
+
+    fprintf('Completed day %s (%d files)\n', dayList{day}, numel(cdffiles))
 end
 
-% Calculate Mean and STD of complete Day for uncorrected Data
-Uncorrected.Ant_ice_mean(end+1) = mean(TPstats.ant_ice_mean,'omitnan');
-Uncorrected.Arc_ice_mean(end+1) = mean(TPstats.arc_ice_mean,'omitnan');
-Uncorrected.Ant_ocean_mean(end+1) = mean(TPstats.ant_ocean_mean,'omitnan');
-Uncorrected.Arc_ocean_mean(end+1) = mean(TPstats.arc_ocean_mean,'omitnan');
+Uncorrected.days = string(dayList);
+Corrected.days   = string(dayList);
 
-Uncorrected.Ant_ice_std(end+1) = mean(TPstats.ant_ice_std,'omitnan');
-Uncorrected.Arc_ice_std(end+1) = mean(TPstats.arc_ice_std,'omitnan');
-Uncorrected.Ant_ocean_std(end+1) = mean(TPstats.ant_ocean_std,'omitnan');
-Uncorrected.Arc_ocean_std(end+1) = mean(TPstats.arc_ocean_std,'omitnan');
-
-TPstats = [];
-
-% Correct Data with Differential RTM
-applyRTM;
-
-for j = 1:length(cdffiles)
-    TPstatsCorrected = meanAndStdTP(DataOfDay(j).Corrected, TPstatsCorrected);
-end
-
-% Calculate Mean and STD of complete Day for Corrected Data
-Corrected.Ant_ice_mean(end+1) = mean(TPstatsCorrected.ant_ice_mean,'omitnan');
-Corrected.Arc_ice_mean(end+1) = mean(TPstatsCorrected.arc_ice_mean,'omitnan');
-Corrected.Ant_ocean_mean(end+1) = mean(TPstatsCorrected.ant_ocean_mean,'omitnan');
-Corrected.Arc_ocean_mean(end+1) = mean(TPstatsCorrected.arc_ocean_mean,'omitnan');
-
-Corrected.Ant_ice_std(end+1) = mean(TPstatsCorrected.ant_ice_std,'omitnan');
-Corrected.Arc_ice_std(end+1) = mean(TPstatsCorrected.arc_ice_std,'omitnan');
-Corrected.Ant_ocean_std(end+1) = mean(TPstatsCorrected.ant_ocean_std,'omitnan');
-Corrected.Arc_ocean_std(end+1) = mean(TPstatsCorrected.arc_ocean_std,'omitnan');
-
-TPstatsCorrected = [];
-clear DataOfDay
-
-fprintf('\rCompleted Day %.0f', day)
-end
-fprintf('\n')
+outdir = 'results_concept';
+if ~isfolder(outdir), mkdir(outdir); end
+save(fullfile(outdir,'Uncorrected.mat'), 'Uncorrected')
+save(fullfile(outdir,'Corrected.mat'),   'Corrected')

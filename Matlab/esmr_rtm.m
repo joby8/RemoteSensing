@@ -37,22 +37,17 @@ function Tb=esmr_rtm(V,W,L,Ts,Ti,c_ice,theta)
     Xi=0.688;
 
     %#ice concentration between 0 and 1
-    if (c_ice < 0.0)
-      c_ice=0.0;
-    end
-    if (c_ice > 1.0) 
-      c_ice=1.0;
-    end %if
+    %#element-wise, so it also works for matrices (if on a matrix only
+    %#fires when ALL elements are true); NaN stays NaN
+    c_ice(c_ice < 0.0)=0.0;
+    c_ice(c_ice > 1.0)=1.0;
     
     %#the isotropic Tb radiative transfer equation eq 15
     %#Tb=TBU+tau*(emissivity*Ts+(1-emissivity)*(omega*TBD+tau*TBC))
     %#eq 18a
-    if (V <= 48.0) 
-      Tv=273.16+0.8337.*V-3.029E-5.*(V.^3.33);
-    %#eq 18b
-    else  
-      Tv=301.16;
-    end %if
+    Tv=273.16+0.8337.*V-3.029E-5.*(V.^3.33);
+    %#eq 18b (element-wise)
+    Tv(V > 48.0)=301.16;
     %#eq 22 + 23
     Tl=(Ts+273.0)./2.0;
     Al37=0.208.*(1-0.026*(Tl-283)).*L;
@@ -108,10 +103,9 @@ function Tb=esmr_rtm(V,W,L,Ts,Ti,c_ice,theta)
     Ew=(0.0094.*theta+0.3).*W./Ts;
 
     %#eq 29 sea surface slope variance: sigma**2
-    sigma=sqrt(5.22E-3.*Xi.*W);
-    if (sigma.^2 > 0.07) 
-      sigma=sqrt(0.07);
-    end %if
+    sigma2=5.22E-3.*Xi.*W;
+    sigma2(sigma2 > 0.07)=0.07;   %#element-wise cap
+    sigma=sqrt(sigma2);
     %#eq 28 reflection reduction factor due to surface roughness, used only
     %for the downwelling
     omega=1.0+6.1.*(sigma.^2-68.0.*sigma.^6).*tau.^2;

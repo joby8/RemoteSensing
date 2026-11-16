@@ -1,25 +1,15 @@
-function [A] = PlotOnGlobe(Data)
-land = (Data.variables.lsm.data(5:end-5, :) > 0.5);
+function PlotOnGlobe(Data, DayStats)
+% Data:     struct of one file (with variables.Tbfilt)
+% DayStats: tie-point statistics (fields Arc_ice_mean, Arc_ocean_mean, ...),
+%           e.g. from poolStats; the last entry is used
+SIC = calculateSIC(Data, DayStats);
+sic_arc = SIC.Arc;
+sic_ant = SIC.Ant;
 
-sic_arc = (Data.variables.Tbfilt - Arc_ocean_mean)/(Arc_ice_mean - Arc_ocean_mean);
-sic_arc(sic_arc>0.95) = 1;
-sic_arc(sic_arc<0) = 0;
-sic_arc(Data.variables.Latitude.data(5:end-5,:) < 50) = NaN;
-sic_arc(Data.variables.Latitude.data(5:end-5,:) > 90) = NaN;
-sic_arc(land) = NaN;
+Latitude = Data.variables.Latitude.data(5:end-4,:);
+Longitude = Data.variables.Longitude.data(5:end-4,:);
 
-
-sic_ant = (Data.variables.Tbfilt - Ant_ocean_mean)/(Ant_ice_mean - Ant_ocean_mean);
-sic_ant(sic_ant>0.95) = 1;
-sic_ant(sic_ant<0) = 0;
-sic_ant(Data.variables.Latitude.data(5:end-5,:)> -50) = NaN;
-sic_ant(Data.variables.Latitude.data(5:end-5,:)< -90) = NaN;
-sic_ant(land) = NaN;
-
-Latitude = Data.variables.Latitude.data(5:end-5,:);
-Longitude = Data.variables.Longitude.data(5:end-5,:);
-
-% sic_ant = Data.variables.siconc.data(5:end-5,:);
+% sic_ant = Data.variables.siconc.data(5:end-4,:);
 
 figure('Color','w','Position',[100 100 1400 650]);
 
