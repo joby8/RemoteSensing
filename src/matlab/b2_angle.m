@@ -38,8 +38,8 @@ for d = days(:)'
         q.th = q.theta; q.tb = q.tb_f; q.ci = q.siconc;
         q.sp = repmat(1:78, size(q.tb, 1), 1);
         valid = ~isnan(q.tb_f) & abs(q.lat) >= 50;          % NO edge cut here
-        m = {valid & q.siconc == 0 & q.sst > 278 & q.tb > 90 & q.tb < 180, ...
-             valid & q.siconc > 0.8 & q.tb > 100 & q.tb < 274};
+        [mw_, mi_] = tp_masks(q, valid, q.tb, double(ncread(fn, 'lsm'))');   % masks 2026-11-17
+        m = {mw_, mi_};
         for h = 1:2
             hs = (q.lat > 0) == (h == 1);
             for t = 1:2, for v = vars, G{h, t}.(v{1}) = [G{h, t}.(v{1}); q.(v{1})(m{t} & hs)]; end, end

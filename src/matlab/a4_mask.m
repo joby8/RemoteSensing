@@ -1,6 +1,7 @@
 % A4: tie-point masks on one orbit (after the A3 filters).
-%  Water (Table 2): siconc = 0, sst > 278 K, 90 K < TB < 180 K.
-%  Ice: siconc >= 0.95 (Tonboe: treat 95 % as 100 %), 100 K < TB < 274 K (Table 2).
+%  Masks from tp_masks.m (Table 2, changed after the Tonboe meeting 2026-11-17):
+%  Water: siconc <= 0.01, sst > 278 K, 90 K < TB < 180 K, lsm == 0.
+%  Ice:   siconc > 0.8, 180 K < TB < 274 K, lsm == 0.
 %  Both: |lat| >= 50 deg, scan positions 5..74. The 5x5-box criterion is not applied.
 % Run from the project root:  matlab -batch "run('src/matlab/a4_mask.m')"
 cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
@@ -14,8 +15,7 @@ o = load_orbit(f);
 edge  = false(1, 78); edge([1:4, 75:78]) = true;
 valid = ~isnan(o.tb_f) & ~repmat(edge, size(o.tb, 1), 1) & abs(o.lat) >= 50;
 tb    = o.tb_f;
-water = valid & o.siconc == 0    & o.sst > 278 & tb > 90  & tb < 180;
-ice   = valid & o.siconc >= 0.95 &                tb > 100 & tb < 274;
+[water, ice] = tp_masks(o, valid, tb, double(ncread(f, 'lsm'))');   % current masks (tp_masks.m, 2026-11-17)
 N = o.lat > 0;
 
 fprintf('%-6s %-5s %7s %9s %7s\n', 'class', 'hemi', 'n', 'mean TB', 'std');

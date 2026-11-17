@@ -17,8 +17,7 @@ o = load_orbit(f);
 edge  = false(1, 78); edge([1:4, 75:78]) = true;
 valid = ~isnan(o.tb_f) & ~repmat(edge, size(o.tb, 1), 1) & abs(o.lat) >= 50;
 tb    = o.tb_f;
-water = valid & o.siconc == 0    & o.sst > 278 & tb > 90  & tb < 180;
-ice   = valid & o.siconc >= 0.95 &                tb > 100 & tb < 274;
+[water, ice] = tp_masks(o, valid, tb, double(ncread(f, 'lsm'))');   % current masks (tp_masks.m, 2026-11-17)
 
 if ~exist('output', 'dir'), mkdir('output'); end
 batch = ~usejava('desktop');

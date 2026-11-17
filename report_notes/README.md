@@ -16,7 +16,10 @@ Use them as the writing plan for the report (due 6 Dec) and the seminar (4 Dec).
 | B1 RTM sensitivity + sweep + exclusion test (Task 2) | [B1_sensitivity.md](B1_sensitivity.md) | Results: Task 2 |
 | B1 Writing plan for the sensitivity part (Task 2) | [B1_writing_plan.md](B1_writing_plan.md) | Report: Task 2 section |
 | Reference: how Tonboe et al. (2022) plot sensitivity / geophysical noise | [ref_Tonboe2022_plots.md](ref_Tonboe2022_plots.md) | Task 2 figures, citations |
+| B1i L study: mean L vs. per-pixel L in the 2nd iteration (Task 2) | [B1i_L_study.md](B1i_L_study.md) | Results: Task 2 |
+| B7 Where the correction changes the SIC (map) | [B7_correction_map.md](B7_correction_map.md) | Results: Task 1 / Task 4 |
 | B2 Std vs. incidence angle, whole swath (Task 3) | [B2_angle.md](B2_angle.md) | Results: Task 3 |
+| Meeting 2026-11-17 | [meeting_2026-11-17.md](meeting_2026-11-17.md) | decisions, to-dos |
 | Session 2026-11-13 | [questions_2026-11-13.md](questions_2026-11-13.md) | decisions |
 | C1 Reference book NASA SP-459 (Zwally et al. 1983): map overlay + extent comparison | [C1_SP459_comparison.md](C1_SP459_comparison.md), step-by-step page [C1_sp459_steps.html](C1_sp459_steps.html) | Discussion / validation |
 | Visualisation | [globe_viewer.md](globe_viewer.md) | Figures / seminar |

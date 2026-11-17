@@ -1,4 +1,5 @@
 % B1e: Task 2 sweep in % SIC (alternative to b1d_sweep.m, style of Tonboe et al. 2022, Figs. 12/13).
+%  2026-11-17 (Tonboe): observed 5-95 % range white, outside grey; L = 0 in the V, W, Ts, Ti sweeps.
 %  Same model runs as b1d: one ERA5 input swept over its physical range, all others at the Feb 1973 mean
 %  of the tie-point cluster (A6b, 1-27 Feb), water (c = 0, solid) and ice (c = 1, dashed), theta = 0/30/50 deg.
 %  Changes vs. b1d (Tonboe style):
@@ -46,7 +47,13 @@ for h = 1:2
         if strcmp(f,'Ti'), obs = I_.(f); else, obs = W_.(f); end
         q = prctile(obs, [5 95]); mu = mean(obs); sd = std(obs);
         ylim(YL);
-        patch([q(1) q(2) q(2) q(1)], [-1e3 -1e3 1e3 1e3], [.90 .90 .90], 'EdgeColor','none', 'HandleVisibility','off');
+        % observed 5-95 % range stays WHITE, outside it GREY (Tonboe 2026-11-17: inverse shading)
+        ga = [x(1) min(max(q(1), x(1)), x(end))]; gb = [max(min(q(2), x(end)), x(1)) x(end)];
+        for g = {ga, gb}
+            g = g{1}; if diff(g) > 0
+                patch([g(1) g(2) g(2) g(1)], [-1e3 -1e3 1e3 1e3], [.90 .90 .90], 'EdgeColor','none', 'HandleVisibility','off');
+            end
+        end
         xline(mu, '-', 'Color', [.4 .4 .4], 'HandleVisibility','off');
         xline(max(mu - sd, x(1)), ':', 'Color', [.25 .25 .25], 'LineWidth', 1.2, 'HandleVisibility','off');
         xline(mu + sd, ':', 'Color', [.25 .25 .25], 'LineWidth', 1.2, 'HandleVisibility','off');
@@ -54,6 +61,7 @@ for h = 1:2
         txt = strings(0);
         for t = 1:2
             b = base{t}; cice = t - 1;
+            if ~strcmp(f, 'L'), b.L = 0; end   % L = 0 in the other sweeps (Tonboe 2026-11-17): no influence from L
             o_ = obsS{t}.(f); m_ = mean(o_, 'omitnan'); s_ = std(o_, 'omitnan');
             for j = 1:numel(ths)
                 X = b; X.(f) = x;
@@ -94,8 +102,8 @@ for h = 1:2
     end
 end
 title(tl, {'Task 2: RTM sweep in % SIC - one ERA5 input over its full range, all others at the Feb 1973 mean of the tie-point cluster', ...
-    'solid = water (c = 0), dashed = ice (c = 1); light -> dark = \theta 0°, 30°, 50°; each curve is 0 at the mean of its own cluster', ...
-    'grey band / grey line / dotted lines = observed 5-95 % range / mean / \pm1\sigma of the water pixels (T_i: ice pixels); box = SIC change per 1\sigma of that surface''s pixels'}, ...
+    'solid = water (c = 0), dashed = ice (c = 1); light -> dark = \theta 0°, 30°, 50°; each curve is 0 at the mean of its own cluster; L = 0 in the V, W, T_s, T_i sweeps (L sweep: others at the mean)', ...
+    'white band / grey line / dotted lines = observed 5-95 % range (grey = outside) / mean / \pm1\sigma of the water pixels (T_i: ice pixels); box = SIC change per 1\sigma of that surface''s pixels'}, ...
     'FontWeight','bold');
 exportgraphics(fig, fullfile('output','B1e_sweep_sic.png'), 'Resolution', 140);
 

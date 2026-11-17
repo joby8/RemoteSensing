@@ -2,14 +2,14 @@
 %   ESMR_globe.html        page (libraries + coastlines inlined, works offline by double-click)
 %   days/MMDD.js           one data file per day, loaded when the day is selected
 % Per pixel: lat, lon, raw TB, scan position and a code byte:
-%   bits 0-1 class (0 other, 1 water tie point, 2 ice tie point; ice = siconc > 0.8 as in Table 2), bit 2 ERA5 land (sst NaN),
+%   bits 0-1 class (0 other, 1 water tie point, 2 ice tie point; classes from correct_day.m = tp_masks.m: water siconc <= 0.01, ice siconc > 0.8 and 180 < TB < 274, both lsm == 0), bit 2 ERA5 land (sst NaN),
 %   bit 3 fails Eq. 1, bit 4 swath edge (scan pos 1-4/75-78), bit 5 |lat| < 50.
 %   dtb = RTM correction (A6b method, iteration 2, via correct_day.m) in 0.1 K, -32768 where not corrected.
 %   Correction inputs, only for corrected pixels (dtb valid, same order as the kept pixels), uint8 / int8:
 %   V 0.25 kg/m2, W 0.1 m/s, L 0.02 kg/m2, Ts 260 K + 0.2 K, Ti 230 K + 0.25 K, c 1/250;
 %   parts of dtb per input (dV, dW, dL, dTs, dTi) in 0.25 K (dL 0.5 K, int8). dL = not applied (L is not corrected).
 % Pixels with |lat| < 50 are thinned (every 4th scan line and position) to keep the files small.
-% Daily tie points per hemisphere (Table 2 clusters, uncorrected and corrected) from correct_day.m.
+% Daily tie points per hemisphere (tp_masks.m clusters, uncorrected and corrected) from correct_day.m.
 % Run from the project root:  matlab -batch "run('src/matlab/globe_html.m')"
 % Only some days:             matlab -batch "days=[""0201"",""0202""]; run('src/matlab/globe_html.m')"
 cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));

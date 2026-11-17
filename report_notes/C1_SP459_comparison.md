@@ -39,7 +39,7 @@ Goal: use SP-459 at the end to **interpret our data**. Not a strict validation (
 Possible script: `src/matlab/c1_sp459_compare.m` (monthly grid South, area, figure next to a cropped page of the book).
 
 ## What we did (c1_sp459_compare.m)
-1. **Our map:** every day `correct_day.m` (A6b, 2 iterations); SIC per pixel with that day's corrected South tie points (month mean: water 140.9 K, ice 201.0 K). Pixels binned on a **30 km polar stereographic grid** (as SP-459). Monthly mean = mean of the unclipped pixel SIC, then clipped to 0–100 %. Land = ERA5 (sst NaN).
+1. **Our map:** every day `correct_day.m` (A6b, 2 iterations); SIC per pixel with that day's corrected South tie points (month mean: water 140.9 K, ice 210.9 K; old masks 201.0 K). Pixels binned on a **30 km polar stereographic grid** (as SP-459). Monthly mean = mean of the unclipped pixel SIC, then clipped to 0–100 %. Land = ERA5 (sst NaN).
 2. **Georeferencing the scan:** the map is polar stereographic, 0° up (checked: circle radii follow tan((90°−|φ|)/2); equal-area fits worse). Affine fit (the scan is ~1.6 % stretched vertically) to 129 points on the 55–70°S circles + 87 points on the 45° meridians → **rms 1.6 px ≈ 9 km** (< 1/3 grid cell).
 3. **Ice / no ice from the scan:** every image pixel → nearest of the 23 legend colours, land (black) or graticule line. Grid cell = majority of the non-line pixels in a 7×7 window. Ice = any class ≥ 16 %. Isolated ice cells (< 3 ice neighbours) removed (light speckles in the printed water fall into the "≥ 98 %" class). Note: the "32 %" colour is very close to the "< 14 %" water colour → nearest-class matching, not a simple threshold.
 4. **Comparison** on common cells (lat ≤ −52°, SP-459 not land, we have ocean data): our ice = mean SIC ≥ 15 %.
@@ -48,15 +48,15 @@ Possible script: `src/matlab/c1_sp459_compare.m` (monthly grid South, area, figu
 | | SP-459 (digitised) | this work |
 |---|---|---|
 | Ice extent, common cells | **5.72 × 10⁶ km²** | **5.51 × 10⁶ km²** (−4 %) |
-| Ice area (Σ SIC·A, cells ≥ 15 %) | **2.71 × 10⁶ km²** (Table 3-2) | **3.86 × 10⁶ km²** (+42 %) |
+| Ice area (Σ SIC·A, cells ≥ 15 %) | **2.71 × 10⁶ km²** (Table 3-2) | **3.48 × 10⁶ km²** (+28 %; old masks 3.86, +42 %) |
 | Open-water tie point | 135 K fixed | 140.9 K (daily, corrected) |
-| 100 % ice | e_i·T_i ≈ 0.92 · ~265 K ≈ 240–245 K | 201.0 K (ERA5 siconc > 0.8 cluster) |
+| 100 % ice | e_i·T_i ≈ 0.92 · ~265 K ≈ 240–245 K | 210.9 K (ERA5 siconc > 0.8, T_B > 180 K cluster; old 201.0 K) |
 
-- **Ice edge agrees well:** 95.7 % of the common area is classified the same (both ice: 4.75, only ours: 0.77, only SP-459: 0.98 × 10⁶ km²).
+- **Ice edge agrees well:** 96.0 % (old masks 95.7 %) of the common area is classified the same (both ice: 4.75, only ours: 0.77, only SP-459: 0.98 × 10⁶ km²).
 - **0.83 of the 0.98 × 10⁶ km² "only SP-459" lie directly at the coast** → different land masks (ice shelves, coarse 1983 mask vs. ERA5) and ±1 cell position error, not a real difference.
 - "Only ours" is a thin ring along the outer edge: our edge is ~1 cell further out (15 % vs. 16 % class, footprint smoothing of the monthly mean).
 - Per sector (extent, SP-459 / ours, 10⁶ km²): Weddell 1.63 / 1.73, Indian 0.84 / 0.59, Pacific 0.82 / 0.75, Ross 1.10 / 1.18, Bellingshausen-Amundsen 1.33 / 1.26. Largest difference in the Indian sector (mostly coastal cells).
-- **Concentrations: ours are clearly higher** (side-by-side figure: most of the pack ≥ 98 %, SP-459 mostly 50–65 %). Reason: our ice tie point (201 K) comes from the ERA5 siconc > 0.8 cluster in summer (wet snow / melt, mixed pixels), so it is much lower than SP-459's e_i·T_i (~240 K) → same T_B gives higher SIC. Extent (threshold near the water tie point) is insensitive to this, area is not. → good discussion point on the **ice tie point in summer**, and SP-459 itself says the summer area is uncertain (Table 3-2, p. 67–68).
+- **Concentrations: ours are clearly higher** (side-by-side figure: most of the pack ≥ 98 %, SP-459 mostly 50–65 %). Reason: our ice tie point (211 K; 201 K with the old masks) comes from the ERA5 siconc > 0.8 cluster in summer (wet snow / melt, mixed pixels), so it is much lower than SP-459's e_i·T_i (~240 K) → same T_B gives higher SIC. Extent (threshold near the water tie point) is insensitive to this, area is not. → good discussion point on the **ice tie point in summer**, and SP-459 itself says the summer area is uncertain (Table 3-2, p. 67–68).
 
 ## For the report
 - Cite SP-459 in the introduction (history of ESMR sea ice data) and in the discussion (comparison).
@@ -66,3 +66,10 @@ Possible script: `src/matlab/c1_sp459_compare.m` (monthly grid South, area, figu
 ## Open
 - Optional: same comparison for January 1973 (Fig. 5-1a, area 3.86 × 10⁶ km²) – but our data is February only.
 - Ask Rasmus whether he had a specific chapter / figure in mind.
+
+## Update 2026-11-17: rerun with the new tie-point masks (`tp_masks.m`, ice T_B > 180 K, lsm == 0)
+Numbers above (201.0 K, 3.86 × 10⁶ km², 95.7 %) are the **old** run; new:
+- South ice tie point (month mean): **210.9 K** (was 201.0 K); water 140.9 K (unchanged).
+- Ice area (cells ≥ 15 %): **3.48 × 10⁶ km²** (was 3.86) vs SP-459 2.71 × 10⁶ km² → **+28 %** (was +42 %).
+- Ice-edge agreement: **96.0 %** of the common area (was 95.7 %).
+- The higher ice tie point moves our concentrations towards SP-459; the remaining gap still fits the summer ice tie point (210.9 K vs SP-459 e_i·T_i ≈ 240 K).

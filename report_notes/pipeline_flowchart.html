@@ -151,10 +151,10 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
 <div class="stage"><div class="tag"><b>A4</b>tie-point clusters</div>
 <div class="row c2">
   <div class="n"><h3>Water cluster M<sub>w</sub> <span class="eqn">Table 2</span></h3>
-    <p class="eq">siconc = 0 &nbsp;∧&nbsp; sst &gt; 278 K &nbsp;∧&nbsp; 90 K &lt; <i>T</i><sub>B</sub> &lt; 180 K</p>
+    <p class="eq">siconc ≤ 0.01 &nbsp;∧&nbsp; sst &gt; 278 K &nbsp;∧&nbsp; 90 K &lt; <i>T</i><sub>B</sub> &lt; 180 K &nbsp;∧&nbsp; lsm = 0</p>
     <p class="from">≈ 17 000 pixels/day (N), 36 000 (S)</p></div>
   <div class="n"><h3>Ice cluster M<sub>i</sub> <span class="eqn">Table 2</span></h3>
-    <p class="eq">siconc &gt; 0.8 &nbsp;∧&nbsp; 100 K &lt; <i>T</i><sub>B</sub> &lt; 274 K</p>
+    <p class="eq">siconc &gt; 0.8 &nbsp;∧&nbsp; 180 K &lt; <i>T</i><sub>B</sub> &lt; 274 K &nbsp;∧&nbsp; lsm = 0</p>
     <p class="from">≈ 79 000 pixels/day (N), 13 000 (S)</p></div>
 </div></div>
 <div class="arrows c2" style="grid-template-columns:1fr 1fr"><div><span class="lab">T<sub>B</sub> of the clusters</span></div><div><span class="lab">V, W, L, T<sub>s</sub>, T<sub>i</sub> of the clusters</span></div></div>
@@ -212,7 +212,7 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
 <div class="row c3">
   <div class="n res"><h3>Task 1: std of SIC</h3>
     <p>std over M<sub>w</sub> and M<sub>i</sub> per day, mean of Feb (w/o 28 Feb):</p>
-    <p><b>water</b> N 10.5 <span class="to">→</span> 8.2 %, S 14.3 <span class="to">→</span> 11.0 % (−23 %)<br><b>ice</b> N 14.6 <span class="to">→</span> 13.0 %, S 44.3 <span class="to">→</span> 40.5 %</p>
+    <p><b>water</b> N 9.6 <span class="to">→</span> 7.05 %, S 11.9 <span class="to">→</span> 9.3 % (−27 % / −21 %)<br><b>ice</b> N 12.5 <span class="to">→</span> 10.9 %, S 24.6 <span class="to">→</span> 23.7 %</p>
     <span class="code">output/A6b_iterative.csv/.png</span></div>
   <div class="n res"><h3>Task 2: B1 sensitivity</h3>
     <p class="eq">Δ<i>T</i><sub>B</sub>(θ) = RTM(<i>X̄</i> + σ<sub>X</sub>) − RTM(<i>X̄</i>)</p>
@@ -316,11 +316,11 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
 <h2>Typical numbers (Feb 1973, monthly mean)</h2>
 <table>
 <tr><th></th><th>North</th><th>South</th></tr>
-<tr><td><i>T</i><sub>p,water</sub> raw <span class="to">→</span> corr.</td><td>145.0 <span class="to">→</span> 145.0 K</td><td>140.9 <span class="to">→</span> 140.9 K</td></tr>
-<tr><td><i>T</i><sub>p,ice</sub> raw <span class="to">→</span> corr.</td><td>225.8 <span class="to">→</span> 226.3 K</td><td>200.1 <span class="to">→</span> 201.2 K</td></tr>
-<tr><td>contrast ice − water</td><td>≈ 81 K</td><td>≈ 60 K</td></tr>
-<tr><td>1 % SIC equals</td><td>≈ 0.8 K</td><td>≈ 0.6 K</td></tr>
-<tr><td>pixels M<sub>w</sub> / M<sub>i</sub> per day</td><td>17 000 / 79 000</td><td>36 000 / 13 000</td></tr>
+<tr><td><i>T</i><sub>p,water</sub> raw <span class="to">→</span> corr.</td><td>144.4 <span class="to">→</span> 144.5 K</td><td>140.8 <span class="to">→</span> 140.9 K</td></tr>
+<tr><td><i>T</i><sub>p,ice</sub> raw <span class="to">→</span> corr.</td><td>226.0 <span class="to">→</span> 226.5 K</td><td>210.6 <span class="to">→</span> 211.2 K</td></tr>
+<tr><td>contrast ice − water</td><td>≈ 82 K</td><td>≈ 70 K</td></tr>
+<tr><td>1 % SIC equals</td><td>≈ 0.8 K</td><td>≈ 0.7 K</td></tr>
+<tr><td>pixels M<sub>w</sub> / M<sub>i</sub> per day</td><td>16 000 / 60 000</td><td>35 000 / 9 000</td></tr>
 </table>
 <p class="small" style="font-size:8pt">The water tie point barely moves: the correction pulls every pixel towards the cluster mean, so the mean of M<sub>w</sub> stays the same and only the spread shrinks.</p>
 </div>
@@ -329,7 +329,7 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
 <div class="trap"><b>Mean SIC over water = 0 by construction.</b> T<sub>p,water</sub> is the mean of the same pixels, so only the std is a result.</div>
 <div class="trap"><b>L in both runs.</b> Per-pixel L makes the std worse (A6: 11.5 % N vs. 10.6 % raw), because ERA5 clouds do not match the 1973 clouds pixel by pixel.</div>
 <div class="trap"><b>c is needed by the RTM but is the output.</b> Hence the iteration: start with ERA5 siconc, then use our own SIC.</div>
-<div class="trap"><b>Southern ice tie point is weak</b> (siconc &gt; 0.8: 200 K, std 26 K): small contrast <span class="to">→</span> large SIC std.</div>
+<div class="trap"><b>Southern ice tie point is weak</b> (211 K, T<sub>B</sub> std 17 K; was 200 K / 26 K before the 180 K limit): small contrast <span class="to">→</span> large SIC std.</div>
 </div>
 </div>
 <div class="foot">source: report_notes/pipeline_flowchart.html · built 2026-11-13 · numbers from output/A6b_iterative.csv (iteration 2)</div>

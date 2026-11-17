@@ -49,3 +49,15 @@ Ice side, from the csv and not plotted: Arctic 14.9 → 13.4 % at 0–20° and 1
   - The blue area between the curves is the noise removed by the RTM correction. The reductions per angle band are given in the text, not in the figure.
   - The y axis does not start at 0, so the gap is easier to see. Paper Fig. 5 shows the std in K; we show % SIC, as Task 3 asks for the std of the SIC.
 - Caption idea: "Std of the SIC per scan position (1–27 Feb 1973), without and with RTM correction. Grey/dashed: swath edge (|θ| > 55.7°), not used in the analysis. Over open water the noise rises above ≈ 40°; the correction lowers it at all angles but does not remove the rise."
+
+## Update 2026-11-17: rerun with the new tie-point masks (`tp_masks.m`, see A6b note)
+std of SIC [%], 1–27 Feb, pooled pixels, no RTM → with RTM:
+
+| | 0–20° | 20–40° | 40–50° | 50–56° | 56–64° (edge) |
+|---|---|---|---|---|---|
+| N water | 9.1 → 6.8 | 9.3 → 6.9 | 10.4 → 7.4 | 11.6 → 8.2 | 13.9 → 9.9 |
+| N ice | 12.1 → 10.4 | 12.3 → 10.6 | 13.2 → 11.5 | 13.7 → 11.9 | 14.7 → 12.5 |
+| S water | 11.0 → 8.9 | 11.6 → 9.1 | 12.6 → 9.6 | 14.5 → 10.8 | 17.5 → 13.0 |
+| S ice | 24.2 → 23.6 | 24.7 → 23.9 | 24.7 → 23.6 | 24.8 → 23.3 | 25.2 → 23.2 |
+
+Same shape as before: water noise flat to ~40°, then rises; ice almost flat.

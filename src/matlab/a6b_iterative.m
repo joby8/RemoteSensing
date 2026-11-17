@@ -1,8 +1,8 @@
 % A6b: iterative RTM correction with c_ice from ERA5 as start (Kolbe et al. 2024, Sect. 4.1, steps 1-2).
 %  Agreed in the feedback session 2026-11-13:
 %   - tie points per day and hemisphere, selection as in Table 2 but with |lat| >= 50 deg:
-%       water: siconc = 0, sst > 278 K, 90 K < TB < 180 K
-%       ice:   siconc > 0.8,            100 K < TB < 274 K
+%       water: siconc <= 0.01, sst > 278 K, 90 K < TB < 180 K, lsm == 0   (tp_masks.m, meeting 2026-11-17)
+%       ice:   siconc > 0.8,               180 K < TB < 274 K, lsm == 0
 %   - iteration 0: c_ice = ERA5 siconc of each pixel
 %   - reference values mixed with c_ice: Xref = (1-c)*mean_water + c*mean_ice   (paper: "c_ice is used as
 %     a ratio to mix the two tie-point values"), for V, W, L, Ts, Ti
@@ -37,8 +37,8 @@ for d = days(:)'
         o.L = double(ncread(fn, 'tcw'))' - o.V;
         o.th = o.theta; o.tb = o.tb_f; o.ci = o.siconc;
         valid = ~isnan(o.tb_f) & ~repmat(edge, size(o.tb_f, 1), 1) & abs(o.lat) >= 50;
-        m = {valid & o.siconc == 0 & o.sst > 278 & o.tb > 90 & o.tb < 180, ...
-             valid & o.siconc > 0.8 & o.tb > 100 & o.tb < 274};
+        [mw_, mi_] = tp_masks(o, valid, o.tb, double(ncread(fn, 'lsm'))');   % masks 2026-11-17
+        m = {mw_, mi_};
         for h = 1:2
             hs = (o.lat > 0) == (h == 1);
             for t = 1:2, for v = vars, G{h, t}.(v{1}) = [G{h, t}.(v{1}); o.(v{1})(m{t} & hs)]; end, end

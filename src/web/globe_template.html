@@ -271,7 +271,7 @@ td .arr { color: var(--label3); }
       <section class="group">
         <h2 class="ghead">Daily tie points</h2>
         <div class="list"><div class="inner"><table id="tp"></table></div></div>
-        <p class="gfoot">Raw → corrected. Clusters as in Table 2.</p>
+        <p class="gfoot">Raw → corrected. Clusters: Table 2 with the 17 Nov masks (water SIC ≤ 1 %, ice T<sub>B</sub> &gt; 180 K, no coastal pixels).</p>
       </section>
     </aside>
   </div>
@@ -621,7 +621,7 @@ function partsHTML(o, i) {
 const LAYERS = [
   { key: 'tb', name: 'Brightness temperature', sym: 'T_B', tile: '--blue', icon: 'wave2' },
   { key: 'th', name: 'Incidence angle', sym: 'θ', tile: '--green', icon: 'angle' },
-  { key: 'mask', name: 'Tie-point clusters', sym: 'Table 2', tile: '--orange', icon: 'grid' },
+  { key: 'mask', name: 'Tie-point clusters', sym: 'masks', tile: '--orange', icon: 'grid' },
   { key: 'sic', name: 'Sea ice concentration', sub: 'raw', tile: '--gray', icon: 'snow' },
   { key: 'sicc', name: 'Sea ice concentration', sub: 'corrected', tile: '--blue', icon: 'snow' },
 ];
@@ -741,7 +741,7 @@ function legend() {
   if (mode === 'mask') {
     L.innerHTML = `<div class="t">Tie-point clusters</div><div class="keys"><span><span class="dot" style="--c:var(--water)"></span>Water</span>
       <span><span class="dot" style="--c:var(--ice)"></span>Ice</span><span><span class="dot" style="--c:var(--other)"></span>Other kept pixels</span></div>`;
-    cap.innerHTML = 'Pure water and pure ice pixels (Table 2).';
+    cap.innerHTML = 'Water: SIC ≤ 1 %, SST &gt; 278 K, 90–180 K. Ice: SIC &gt; 80 %, 180–274 K. Both: ERA5 land fraction 0 (coast out).';
     return;
   }
   let lo, hi, stops, title, unit, text;

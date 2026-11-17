@@ -2,7 +2,8 @@
 %  One ERA5 input is swept over its full physical range, all other inputs stay at the
 %  Feb 1973 mean of the tie-point cluster (A6b, 1-27 Feb). Shown: dTB = TB(x) - TB(mean state),
 %  water (c = 0, solid) and ice (c = 1, dashed) at theta = 0, 30, 50 deg.
-%  Grey band = range observed in the tie-point pixels (5-95 %), vertical line = mean.
+%  White band = range observed in the tie-point pixels (5-95 %), grey = outside it, vertical line = mean.
+%  L = 0 in the V, W, Ts, Ti sweeps (Tonboe 2026-11-17), so L does not influence the other inputs.
 %  Right axis: the same dTB in % SIC (divided by the ice-water contrast of that hemisphere).
 %  Rows: Arctic (top), Antarctic (bottom). Columns: V, W, L, Ts, Ti.
 % Needs:  output/A6b_pixels.mat, output/A6b_iterative.csv (src/matlab/a6b_iterative.m)
@@ -43,11 +44,18 @@ for h = 1:2
         if strcmp(f,'Ti'), obs = I_.(f); else, obs = W_.(f); end
         q = prctile(obs, [5 95]); mu = mean(obs);
         ylim([-30 30]);                        % fixed first, so the band covers the panel
-        patch([q(1) q(2) q(2) q(1)], [-1e3 -1e3 1e3 1e3], [.88 .88 .88], 'EdgeColor','none', 'HandleVisibility','off');
+        % observed 5-95 % range stays WHITE, outside it GREY (Tonboe 2026-11-17: inverse shading)
+        ga = [x(1) min(max(q(1), x(1)), x(end))]; gb = [max(min(q(2), x(end)), x(1)) x(end)];
+        for g = {ga, gb}
+            g = g{1}; if diff(g) > 0
+                patch([g(1) g(2) g(2) g(1)], [-1e3 -1e3 1e3 1e3], [.88 .88 .88], 'EdgeColor','none', 'HandleVisibility','off');
+            end
+        end
         xline(mu, '-', 'Color', [.4 .4 .4], 'HandleVisibility','off');
         yline(0, 'k:', 'HandleVisibility','off');
         for t = 1:2                            % 1 water, 2 ice
             b = base{t}; cice = t - 1;
+            if ~strcmp(f, 'L'), b.L = 0; end   % L = 0 in the other sweeps (Tonboe 2026-11-17): no influence from L
             for j = 1:numel(ths)
                 X = b; X.(f) = x;
                 tb  = esmr_rtm_vec(X.V, X.W, X.L, X.Ts, X.Ti, cice, ths(j));
@@ -80,7 +88,7 @@ for h = 1:2
     end
 end
 title(tl, {'Task 2: RTM sweep - one ERA5 input over its full range, all others at the Feb 1973 mean of the tie-point cluster', ...
-    'solid = water (c = 0), dashed = ice (c = 1); light -> dark = \theta 0°, 30°, 50°; each curve is 0 at the mean of its own cluster', 'grey band / grey line = observed 5-95 % range / mean of the water pixels (T_i: ice pixels)'}, ...
+    'solid = water (c = 0), dashed = ice (c = 1); light -> dark = \theta 0°, 30°, 50°; each curve is 0 at the mean of its own cluster; L = 0 in the V, W, T_s, T_i sweeps (L sweep: others at the mean)', 'white band / grey line = observed 5-95 % range (grey = outside) / mean of the water pixels (T_i: ice pixels)'}, ...
     'FontWeight','bold');
 exportgraphics(fig, fullfile('output','B1d_sweep.png'), 'Resolution', 140);
 

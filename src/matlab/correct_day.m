@@ -2,8 +2,8 @@ function [O, TP] = correct_day(fnames, NIT)
 % Iterative RTM correction (A6b method) for ALL valid pixels of one day.
 % fnames: cell array of the day's swath files. NIT: number of iterations (default 2 = paper).
 % Same steps as a6b_iterative.m:
-%   clusters per hemisphere (Table 2, |lat| >= 50): water siconc = 0, sst > 278, 90 < TB < 180;
-%                                                   ice siconc > 0.8, 100 < TB < 274
+%   clusters per hemisphere (tp_masks.m, |lat| >= 50): water siconc <= 0.01, sst > 278, 90 < TB < 180, lsm == 0;
+%                                                      ice siconc > 0.8, 180 < TB < 274, lsm == 0
 %   iteration 1: c = ERA5 siconc; reference = (1-c)*mean_water + c*mean_ice; L mean in both runs
 %   tie points = cluster means of TB + dTB; new c = SIC clipped to 0..1, < 0.15 -> 0
 % Returns
@@ -19,8 +19,7 @@ for k = 1:numel(fnames)
     o = load_orbit(fnames{k});
     o.L = double(ncread(fnames{k}, 'tcw'))' - o.V;
     o.valid = ~isnan(o.tb_f) & ~repmat(edge, size(o.tb_f, 1), 1) & abs(o.lat) >= 50;
-    o.mw = o.valid & o.siconc == 0 & o.sst > 278 & o.tb_f > 90 & o.tb_f < 180;
-    o.mi = o.valid & o.siconc > 0.8 & o.tb_f > 100 & o.tb_f < 274;
+    [o.mw, o.mi] = tp_masks(o, o.valid, o.tb_f, double(ncread(fnames{k}, 'lsm'))');  % masks 2026-11-17
     o.corr = o.valid & ~isnan(o.sst);                % pixels we correct (ocean)
     o.Tsx = o.sst; o.Tsx(isnan(o.Tsx)) = 271.35;     % SST under ice where missing (weight ~0)
     O(k) = o; %#ok<AGROW>

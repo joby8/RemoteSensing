@@ -34,6 +34,11 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
 ### Phase B: tasks
 - [x] B1 Task 2 (agreed 2026-11-13: **RTM sensitivity study**): `b1_sensitivity.m` → `output/B1_sensitivity.png` = static report version of the learning-page animation (θ on x axis, ΔT_B per +1σ of each input). Exclusion test with the data done 2026-11-16: `b1c_exclusion.m` → `output/B1c_exclusion.png` (V > W ≫ Ts; Ts can be dropped; Ti only for ice).
 - [x] B2 Task 3: std of SIC per scan position over the whole swath, uncorrected vs corrected (`b2_angle.m` → `output/B2_std_vs_angle.png`, edge |θ| > 55.7° dashed). Water noise flat to ~40°, then rises (Arctic corrected 7.8 → 9.3 → 11.1 %); ice flat. Notes: `report_notes/B2_angle.md`
+- [x] Tie-point masks updated 2026-11-17 (Tonboe): `tp_masks.m`, water siconc ≤ 0.01, ice T_B > 180 K, lsm == 0. A6b, B1c/d/e/f/g/h, B2 rerun. Water std (iter. 2) N 8.2 → 7.05 %, S 11.0 → 9.3 %; ice S 40.5 → 23.7 %.
+- [x] B1i L study (`b1i_L_study.m` → `output/B1i_L_study.png`): mean L in both iterations best (N 7.05 / S 9.33 %); per-pixel L in iteration 2 worse than uncorrected (10.0 / 13.6 %).
+- [x] B7 correction map (`b7_correction_map.m` → `output/B7_correction_map.png`): largest over open water near the ice edge / Southern Ocean (V), storm tracks (W), Ti on pack ice.
+- [x] Inverse grey confirmed by Jo (2026-11-17): grey = input range not really used (outside 5–95 %), white = observed range (B1d/B1e).
+- [x] All figures and the globe rebuilt on the new masks (2026-11-17): A4, globe_plot, B1, B1b, B1c–i, B2, B7, C1 (cache cleared), globe viewer; flowchart numbers updated. Not rebuilt: explainer video (`video_export.m` + `video/build.py`).
 - [ ] B3 Scale up to all of Feb 1973, both hemispheres. Vectorise the RTM (NumPy) if the loop is too slow.
 - [ ] B4 Task 4: recommendation (angle cut-off, which variables, ice side, clouds).
 - [ ] B5 Seminar slides (length tbc) · B6 Report.
@@ -58,6 +63,7 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
   - Use the ERA5 algorithm: **ERA5 SIC for the T_B model**, criteria as in **Table 2** (interpretation still to confirm).
   - Task 2 = **sensitivity study with the RTM**.
 - **Open question for Tonboe: whole scan lines in `brightness_temperature_filtered`.** The field removes whole rows around single-pixel spikes (Kolbe Eq. 3 outliers): usually spike row ± 1, sometimes 16–18 rows. Orbit 1973-02-01 04:21: 276 of 1483 rows removed, 177 of them without any out-of-range pixel; ≈ 21 000 plausible pixels (≈ 18 %) lost. Example: row 386 has 2 pixels at −77 K → rows 373–388 removed. Not the paper's Eq. 2 (> 50 K row mean) as written. Ask: is dropping whole rows intended, or should we filter per pixel (Eq. 1 + Eq. 3)? Our meeting notes (2026-11-10) only say "use the filtered field"; compare with the less aggressive filter in Tellefsen et al. 2026. Details: `report_notes/A3_filters.md` → Open.
+- **Meeting with Tonboe (2026-11-17)**, notes in `report_notes/meeting_2026-11-17.md`: map where the correction is largest; inverted grey Task 2 plot; L = 0 / mean / actual run (effect on wind); SST needs another frequency; Antarctic summer ice (vapour, melt) explains weird data; check tie-point masks (raise T_B limit); use the land mask in `provided/resampling_example/` (limit 0.1?); open-water SIC mean ≈ 0 → std is the result.
 - Still to check: seminar length (newer paper from Tonboe's mail is optional reading).
 - `esmr_rtm.py` ice emissivity table (0.93) ≠ paper Table 1 (0.91); irrelevant over open water.
 - `provided/esmr_rtm.m` is scalar-only and uses `endif` (Octave syntax, not valid in MATLAB): needs a fixed/vectorised copy in `src/matlab/` before A5/A6. `interp1` returns NaN outside −5…25 °C.
@@ -98,6 +104,8 @@ Tasks: `docs/read_me.txt`. Report notes per step (writing plan): `report_notes/`
 - 2026-11-13 · pipeline flowchart `report_notes/pipeline_flowchart.html` (p. 1 flow A1–A6b with paper equations, p. 2 all RTM equations (Wentz 1997) + where each input enters, p. 3 value table; 3 A4 pages)
 - 2026-11-13 · explainer video `output/video/ESMR_pipeline_explainer.mp4` (~8 min, steps 1–9 on orbit 5 Feb 09:59 UTC, narration edge-tts Andrew); sources in `video/` (script.md, player.html, build.py) + `src/matlab/video_export.m`
 - 2026-11-13 · globe viewer: A6b correction for all valid ocean pixels (`correct_day.m`), new modes ΔT_B and SIC corrected
+
+- 2026-11-17 · meeting with Tonboe → new tie-point masks, L study, sweep with L = 0 + inverted grey, correction map
 
 ### 2026-11-13 · Explainer video, review round 1
 - Fixed from Jo's review: sea-ice label in step 1 was off-screen (callouts now stay inside the panel); formulas rendered as LaTeX (KaTeX 0.16.11 vendored in `video/vendor/katex/`); histogram text larger, tie-point labels above the bars; zoom into the example pixel without overshoot/jitter; map → chart switches are sequential (fade out, then in) instead of cross-fades; layer alpha now multiplies with the scene alpha.

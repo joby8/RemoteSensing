@@ -14,9 +14,10 @@
 
 ## What we did
 1. Clusters per day and hemisphere:
-   - water: siconc = 0, SST > 278 K, 90 < T_B < 180 K
-   - ice: **siconc > 0.8**, 100 < T_B < 274 K
-   - both: |lat| ≥ 50°, scan positions 5–74
+   - water: **siconc ≤ 0.01**, SST > 278 K, 90 < T_B < 180 K
+   - ice: **siconc > 0.8**, **180** < T_B < 274 K
+   - both: |lat| ≥ 50°, scan positions 5–74, ERA5 **lsm = 0** (no coastal pixels)
+   - Code: `src/matlab/tp_masks.m`. Until 2026-11-17: siconc = 0 / 100 K / no lsm cut (Table 2 as written); changed after the Tonboe meeting, see the update section at the end.
 2. **Iteration 1:** c_ice = ERA5 siconc of each pixel.
 3. **Reference values mixed by c_ice:** X_ref = (1 − c)·X̄_water + c·X̄_ice for V, W, L, Ts and Ti. The paper describes this as "c_ice is used as a ratio to mix the two tie-point values".
    - ΔT_B = RTM(X_ref, c, θ) − RTM(X_pixel, c, θ)
@@ -27,21 +28,25 @@
 ## Result (Feb 1973 without 28 Feb, mean of the daily std, iteration 2)
 | | Water: std SIC before → after | Ice: std SIC before → after | Days improved (water / ice) |
 |---|---|---|---|
-| North | 10.5 → **8.2 %** (−23 %) | 14.6 → **13.0 %** | 27/27 / 27/27 |
-| South | 14.3 → **11.0 %** (−23 %) | 44.3 → **40.5 %** | 26/27 / 27/27 |
+| North | 9.6 → **7.05 %** (−27 %) | 12.5 → **10.9 %** | 27/27 / 27/27 |
+| South | 11.9 → **9.3 %** (−21 %) | 24.6 → **23.7 %** | 26/27 / 24/27 |
+
+(Old masks, before 2026-11-17: water N 10.5 → 8.2 %, S 14.3 → 11.0 %; ice N 14.6 → 13.0 %, S 44.3 → 40.5 %.)
 
 **Convergence**, measured as mean |c_new − c_used| in % SIC:
 
 | Iteration | Water N / S | Ice N / S |
 |---|---|---|
-| 1 | 1.1 / 2.1 | 6.0 / 16.7 |
-| 2 | 0.3 / 0.6 | 0.5 / 1.3 |
-| 3 | 0.2 / 0.4 | 0.1 / 0.4 |
+| 1 | 0.5 / 1.4 | 5.6 / 9.2 |
+| 2 | 0.2 / 0.4 | 0.5 / 0.5 |
+| 3 | 0.1 / 0.3 | 0.05 / 0.06 |
 
 - **Iteration 2 is the best.** Iteration 3 changes almost nothing; the std even goes up slightly (0.1–0.2 %). This agrees with the paper: "updates are small after one iteration". Use iteration 2.
-- Tie points: T_p,water ≈ 145 K (N) and 141 K (S). It hardly changes after correction.
+- Tie points (corrected): T_p,water ≈ 144.5 K (N) and 140.9 K (S), hardly changed by the correction; T_p,ice 226.5 K (N), 211.2 K (S).
 
 ## Important finding: the Southern ice tie point with siconc > 0.8
+(Numbers in this section are from the old masks with 100 K. With the 180 K limit (2026-11-17) the Southern T_p,ice rises to 211 K, contrast 70 K, ice T_B std 17 K, ice SIC std 23.7 %: most of the problem came from clear-ocean pixels in the ice cluster.)
+
 | | T_p,ice | Ice–water contrast | T_B std of ice cluster |
 |---|---|---|---|
 | A6 (siconc ≥ 0.95) S | 214 K | 73 K | – |
@@ -59,14 +64,31 @@
 - In the North the ice cluster is fine (std 13 %, 79 k pixels per day).
 
 ## For the report
-- Task 1 figures: `A6b_iterative.png` (daily std) and `A6b_hist.png` (histogram: mean 0 %, std N 10.6 → 8.2 %, S 14.3 → 11.0 %, all pixels pooled). Antarctic histogram: small shoulder at +12…16 % after correction. Possible cause, not tested: the c < 0.15 → 0 step of the iteration, so pixels just above 15 % get a different reference.
+- Task 1 figures: `A6b_iterative.png` (daily std) and `A6b_hist.png` (histogram of all pooled open-water pixels, mean 0 %; numbers from the old masks were std N 10.6 → 8.2 %, S 14.3 → 11.0 %, re-read from the new figure). Antarctic histogram: small shoulder at +12…16 % after correction. Possible cause, not tested: the c < 0.15 → 0 step of the iteration, so pixels just above 15 % get a different reference.
 - Method: describe steps 1–5 as the final algorithm. One sentence on A6 as a simpler variant (fixed c = 0/1) giving similar water results (−17 % with siconc ≥ 0.95).
 - Results Task 1: the table and the 4-panel figure (daily std, water and ice, N and S).
 - Discussion:
-  - The correction reduces the open-water noise by about 23 % (about 2–3 percentage points of SIC).
+  - The correction reduces the open-water noise by about 21–27 % (about 2.5 percentage points of SIC).
   - It also reduces the ice-side noise, but less.
-  - The Southern ice tie point is the weak point.
+  - The Southern ice tie point is the weak point (Antarctic summer: melt, wet snow, water vapour; meeting 2026-11-17). Raising the ice T_B limit to 180 K removed the clear-ocean pixels and halved the ice std (40.5 → 23.7 %).
 
 ## Open / to discuss
 - South: is siconc > 0.8 really the best choice, or ≥ 0.95, or add the 5×5 box? Show the numbers above to Tonboe.
 - Task 2: RTM sensitivity study (agreed). Task 3: std vs. θ from `A6b_pixels.mat` (θ, sic_u, sic_c per pixel, `cls` 1 = water, 2 = ice).
+
+## Update 2026-11-17: tie-point masks changed (Tonboe meeting, `report_notes/meeting_2026-11-17.md`)
+New shared function `src/matlab/tp_masks.m` (used by `a6b_iterative.m`, `correct_day.m`, `b2_angle.m`):
+- water: siconc **≤ 0.01** (was = 0): 1 % SIC still counts as ocean.
+- ice: lower T_B limit **180 K** (was 100 K): clear-ocean pixels (T_B ≈ 145 K) had been counted as ice. 180 K = upper limit of the water mask, so the two masks no longer overlap.
+- both: ERA5 land-sea fraction **lsm == 0**: coastal pixels (land spill-over in the large ESMR footprint) are dropped from the tie points. Before, land only dropped out via NaN sst/siconc (ERA5 lsm > 0.5).
+- Older steps A4/A5/A6 keep the original Table 2 masks (baseline, not rerun).
+
+Effect (iteration 2, mean of 1–27 Feb):
+
+| | water px/day | ice px/day | T_p,ice | std water SIC | std ice SIC |
+|---|---|---|---|---|---|
+| N old → new | 17.0k → 15.8k | 79k → 60k | 226.3 → 226.5 K | 8.15 → **7.05 %** | 13.0 → **10.9 %** |
+| S old → new | 35.7k → 35.3k | 12.9k → 8.9k | 201.2 → **211.2 K** | 10.97 → **9.33 %** | 40.5 → **23.7 %** |
+
+Uncorrected → corrected (iteration 2, new masks): water N 9.6 → 7.05 %, S 11.9 → 9.3 %; ice N 12.5 → 10.9 %, S 24.6 → 23.7 %. Water improved on 27/27 (N) and 26/27 (S) days.
+The southern ice tie point was the weak point (contrast 59 K, ice std 40 %): with ocean pixels removed it rises 10 K and the ice std almost halves. The remaining southern ice noise (~24 %) fits Antarctic summer (melt, wet snow, water vapour; meeting note 7).

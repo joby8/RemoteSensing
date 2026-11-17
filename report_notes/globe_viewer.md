@@ -10,7 +10,7 @@ Apple-style layout (system font, iOS colours, light/dark): globe with floating c
 
 ## What it shows
 - All orbits of each day in Feb 1973 on a rotatable 3D globe (drag, scroll to zoom, ←/→ for the day).
-- Colour modes: T_B, incidence angle θ, tie-point masks (Table 2: ice siconc > 0.8), **SIC raw**, **ΔT_B** (RTM correction per pixel) and **SIC corrected**.
+- Colour modes: T_B, incidence angle θ, tie-point masks (`tp_masks.m`, 17 Nov: water siconc ≤ 0.01, SST > 278 K, 90–180 K; ice siconc > 0.8, 180–274 K; both ERA5 lsm = 0), **SIC raw**, **ΔT_B** (RTM correction per pixel) and **SIC corrected**.
 - Correction = A6b method (c_ice from ERA5, one iteration, L not corrected) applied to **all** valid ocean pixels via `src/matlab/correct_day.m`. Same tie points and std as `a6b_iterative.m` (checked for 5 Feb: identical).
 - Tie-point table per day: T_p,water, T_p,ice, std SIC water and ice, raw → corrected.
 - **Preprocessing slider** (steps 0–4: raw swath → Eq. 1 → swath edges → |lat| ≥ 50° → ERA5 land), removed pixels coloured by reason, with pixel counts per step.
@@ -36,6 +36,12 @@ Apple-style layout (system font, iOS colours, light/dark): globe with floating c
 - Correction inputs and parts are stored only for corrected pixels, as 1 byte each (V 0.25 kg/m², W 0.1 m/s, L 0.02 kg/m², T_s 0.2 K, T_i 0.25 K, c 0.4 %, parts 0.25 K, L part 0.5 K). They come from `correct_day.m` (new outputs c, dV, dW, dL, dTs, dTi and cluster means Mw/Mi).
 - Pixels with |lat| < 50° are stored thinned (every 4th line and position) to keep files small; counts are scaled by 16.
 - Rebuild after code changes: `matlab -batch "run('src/matlab/globe_html.m')"` (~2 min for all days, ~350 MB in `output/globe/days/`).
+
+## Update 2026-11-17: new tie-point masks
+- Rebuilt with the masks from the Tonboe meeting (`tp_masks.m`, used via `correct_day.m`). The cluster class bits in `globe_html.m` come from `correct_day`'s `o.mw` / `o.mi`, so the globe and `a6b_iterative.m` share one rule. Texts in the tie-point panel and the cluster legend updated.
+- Coastal pixels (ERA5 lsm > 0) are now left out of the tie-point clusters, but they are still corrected and shown as ocean where ERA5 has an SST (unchanged behaviour). The slider's "ERA5 land" step is still "sst missing".
+- Check 5 Feb (iteration 2), globe = `output/A6b_iterative.csv` exactly: N T_p,water 146.3 → 146.6 K, T_p,ice 224.0 → 224.6 K, std water 10.77 → 7.28 %, ice 13.06 → 10.96 %; S T_p,water 140.6 → 140.8 K, T_p,ice 211.3 → 211.8 K, std water 12.57 → 9.92 %, ice 24.59 → 23.51 %.
+- The 5 Feb example numbers below (ΔT_B range, parts, example pixel) are from the **old masks** (before 17 Nov). Re-read them from the globe before using them in the report.
 
 ## For the report / seminar
 - Screenshots of step 0 vs. step 3 explain the preprocessing in one picture.

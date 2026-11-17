@@ -9,16 +9,22 @@
   - Main y axis = ΔSIC in %, the same range (±45 %) in all 10 panels. K is now on the right axis.
   - ±1σ of the observed pixels marked as dotted lines.
   - Box in each panel: SIC change per 1σ at θ = 50°.
-- Effect: Arctic and Antarctic can be compared directly. The Antarctic curves are steeper in % SIC because the ice–water contrast is smaller (60 vs. 81 K).
-- 1σ at θ = 50° (σ per hemisphere; the tornado pools both hemispheres, so its numbers differ slightly):
+- Effect: Arctic and Antarctic can be compared directly. The Antarctic curves are steeper in % SIC because the ice–water contrast is smaller (70 vs. 82 K since 2026-11-17; was 60 vs. 81 K).
+- **Update 2026-11-17 (Tonboe, meeting 2026-11-17; he liked the plots):**
+  - Shading inverted (B1d and B1e): the observed 5–95 % range is now **white**, everything outside it **grey**, so the eye goes to the realistic range.
+  - **L = 0 in the V, W, Ts, Ti sweeps** (base state and zero point both with L = 0, so each curve is still 0 at its own cluster mean). Reason: L is not corrected and its mean (≈ 0.2 kg/m²) would otherwise shift the other curves. The L sweep itself keeps the others at the cluster mean.
+  - Rerun on the new tie-point masks (`tp_masks.m`: water siconc ≤ 0.01, ice 180 K < T_B < 274 K, lsm = 0). Ice–water contrast now 82 K (N) / 70 K (S) (was 81 / 60 K).
+- 1σ at θ = 50° (σ per hemisphere; the tornado pools both hemispheres, so its numbers differ slightly). New (2026-11-17), old in brackets:
 
 | input | Arctic water | Arctic ice | Antarctic water | Antarctic ice |
 |---|---|---|---|---|
-| V | +8.1 % | +0.3 % | +11.9 % | +0.6 % |
-| W | +4.6 % | 0 | +4.9 % | 0 |
-| L | +10.5 % | +0.3 % | +14.3 % | +0.7 % |
-| Ts | −0.3 % | 0 | −0.3 % | 0 |
-| Ti | 0 | +3.0 % | 0 | +1.9 % |
+| V | +8.2 % (8.1) | +0.3 % (0.3) | +10.4 % (11.9) | +0.5 % (0.6) |
+| W | +4.5 % (4.6) | 0 | +4.2 % (4.9) | 0 |
+| L | +10.5 % (10.5) | +0.3 % (0.3) | +12.2 % (14.3) | +0.5 % (0.7) |
+| Ts | −0.2 % (−0.3) | 0 | −0.2 % (−0.3) | 0 |
+| Ti | 0 | +2.8 % (3.0) | 0 | +1.6 % (1.9) |
+
+  - The Antarctic numbers drop mostly because the contrast grew (60 → 70 K, new ice mask), not because of L = 0; in K the water values barely change (Antarctic V 7.2 → 7.3 K, W 2.97 → 2.95 K, L 8.62 → 8.61 K).
 
 ## B1f: real pixels (`src/matlab/b1f_scatter_ow.m` → `output/B1f_scatter_ow.png`, `.csv`)
 - Tonboe's Figs. 12/13, but with **real** open-water tie-point pixels (1–27 Feb 1973, A6b iteration 2; 460 k Arctic, 964 k Antarctic). Columns V, W, L, Ts; rows Arctic/Antarctic.
