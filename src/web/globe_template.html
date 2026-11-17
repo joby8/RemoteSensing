@@ -9,7 +9,9 @@
   --red: #ff3b30; --orange: #ff9500; --green: #34c759; --teal: #30b0c7; --indigo: #5856d6; --purple: #af52de; --pink: #ff2d55;
   --gray: #8e8e93; --brown: #a2845e; --cyan: #32ade6;
   --water: #0a84ff; --ice: #ff9f0a; --other: #8e8e93;
-  --r-eq1: var(--red); --r-edge: var(--purple); --r-lat: #4a5560; --r-land: var(--brown); --nodata: #c7c7cc;
+  --yellow: #ffcc00; --mint: #00c7be;
+  --r-analog: var(--pink); --r-eq1: var(--red); --r-eq2: var(--orange); --r-eq3: var(--yellow); --r-eq4: var(--mint);
+  --r-edge: var(--purple); --r-lat: #4a5560; --r-land: var(--brown); --nodata: #c7c7cc; --drop: var(--red);
   --c-V: var(--teal); --c-W: var(--indigo); --c-Ti: var(--purple); --c-Ts: var(--orange); --c-L: var(--gray); --c-c: var(--cyan); --c-dtb: var(--red);
   --glass: rgba(255,255,255,.58); --edge: rgba(255,255,255,.7); --hi: rgba(255,255,255,.9); --hover: rgba(120,120,128,.08); --tint: rgba(0,122,255,.12); --shadow: 0 6px 24px rgba(0,0,0,.14), 0 0 0 .5px rgba(0,0,0,.06);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
@@ -18,13 +20,13 @@
   --bg: #000000; --cell: #1c1c1e; --label: #ffffff; --label2: rgba(235,235,245,.6); --label3: rgba(235,235,245,.3);
   --sep: rgba(84,84,88,.55); --fill: rgba(118,118,128,.24); --thumb: #636366; --seg-on: #ffffff; --blue: #0a84ff;
   --red: #ff453a; --orange: #ff9f0a; --green: #30d158; --teal: #40c8e0; --indigo: #5e5ce6; --purple: #bf5af2; --pink: #ff375f;
-  --brown: #ac8e68; --cyan: #64d2ff; --nodata: #48484a; --r-lat: #4a5560;
+  --brown: #ac8e68; --cyan: #64d2ff; --nodata: #48484a; --r-lat: #4a5560; --yellow: #ffd60a; --mint: #63e6e2;
   --glass: rgba(44,44,46,.55); --edge: rgba(255,255,255,.16); --hi: rgba(255,255,255,.22); --hover: rgba(120,120,128,.16); --tint: rgba(10,132,255,.22); --shadow: 0 6px 24px rgba(0,0,0,.5), 0 0 0 .5px rgba(255,255,255,.08); color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #000000; --cell: #1c1c1e; --label: #ffffff; --label2: rgba(235,235,245,.6); --label3: rgba(235,235,245,.3);
   --sep: rgba(84,84,88,.55); --fill: rgba(118,118,128,.24); --thumb: #636366; --seg-on: #ffffff; --blue: #0a84ff;
   --red: #ff453a; --orange: #ff9f0a; --green: #30d158; --teal: #40c8e0; --indigo: #5e5ce6; --purple: #bf5af2; --pink: #ff375f;
-  --brown: #ac8e68; --cyan: #64d2ff; --nodata: #48484a; --r-lat: #4a5560;
+  --brown: #ac8e68; --cyan: #64d2ff; --nodata: #48484a; --r-lat: #4a5560; --yellow: #ffd60a; --mint: #63e6e2;
   --glass: rgba(44,44,46,.55); --edge: rgba(255,255,255,.16); --hi: rgba(255,255,255,.22); --hover: rgba(120,120,128,.16); --tint: rgba(10,132,255,.22); --shadow: 0 6px 24px rgba(0,0,0,.5), 0 0 0 .5px rgba(255,255,255,.08); color-scheme: dark }
 [hidden] { display: none !important; }
 * { box-sizing: border-box; }
@@ -181,6 +183,26 @@ input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border: 0; bord
 .step.off .ttl, .step.off .trail { opacity: .45; }
 .step .trail { flex-direction: column; align-items: flex-end; gap: 0; font-size: 13px; }
 .step .trail b { color: var(--label); font-weight: 500; }
+.step.na .num { background: transparent; color: var(--c); box-shadow: inset 0 0 0 1.5px var(--c); }
+.step.na .trail b { color: var(--label2); font-weight: 400; font-style: italic; }
+.step .trail .w { color: var(--c); font-weight: 500; }
+.ticks5 span { width: 12px; text-align: center; }
+/* tie-point criteria (Map → Tie-point clusters) */
+.crit { display: grid; gap: 2px; }
+.crit .gh { font-size: 12px; color: var(--label2); text-transform: uppercase; letter-spacing: .02em; margin: 6px 0 2px; display: flex; justify-content: space-between; }
+.crit button { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; align-items: center; border: 0; background: transparent; text-align: left; padding: 5px 6px; border-radius: 8px; font-size: 13px; transition: background .12s; }
+.crit button:hover { background: var(--hover); }
+.crit button[aria-checked="true"] { background: var(--tint); }
+.crit button[aria-checked="true"] .lbl { color: var(--blue); font-weight: 600; }
+.crit .n { width: 20px; height: 20px; border-radius: 50%; background: var(--fill); color: var(--label2); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+.crit button[aria-checked="true"] .n { background: var(--c); color: #fff; }
+.crit .lbl { display: grid; min-width: 0; }
+.crit .lbl small { color: var(--label2); font-size: 11.5px; font-weight: 400; }
+.crit .ct { text-align: right; font-size: 12.5px; color: var(--label2); white-space: nowrap; display: grid; }
+.crit .ct b { color: var(--label); font-weight: 500; }
+.crit .ct .d { color: var(--drop); }
+.crit .fin { font-size: 12.5px; color: var(--label2); padding: 2px 6px 4px 34px; }
+.crit .fin b { color: var(--label); font-weight: 600; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th, td { text-align: right; padding: 7px 0; }
 tr + tr td { border-top: .5px solid var(--sep); }
@@ -261,11 +283,11 @@ td .arr { color: var(--label3); }
       <section class="group">
         <h2 class="ghead">Preprocessing</h2>
         <div class="list">
-          <div class="inner"><input type="range" id="step" min="0" max="4" step="1" value="3" aria-label="Preprocessing step"><div class="ticks5"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span></div></div>
+          <div class="inner"><input type="range" id="step" min="0" max="8" step="1" value="7" aria-label="Preprocessing step"><div class="ticks5"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div></div>
           <div id="steps" style="display:contents"></div>
           <label class="cell plain"><span class="ttl"><span>Show removed pixels</span><small>coloured by the step that removed them</small></span><input type="checkbox" class="switch" id="showrm"></label>
         </div>
-        <p class="gfoot">Counts for the selected orbits (|lat| &lt; 50° thinned, × 16).</p>
+        <p class="gfoot"><span>Paper order (Kolbe et al. 2024, Sect. 2.2). Counts for the selected orbits (|lat| &lt; 50° thinned, × 16).</span><span id="stepnote"></span></p>
       </section>
 
       <section class="group">
@@ -292,16 +314,58 @@ const sg = (v, d = 1) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(d);
 const sub = s => s.replace(/T_([a-zA-Z,]+)/g, 'T<sub>$1</sub>');
 
 // ---- preprocessing steps -------------------------------------------------
-// stage = first step that removes the pixel (9 = kept to the end)
+// One slider step per calculation, in the paper's order (Kolbe et al. 2024, Sect. 2.2): analog → Eq. 1 → Eq. 2
+// → Eq. 3 → Eq. 4 → swath edges, then our area masks (latitude, land). code = o.flag of esmr_preprocess.m
+// (stable table cfg.codes), wb = bit of the 'would' byte (what a disabled step would remove).
+// stage of a pixel = slider index of the step that removed it (9 = kept to the end).
+const P = (s) => s.replace(/p_\{?([^}\s·|]+)\}?/g, 'p<sub>$1</sub>');
 const STEPS = [
-  { name: 'Raw swath', desc: 'all 78 scan positions, θ up to ±63.9°' },
-  { name: 'Eq. 1', desc: '90 K < T_B ≤ 273.15 K', c: '--r-eq1' },
-  { name: 'Swath edges', desc: 'scan positions 1–4 and 75–78 (|θ| > 55.7°)', c: '--r-edge' },
-  { name: 'High latitudes', desc: 'keep |lat| ≥ 50°', c: '--r-lat' },
-  { name: 'ERA5 land', desc: 'no ERA5 SST = land', c: '--r-land' },
+  { key: 'raw', name: 'Raw swath', code: -1, desc: () => 'all 78 scan positions, θ up to ±63.9°' },
+  { key: 'analog', name: 'Analog filter', code: 5, wb: 1, c: '--r-analog', on: c => c.analog.on,
+    desc: c => `|ΔA<sub>k</sub>| ≤ ${c.analog.thr} between lines · whole line${c.analog.pad ? ` ±${c.analog.pad}` : ''}` },
+  { key: 'eq1', name: 'Eq. 1', code: 1, wb: 2, c: '--r-eq1', on: c => c.eq1.on, desc: c => `${c.eq1.lo} K < T_B ≤ ${c.eq1.hi} K` },
+  { key: 'eq2', name: 'Eq. 2', code: 2, wb: 4, c: '--r-eq2', on: c => c.eq2.mode !== 'off',
+    desc: c => `mean |T<sub>B,i+1</sub> − T<sub>B,i</sub>| ≤ ${c.eq2.thr} K · ${c.eq2.mode === 'line' ? 'whole line' : `offset blocks ≤ ${c.eq2.lmax} lines`}` },
+  { key: 'eq3', name: 'Eq. 3', code: 3, wb: 8, c: '--r-eq3', on: c => c.eq3.mode !== 'off',
+    desc: c => P(`|p_i − p_{i−1}| + |p_{i+1} − p_i| ≤ ${c.eq3.thr} K · `) + (c.eq3.mode === 'line' ? `whole line ±${c.eq3.pad}` : 'per pixel') },
+  { key: 'eq4', name: 'Eq. 4', code: 4, wb: 16, c: '--r-eq4', on: c => c.eq4.on, desc: c => `no ${c.eq4.win} identical values along track` },
+  { key: 'edge', name: 'Swath edges', code: 6, c: '--r-edge', on: c => [].concat(c.edge).length > 0, desc: c => {
+      const e = new Set([].concat(c.edge)), k = SPOS.map((_, j) => j + 1).filter(j => !e.has(j));
+      return `keep positions ${k[0]}–${k[k.length - 1]} (|θ| ≤ ${Math.max(...k.map(j => Math.abs(SPOS[j - 1]))).toFixed(1)}°)`; } },
+  { key: 'lat', name: 'High latitudes', code: 7, c: '--r-lat', on: c => c.lat_min > 0, desc: c => `keep |lat| ≥ ${c.lat_min}°` },
+  { key: 'land', name: 'ERA5 land', code: 8, wb: 32, c: '--r-land', on: c => c.land !== 'none',
+    desc: c => c.land === 'lsm' ? `keep ERA5 lsm ≤ ${c.lsm_max}` : 'keep pixels with an ERA5 SST' },
 ];
-function stageOf(code) {
-  if (code & 8) return 1; if (code & 16) return 2; if (code & 32) return 3; if (code & 4) return 4; return 9;
+const KEPT = 9, STAGE_OF = new Uint8Array(256).fill(KEPT);
+STEPS.forEach((s, j) => { if (s.code >= 0) STAGE_OF[s.code] = j; });
+// defaults = preproc_config('default'), used only if a day file has no cfg
+const CFG0 = { analog: { on: false, thr: 10, pad: 0 }, eq1: { on: true, lo: 90, hi: 273.15 }, eq2: { mode: 'pixel', thr: 50, lmax: 20 },
+  eq3: { mode: 'line', thr: 150, pad: 1 }, eq4: { on: true, win: 7 }, edge: [1, 2, 3, 4, 75, 76, 77, 78], lat_min: 50, land: 'sst', lsm_max: 0 };
+const cfgNow = () => (cur && cur.cfg) || CFG0;
+const stepOn = j => !STEPS[j].on || STEPS[j].on(cfgNow());
+const f1 = v => (v / 10).toFixed(1);
+// why the step removed (or would remove) pixel i: short text with the value where it is cheap
+function reason(o, i, j) {
+  const c = cfgNow(), L = o.line[i], li = L - 1, tb = o.tb[i];
+  switch (STEPS[j].key) {
+    case 'analog': { const v = o.la[li], d = o.lao[li];
+      return `Analog filter · housekeeping jump ${v === -32768 ? '' : f1(v) + ' '}&gt; ${c.analog.thr}${d ? ` in line ${L + d}` : ''}`; }
+    case 'eq1':
+      if (tb === -32768) return 'Eq. 1 · no T<sub>B</sub>';
+      return `Eq. 1 · T<sub>B</sub> = ${tb < 0 ? '−' + f1(-tb) : f1(tb)} K ${tb / 10 <= c.eq1.lo ? `≤ ${c.eq1.lo}` : `&gt; ${c.eq1.hi}`} K`;
+    case 'eq2': { const v = o.l2[li];
+      return `Eq. 2 · scan-line jump ${v === -32768 ? '' : f1(v) + ' K '}&gt; ${c.eq2.thr} K${c.eq2.mode === 'line' ? '' : ' · offset block'}`; }
+    case 'eq3': {
+      if (c.eq3.mode === 'line') { const v = o.l3[li], d = o.l3o[li];
+        return `Eq. 3 · along-track spike ${v === -32768 ? '' : f1(v) + ' K '}&gt; ${c.eq3.thr} K ${d ? `in line ${L + d} (±${c.eq3.pad} line buffer)` : 'in this line'}`; }
+      const k = o.p3i ? o.p3i[i] : -1, v = k >= 0 ? o.p3[k] : -32768;
+      return `Eq. 3 · along-track spike ${v === -32768 ? '' : f1(v) + ' K '}&gt; ${c.eq3.thr} K`; }
+    case 'eq4': return `Eq. 4 · ${c.eq4.win} identical values${tb === -32768 ? '' : ` (${f1(tb)} K)`}`;
+    case 'edge': return `Swath edge · position ${o.spos[i]} (θ ${SPOS[o.spos[i] - 1].toFixed(1)}°)`;
+    case 'lat': return `High latitudes · |lat| ${Math.abs(o.lat[i] / 100).toFixed(1)}° &lt; ${c.lat_min}°`;
+    case 'land': return c.land === 'lsm' ? `ERA5 land · lsm &gt; ${c.lsm_max}` : 'ERA5 land · no SST';
+  }
+  return STEPS[j].name;
 }
 
 // ---- icons (simple line glyphs in the style of SF Symbols) ----------------------
@@ -344,7 +408,7 @@ async function loadDay(d, progress) {
     progress(`Decoding orbit ${j + 1} of ${src.length} …`, 0.1 + 0.85 * j / src.length); await nextFrame();
     orbits.push(prep(src[j]));
   }
-  const day = { tp: raw.tp, orbits };
+  const day = { tp: raw.tp, cfg: raw.cfg, orbits };
   cache.set(d, day); if (cache.size > 4) cache.delete(cache.keys().next().value);
   return day;
 }
@@ -352,12 +416,18 @@ async function loadDay(d, progress) {
 const ENC = { V: [0, 0.25], W: [0, 0.1], L: [0, 0.02], Ts: [260, 0.2], Ti: [230, 0.25], c: [0, 0.004],
               dV: [0, 0.25], dW: [0, 0.25], dL: [0, 0.5], dTs: [0, 0.25], dTi: [0, 0.25] };
 function prep(o) {
-  const lat = dec(o.lat, Int16Array), lon = dec(o.lon, Int16Array), tb = dec(o.tb, Int16Array), code = dec(o.code, Uint8Array), spos = dec(o.spos, Uint8Array), dtb = dec(o.dtb, Int16Array);
+  const lat = dec(o.lat, Int16Array), lon = dec(o.lon, Int16Array), tb = dec(o.tb, Int16Array), spos = dec(o.spos, Uint8Array), dtb = dec(o.dtb, Int16Array);
+  const flag = dec(o.flag, Uint8Array), bits = dec(o.bits, Uint8Array), lpc = dec(o.lpc, Uint8Array);
+  const would = o.would ? dec(o.would, Uint8Array) : null;          // only present if a disabled step would remove pixels
   const n = lat.length, x = new Float32Array(n), y = new Float32Array(n), z = new Float32Array(n), stage = new Uint8Array(n);
+  const cls = new Uint8Array(n), line = new Uint16Array(n);
+  for (let L = 0, i = 0; L < lpc.length; L++) for (let q = 0; q < lpc[L]; q++) line[i++] = L + 1;   // stored line by line
   for (let i = 0; i < n; i++) {
     const p = lat[i] / 100 * RAD, l = lon[i] / 100 * RAD;
     x[i] = Math.cos(p) * Math.cos(l); y[i] = Math.cos(p) * Math.sin(l); z[i] = Math.sin(p);
-    stage[i] = stageOf(code[i]);
+    stage[i] = STAGE_OF[flag[i]];
+    const b = bits[i];                                              // tie-point criteria (tp_masks.m), valid pixels only
+    cls[i] = (b & 15) === 15 ? 1 : (b & 56) === 56 ? 2 : 0;          // 1 water cluster, 2 ice cluster
   }
   // correction inputs are stored only for corrected pixels (dtb valid): ci[i] = index into them, -1 = none
   const ci = new Int32Array(n).fill(-1); let k = 0;
@@ -371,7 +441,14 @@ function prep(o) {
       inp[f] = v;
     }
   }
-  return { name: o.name, n, lat, lon, tb, code, spos, dtb, stage, x, y, z, ci, inp, col: new Uint32Array(n) };
+  // Eq. 3 pixel mode: spike value per pixel with flag 3 or would-Eq. 3 (stored order)
+  let p3 = null, p3i = null;
+  if (o.p3) { p3 = dec(o.p3, Int16Array); p3i = new Int32Array(n).fill(-1); let m = 0;
+    for (let i = 0; i < n; i++) if (flag[i] === 3 || (would && would[i] & 8)) p3i[i] = m++; }
+  const ln = (f, T) => o[f] ? dec(o[f], T) : new T(lpc.length).fill(T === Int16Array ? -32768 : 0);
+  return { name: o.name, n, lat, lon, tb, spos, dtb, flag, bits, cls, would, line, stage, x, y, z, ci, inp, p3, p3i,
+    la: ln('la', Int16Array), lao: ln('lao', Int8Array), l2: ln('l2', Int16Array), l3: ln('l3', Int16Array), l3o: ln('l3o', Int8Array),
+    col: new Uint32Array(n), top: new Uint8Array(n) };
 }
 
 // the RTM inputs, in the order of the explainer video (step 2)
@@ -431,16 +508,39 @@ function inpValue(o, i, f = inp, v = view) {
 function refOf(o, i, f) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S, c = o.inp.c[o.ci[i]]; return (1 - c) * t.Mw[f] + c * t.Mi[f]; }
 
 // ---- state ------------------------------------------------------------------
-let cur = null, dayIdx = 0, sel = 'all', mode = 'tb', step = 3, showRm = false, inp = 'V', view = 'part';
+let cur = null, dayIdx = 0, sel = 'all', mode = 'tb', step = 7, showRm = false, inp = 'V', view = 'part';
+let crit = null;                                     // tie-point criterion view: null = default clusters, else {g: 'w'|'i', k}
 let rot = [50, -62], zoom = 1;
 const selected = () => !cur ? [] : sel === 'all' ? cur.orbits : [cur.orbits[sel]];
 function sicOf(o, i) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S; return 100 * (o.tb[i] / 10 - t.water_u) / (t.ice_u - t.water_u); }
 function sicCorr(o, i) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S; return 100 * ((o.tb[i] + o.dtb[i]) / 10 - t.water_c) / (t.ice_c - t.water_c); }
 let RM = [];
-const NEEDS_OCEAN = new Set(['sic', 'dtb', 'sicc', 'inp']);   // modes that only make sense for ocean pixels after step 3
+const NEEDS_OCEAN = new Set(['sic', 'dtb', 'sicc', 'inp']);   // modes that only make sense for ocean pixels after all steps
+const LAST = STEPS.length - 1;
+// tie-point criteria (tp_masks.m, 3rd output; one bit each in o.bits, set only for o.valid pixels), in the order tested
+const CRIT = {
+  w: { name: 'Water', c: '--water', steps: [
+    { bit: 1, t: 'siconc ≤ 0.01', paper: 'paper: siconc = 0' },
+    { bit: 2, t: 'SST &gt; 278 K' },
+    { bit: 4, t: '90 K &lt; T<sub>B</sub> &lt; 180 K' },
+    { bit: 8, t: 'ERA5 lsm = 0', paper: 'not in paper (paper: 5×5 box SIC &lt; 1 %)' }] },
+  i: { name: 'Ice', c: '--ice', steps: [
+    { bit: 16, t: 'siconc &gt; 0.8', paper: 'paper also: 5×5 box SIC &gt; 80 %' },
+    { bit: 32, t: '180 K &lt; T<sub>B</sub> &lt; 274 K', paper: 'paper: 100 K &lt; T<sub>B</sub> &lt; 274 K' },
+    { bit: 8, t: 'ERA5 lsm = 0', paper: 'not in paper' }] },
+};
+const critBits = (g, k) => CRIT[g].steps.slice(0, k + 1).reduce((m, s) => m | s.bit, 0);
+// 0 not valid after preprocessing, 1 failed an earlier criterion, 2 drops out at criterion k, 3 passes 1..k
+function critState(o, i, g, k) {
+  if (o.flag[i] !== 0) return 0;
+  const b = o.bits[i], prev = k > 0 ? critBits(g, k - 1) : 0;
+  if ((b & prev) !== prev) return 1;
+  return b & CRIT[g].steps[k].bit ? 3 : 2;
+}
 function recolor() {
   const C = [pack(colOf('--other')), pack(colOf('--water')), pack(colOf('--ice'))];
   RM = [0, ...STEPS.slice(1).map(s => pack(colOf(s.c)))];
+  const CR = crit ? [pack(colOf('--nodata')), pack(colOf('--other')), pack(colOf('--drop')), pack(colOf(CRIT[crit.g].c))] : null;
   const ND = pack(colOf('--nodata'));                  // kept pixel without a value for this mode
   let LUT_INP, ilo, ihi;
   if (mode === 'inp') { const [lo, hi, st] = inpScale(); LUT_INP = lutOf(st, lo, hi); ilo = lo; ihi = hi; }
@@ -454,7 +554,9 @@ function recolor() {
     else if (mode === 'sic') o.col[i] = LUT_SIC[Math.max(0, Math.min(140, Math.round(sicOf(o, i) + 20)))];
     else if (mode === 'dtb') o.col[i] = LUT_DTB[Math.max(0, Math.min(300, o.dtb[i] + 150))];
     else if (mode === 'sicc') o.col[i] = LUT_SIC[Math.max(0, Math.min(140, Math.round(sicCorr(o, i) + 20)))];
-    else o.col[i] = C[o.code[i] & 3];
+    else if (crit) { const q = critState(o, i, crit.g, crit.k); o.col[i] = CR[q]; o.top[i] = q >= 2; continue; }
+    else { o.col[i] = C[o.cls[i]]; o.top[i] = o.cls[i] > 0; continue; }
+    o.top[i] = 0;
   }
 }
 
@@ -493,22 +595,27 @@ function draw() {
   const ps = Math.max(1, Math.min(14, Math.round(30 / 6371 * k)));   // ~30 km footprint in device px
   const ps4 = Math.max(ps, Math.min(40, Math.round(4 * 30 / 6371 * k)));  // thinned low-lat pixels drawn 4x larger
   // pass 0: removed pixels, pass 1: kept "other", pass 2: kept tie-point pixels (on top)
-  for (let pass = 0; pass < 3; pass++) for (const o of selected()) {
-    const { x, y, z, col, code, stage, n } = o;
+  // pass 3: pixels a disabled step WOULD remove (selected step not applied), drawn as a checker pattern on top
+  const wb = !stepOn(step) && STEPS[step].wb || 0;
+  for (let pass = 0; pass < 4; pass++) for (const o of selected()) {
+    const { x, y, z, col, top, bits, stage, n, would } = o;
+    if (pass === 3 && (!wb || !would)) continue;
     for (let i = 0; i < n; i++) {
       const removed = stage[i] <= step;
       let c;
-      if (pass === 0) { if (!removed || !showRm) continue; c = RM[stage[i]]; }
-      else { if (removed) continue; const tpix = mode === 'mask' && (code[i] & 3); if ((pass === 2) !== !!tpix) continue; c = col[i]; if (!c) continue; }
+      if (pass === 0) { if (!removed || !showRm || crit) continue; c = RM[stage[i]]; }   // criterion view: only valid pixels
+      else if (pass === 3) { if (removed || !(would[i] & wb)) continue; c = RM[step]; }
+      else { if (removed) continue; const tpix = mode === 'mask' && top[i]; if ((pass === 2) !== !!tpix) continue; c = col[i]; if (!c) continue; }
       const xr = x[i] * cl - y[i] * sl, yr = x[i] * sl + y[i] * cl;
       const X3 = xr * cp - z[i] * sp; if (X3 <= 0) continue;
       const Z3 = z[i] * cp + xr * sp;
-      const s = (code[i] & 32) ? ps4 : ps, hh = s >> 1;
+      const s = (bits[i] & 64) ? ps4 : ps, hh = s >> 1;
       const px = Math.round(X0 + k * yr) - hh, py = Math.round(Y0 - k * Z3) - hh;
       for (let dy = 0; dy < s; dy++) {
         const yy = py + dy; if (yy < 0 || yy >= H) continue;
         let p = yy * W + px;
-        for (let dx = 0; dx < s; dx++, p++) if (px + dx >= 0 && px + dx < W) buf[p] = c;
+        if (pass === 3 && s >= 4) { for (let dx = 0; dx < s; dx++, p++) if (px + dx >= 0 && px + dx < W && (((px + dx) >> 1) + (yy >> 1)) & 1) buf[p] = c; }
+        else for (let dx = 0; dx < s; dx++, p++) if (px + dx >= 0 && px + dx < W) buf[p] = c;
       }
     }
   }
@@ -563,10 +670,10 @@ function nearest(e) {
   const px = Math.cos(p[1]*RAD)*Math.cos(p[0]*RAD), py = Math.cos(p[1]*RAD)*Math.sin(p[0]*RAD), pz = Math.sin(p[1]*RAD);
   let best = -1, bo = null, bi = -1;
   for (const o of selected()) for (let i = 0; i < o.n; i++) {
-    if (o.stage[i] <= step && !showRm) continue;
+    if (o.stage[i] <= step && (!showRm || crit)) continue;
     const d = o.x[i]*px + o.y[i]*py + o.z[i]*pz; if (d > best) { best = d; bo = o; bi = i; }
   }
-  const km = Math.acos(Math.min(1, best)) * 6371, maxKm = Math.max(30, 8 * 6371 / radius()) * (bo && (bo.code[bi] & 32) ? 4 : 1);
+  const km = Math.acos(Math.min(1, best)) * 6371, maxKm = Math.max(30, 8 * 6371 / radius()) * (bo && (bo.bits[bi] & 64) ? 4 : 1);
   return { p, o: bo && km <= maxKm ? bo : null, i: bi };
 }
 const posTxt = (lat, lon) => `${Math.abs(lat).toFixed(1)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(1)}° ${lon >= 0 ? 'E' : 'W'}`;
@@ -593,16 +700,27 @@ hc.addEventListener('click', e => { if (e.target.closest('.x')) unpin(); });
 function card(bo, bi) {
   const pos = posTxt(bo.lat[bi] / 100, bo.lon[bi] / 100);
   const st = bo.stage[bi], tbv = bo.tb[bi], dv = bo.dtb[bi], hasC = dv !== -32768;
-  const status = st <= step ? `<span class="dot" style="--c:var(${STEPS[st].c})"></span>Removed: ${STEPS[st].name}`
-    : ['Kept', '<span class="dot" style="--c:var(--water)"></span>Kept · water tie point', '<span class="dot" style="--c:var(--ice)"></span>Kept · ice tie point'][bo.code[bi] & 3];
-  const kv = [['Scan position', `${bo.spos[bi]} · θ ${SPOS[bo.spos[bi]-1].toFixed(1)}°`],
+  const dot = c => `<span class="dot" style="--c:var(${c})"></span>`;
+  const lines = [];
+  if (st <= step) lines.push(`${dot(STEPS[st].c)}Removed · ${reason(bo, bi, st)}`);
+  else {
+    lines.push(['Kept', `${dot('--water')}Kept · water tie point`, `${dot('--ice')}Kept · ice tie point`][bo.cls[bi]]);
+    if (st <= LAST) lines.push(`${dot(STEPS[st].c)}Later step ${st} · ${reason(bo, bi, st)}`);
+  }
+  if (bo.would) STEPS.forEach((S, j) => { if (S.wb && !stepOn(j) && bo.would[bi] & S.wb)
+    lines.push(`<span class="dot" style="--c:transparent;box-shadow:inset 0 0 0 1.5px var(${S.c})"></span>Not applied · would remove: ${reason(bo, bi, j)}`); });
+  if (mode === 'mask' && bo.flag[bi] === 0) lines.push(['w', 'i'].map(g => {
+    const k = CRIT[g].steps.findIndex(c => !(bo.bits[bi] & c.bit));
+    return `${CRIT[g].name}: ${k < 0 ? '<b>in cluster</b>' : `fails ${CRIT[g].steps[k].t}`}`; }).join(' · '));
+  if (bo.bits[bi] & 128) lines.push('ERA5: no SST (land)');
+  const kv = [['Line · position', `${bo.line[bi]} · ${bo.spos[bi]} · θ ${SPOS[bo.spos[bi]-1].toFixed(1)}°`],
     ['T<sub>B</sub>', tbv === -32768 ? '–' : `${(tbv/10).toFixed(1)} K${hasC ? ` → ${((tbv + dv) / 10).toFixed(1)} K` : ''}`]];
   if (hasC) kv.push(['ΔT<sub>B</sub>', `${sg(dv/10)} K`]);
   if (tbv !== -32768) kv.push(['SIC', `${sicOf(bo, bi).toFixed(1)} %${hasC ? ` → ${sicCorr(bo, bi).toFixed(1)} %` : ''}`]);
   const head = pin ? `<div class="pin"><svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z" fill="currentColor"/></svg>Pinned</div>` : '';
   hc.innerHTML = `${head}<div class="h"><span style="color:var(--label);font-weight:600">${pos}</span><span style="display:flex;align-items:flex-start">${bo.name}${pin ? '<button class="x" aria-label="Unpin">✕</button>' : ''}</span></div>
     <div class="kv">${kv.map(([a, b]) => `<span>${a}</span><b>${b}</b>`).join('')}</div>
-    <div class="s">${status}${bo.code[bi] & 4 ? ' (ERA5 land)' : ''}</div>${partsHTML(bo, bi)}`;
+    ${lines.map(t => `<div class="s">${t}</div>`).join('')}${partsHTML(bo, bi)}`;
 }
 // per-pixel breakdown of the correction: value vs. reference and the effect, as a small tornado
 function partsHTML(o, i) {
@@ -640,7 +758,9 @@ function renderLayers() {
 }
 // how the selected SIC map was computed (same steps as a6b_iterative.m / correct_day.m)
 function methodHTML(k) {
+  if (k === 'mask') return critHTML();
   if (k === 'sic') return `<div class="method"><div class="badge"><i>No correction</i></div></div>`;
+  if (k !== 'sicc') return '';
   return `<div class="method"><ol>
     <li><div><b>Iteration 1</b> <span>– c from ERA5</span></div></li>
     <li><div><b>Iteration 2</b> <span class="badge"><i class="on">shown</i></span> <span>– c from result of 1</span></div></li>
@@ -678,6 +798,13 @@ function renderCorr() {
   $('ref').innerHTML = row('inp:c', '--c-c', 'half', 'Ice fraction <span class="sym">c</span>', 'sets the reference weather', has ? `mean ${(100 * S.c).toFixed(0)} %` : '–');
 }
 document.querySelector('aside').addEventListener('click', e => {
+  const cb = e.target.closest('button[data-crit]');
+  if (cb) {                                            // tie-point criterion: toggle; criteria apply after all steps
+    const [g, k] = cb.dataset.crit.split(':'), same = crit && crit.g === g && crit.k === +k;
+    crit = !cb.dataset.crit || same ? null : { g, k: +k };
+    if (crit && step < LAST) { step = LAST; sl.value = step; steps(); }
+    renderLayers(); recolor(); legend(); redraw(); refreshCard(); return;
+  }
   const b = e.target.closest('button.cell[data-key]'); if (!b) return;
   const k = b.dataset.key;
   if (k.startsWith('inp:')) { inp = k.slice(4); setMode('inp'); } else setMode(k);
@@ -704,7 +831,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') $('dprev').click(); if (e.key === 'ArrowRight') $('dnext').click();
 });
 const os = $('orbit');
-os.onchange = () => { sel = os.value === 'all' ? 'all' : +os.value; if (pin && !selected().includes(pin.o)) unpin(); steps(); renderCorr(); redraw(); };
+os.onchange = () => { sel = os.value === 'all' ? 'all' : +os.value; if (pin && !selected().includes(pin.o)) unpin(); steps(); renderCorr(); renderLayers(); redraw(); };
 
 async function setDay(i) {
   unpin();
@@ -730,14 +857,25 @@ async function setDay(i) {
 }
 
 function setMode(m) {
+  if (m !== 'mask') crit = null;
   mode = m; renderLayers();
-  if (NEEDS_OCEAN.has(m) && step < 4) { step = 4; $('step').value = 4; steps(); }   // the state A6b works on
+  if (NEEDS_OCEAN.has(m) && step < LAST) { step = LAST; $('step').value = LAST; steps(); }   // the state A6b works on
   syncChecks(); recolor(); legend(); redraw();
   refreshCard();
 }
 function legend() {
   const L = $('legend'), cap = $('caption');
   const nd = NEEDS_OCEAN.has(mode) ? `<div class="keys"><span><span class="dot" style="--c:var(--nodata)"></span>no value (land or filtered)</span></div>` : '';
+  if (mode === 'mask' && crit) {
+    const G = CRIT[crit.g], c = G.steps[crit.k], k1 = crit.k + 1;
+    L.innerHTML = `<div class="t">${G.name} criterion ${k1} of ${G.steps.length}</div><div class="keys">
+      <span><span class="dot" style="--c:var(${G.c})"></span>passes ${k1 > 1 ? `1–${k1}` : '1'}</span>
+      <span><span class="dot" style="--c:var(--drop)"></span>drops out at ${k1}</span>
+      ${k1 > 1 ? `<span><span class="dot" style="--c:var(--other)"></span>failed earlier</span>` : ''}
+      <span><span class="dot" style="--c:var(--nodata)"></span>not valid after preprocessing</span></div>`;
+    cap.innerHTML = `${G.name} ${k1}: <b>${c.t}</b>${c.paper ? ` · ${c.paper}` : ''}`;
+    return;
+  }
   if (mode === 'mask') {
     L.innerHTML = `<div class="t">Tie-point clusters</div><div class="keys"><span><span class="dot" style="--c:var(--water)"></span>Water</span>
       <span><span class="dot" style="--c:var(--ice)"></span>Ice</span><span><span class="dot" style="--c:var(--other)"></span>Other kept pixels</span></div>`;
@@ -775,21 +913,75 @@ const sl = $('step');
 sl.oninput = e => { step = +e.target.value; steps(); redraw(); refreshCard(); };
 $('showrm').onchange = e => { showRm = e.target.checked; redraw(); };
 $('steps').addEventListener('click', e => { const b = e.target.closest('[data-step]'); if (b) { step = +b.dataset.step; sl.value = step; steps(); redraw(); refreshCard(); } });
+// pixel counts per step for a set of orbits (|lat| < lat_min thinned: weight 16)
+function stepCounts(orbits) {
+  const rm = new Array(STEPS.length).fill(0), wo = new Array(STEPS.length).fill(0); let total = 0, kept = 0, hasW = false;
+  for (const o of orbits) { if (o.would) hasW = true;
+    for (let i = 0; i < o.n; i++) {
+      const w = (o.bits[i] & 64) ? 16 : 1, s = o.stage[i]; total += w;
+      if (s <= LAST) rm[s] += w; else kept += w;
+      if (o.would && o.would[i]) STEPS.forEach((S, j) => { if (S.wb && o.would[i] & S.wb) wo[j] += w; });
+    } }
+  return { total, kept, rm, wo, hasW };
+}
 function steps() {
-  sl.style.setProperty('--p', `${step * 25}%`);
-  const rm = [0, 0, 0, 0, 0]; let total = 0;
-  for (const o of selected()) for (let i = 0; i < o.n; i++) {
-    const w = (o.code[i] & 32) ? 16 : 1; total += w; const s = o.stage[i]; if (s <= 4) rm[s] += w;
-  }
-  let left = total;
+  sl.style.setProperty('--p', `${100 * step / LAST}%`);
+  const K = stepCounts(selected()), c = cfgNow();
+  let left = K.total;
   $('steps').innerHTML = STEPS.map((s, j) => {
-    if (j > 0) left -= rm[j];
-    const trail = j === 0 ? `<b>≈ ${fmt(total)}</b><span>pixels</span>` : `<b>${fmt(left)}</b><span>−${fmt(rm[j])}</span>`;
-    return `<button class="cell step${j > step ? ' off' : ''}" data-step="${j}" aria-current="${j === step}">
+    const on = stepOn(j);
+    if (j > 0) left -= K.rm[j];
+    let trail;
+    if (j === 0) trail = `<b>≈ ${fmt(K.total)}</b><span>pixels</span>`;
+    else if (!on) trail = `<b>not applied</b>${K.hasW && s.wb ? `<span class="w" style="--c:var(${s.c})">would −${fmt(K.wo[j])}</span>` : ''}`;
+    else trail = `<b>${fmt(left)}</b><span>−${fmt(K.rm[j])}</span>`;
+    return `<button class="cell step${j > step ? ' off' : ''}${on ? '' : ' na'}" data-step="${j}" aria-current="${j === step}">
       <span class="num" style="${j ? `--c:var(${s.c})` : ''}">${j}</span>
-      <span class="ttl"><span${j === step ? ' style="font-weight:600"' : ''}>${s.name}</span><small>${sub(s.desc)}</small></span>
+      <span class="ttl"><span${j === step ? ' style="font-weight:600"' : ''}>${s.name}</span><small>${sub(s.desc(c))}</small></span>
       <span class="trail">${trail}</span></button>`;
   }).join('');
+  const S = STEPS[step];
+  $('stepnote').innerHTML = !stepOn(step) ? (K.hasW && S.wb ? `<b>${S.name} is off.</b> Checkered: pixels it would remove (${fmt(K.wo[step])}).` : `<b>${S.name} is off.</b>`) : '';
+}
+// tie-point criteria view for the selected orbits: count passing / dropping at each criterion, and the final cluster
+function critStats() {
+  const R = { valid: 0, w: [], i: [] };
+  for (const g of ['w', 'i']) R[g] = CRIT[g].steps.map(() => ({ pass: 0, drop: 0 }));
+  const fin = { w: { N: [0, 0, 0], S: [0, 0, 0] }, i: { N: [0, 0, 0], S: [0, 0, 0] } };   // n, sum, sum of squares of T_B
+  for (const o of selected()) for (let i = 0; i < o.n; i++) {
+    if (o.flag[i] !== 0) continue; R.valid++;
+    const b = o.bits[i];
+    for (const g of ['w', 'i']) {
+      const st = CRIT[g].steps; let m = 0;
+      for (let k = 0; k < st.length; k++) {
+        if (!(b & st[k].bit)) { R[g][k].drop++; break; }
+        R[g][k].pass++;
+        if (k === st.length - 1) { const a = fin[g][o.lat[i] > 0 ? 'N' : 'S'], t = o.tb[i] / 10; a[0]++; a[1] += t; a[2] += t * t; }
+      }
+    }
+  }
+  R.fin = fin;
+  return R;
+}
+function critHTML() {
+  const R = critStats(), t = cur && cur.tp;
+  const ms = a => { if (!a[0]) return '–'; const m = a[1] / a[0]; return `${m.toFixed(1)} ± ${Math.sqrt(Math.max(0, a[2] / a[0] - m * m)).toFixed(1)}`; };
+  const grp = g => {
+    const G = CRIT[g], key = g === 'w' ? 'water_u' : 'ice_u', sk = g === 'w' ? 'w_std_u' : 'i_std_u';
+    const rows = G.steps.map((c, k) => {
+      const on = crit && crit.g === g && crit.k === k, r = R[g][k];
+      return `<button data-crit="${g}:${k}" role="radio" aria-checked="${on}" style="--c:var(${G.c})"><span class="n">${k + 1}</span>
+        <span class="lbl"><span>${c.t}</span>${c.paper ? `<small>${c.paper}</small>` : ''}</span>
+        <span class="ct"><b>${fmt(r.pass)}</b><span class="d">−${fmt(r.drop)}</span></span></button>`;
+    }).join('');
+    const F = R.fin[g];
+    const fin = `<div class="fin">Cluster T<sub>B</sub> (K): N <b>${ms(F.N)}</b> · S <b>${ms(F.S)}</b>${t && sel === 'all' ? `<br>Day T<sub>p</sub>: N <b>${t.N[key].toFixed(1)}</b> · S <b>${t.S[key].toFixed(1)} K</b> · σ SIC N ${t.N[sk].toFixed(1)} · S ${t.S[sk].toFixed(1)} %` : ''}</div>`;
+    return `<div class="gh"><span>${G.name}</span></div>${rows}${fin}`;
+  };
+  return `<div class="method"><div class="crit" role="radiogroup" aria-label="Tie-point criteria">
+    <button data-crit="" role="radio" aria-checked="${!crit}" style="--c:var(--blue)"><span class="n">✓</span><span class="lbl"><span>Final clusters</span><small>default view</small></span><span class="ct"><b>${fmt(R.valid)}</b><span>valid pixels</span></span></button>
+    ${grp('w')}${grp('i')}
+    <span style="color:var(--label2);font-size:12px">After preprocessing (step ${LAST}). Tap a criterion: passing pixels coloured, drop-outs red. Removed pixels hidden.</span></div></div>`;
 }
 function tpTable() {
   const t = cur.tp, f = (v, d = 1) => v.toFixed(d);

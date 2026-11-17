@@ -50,3 +50,7 @@ Water pixels sit in the Labrador Sea / North Atlantic and the Southern Ocean; ic
 ## Open
 - Ask Tonboe: is the 5×5 box needed? Are 95 % pixels in the South enough?
 - ~~Coastal spill-over~~: solved with lsm = 0 (2026-11-17).
+
+## Rerun 2026-11-17 with the central preprocessing (`o.valid`, default `preproc_config()`)
+- `a4_mask.m` now uses `o.valid` instead of its own edge and latitude cuts. `o.valid` also removes land (ERA5 SST missing), which the masks already exclude via lsm = 0.
+- The orbit 02:23 numbers in the table above are unchanged (identical pixel counts).

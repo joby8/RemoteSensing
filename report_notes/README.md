@@ -21,6 +21,8 @@ Use them as the writing plan for the report (due 6 Dec) and the seminar (4 Dec).
 | B2 Std vs. incidence angle, whole swath (Task 3) | [B2_angle.md](B2_angle.md) | Results: Task 3 |
 | Meeting 2026-11-17 | [meeting_2026-11-17.md](meeting_2026-11-17.md) | decisions, to-dos |
 | Session 2026-11-13 | [questions_2026-11-13.md](questions_2026-11-13.md) | decisions |
+| Questions for Tonboe after 2026-11-17 (filters, c in Eq. 14, iteration) | [questions_2026-11-17.md](questions_2026-11-17.md) | decisions |
+| A3b Preprocessing validated against DMI's field | [A3b_filter_validation.md](A3b_filter_validation.md) | Method: preprocessing (validation) |
 | C1 Reference book NASA SP-459 (Zwally et al. 1983): map overlay + extent comparison | [C1_SP459_comparison.md](C1_SP459_comparison.md), step-by-step page [C1_sp459_steps.html](C1_sp459_steps.html) | Discussion / validation |
 | Visualisation | [globe_viewer.md](globe_viewer.md) | Figures / seminar |
 | Pipeline overview (all steps, paper + RTM equations, sources) | [pipeline_flowchart.html](pipeline_flowchart.html) | Method: overview figure / seminar |

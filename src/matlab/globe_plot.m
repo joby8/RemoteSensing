@@ -13,11 +13,10 @@ end
 o = load_orbit(f);
 [~, name] = fileparts(f);
 
-% A3 filters + A4 masks (same rules as a3_filter.m / a4_mask.m)
-edge  = false(1, 78); edge([1:4, 75:78]) = true;
-valid = ~isnan(o.tb_f) & ~repmat(edge, size(o.tb, 1), 1) & abs(o.lat) >= 50;
+% A3 preprocessing + A4 masks (same as a3_filter.m / a4_mask.m)
+valid = o.valid;                                   % preprocessing (esmr_preprocess.m, preproc_config.m)
 tb    = o.tb_f;
-[water, ice] = tp_masks(o, valid, tb, double(ncread(f, 'lsm'))');   % current masks (tp_masks.m, 2026-11-17)
+[water, ice] = tp_masks(o, valid, tb, o.lsm);   % current masks (tp_masks.m, 2026-11-17)
 
 if ~exist('output', 'dir'), mkdir('output'); end
 batch = ~usejava('desktop');

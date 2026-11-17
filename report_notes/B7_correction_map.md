@@ -47,7 +47,7 @@
 
 **Ice edge (0 < c < 0.8):** a mix of the two.
 - Antarctic: ΔSIC +4 to +5 % (V +3.6 to +4.6 %).
-- Arctic: −3.6 to +1.7 %, with V and Ti partly cancelling.
+- Arctic: −3.5 to +1.7 %, with V and Ti partly cancelling (−3.6 before the preprocessing default of 2026-11-17).
 
 ## For the report
 - Answer to Tonboe: **the correction is largest over open water near the ice edge and in the Southern Ocean**, mostly through water vapour. It is smallest over the consolidated pack ice, where Ti drives a correction of only a few %.

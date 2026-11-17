@@ -18,7 +18,7 @@ Open one NetCDF swath file, list all variables with shape and units, and find ou
 - Values are already in K and degrees (no ÷10 scaling needed).
 
 ## Findings
-- `brightness_temperature_filtered` = raw T_B with NaN outside **90 K < T_B ≤ 273.15 K** → Eq. 1 of the paper is already applied (8 % NaN in the example orbit, mostly land).
+- `brightness_temperature_filtered` = raw T_B with NaN outside **90 K < T_B ≤ 273.15 K** (8 % NaN in the example orbit, mostly land) **plus whole scan lines set to NaN** (found 2026-11-17: 11 867 lines in all 312 orbits, 925 626 pixels, of which 821 203 are inside the Eq. 1 range; 7 668 of these lines have no pixel outside Eq. 1, and their scan-to-scan jumps look like normal lines: median 3.6 K vs. 3.4 K). **Not used since 2026-11-17:** `load_orbit.m` applies Eq. 1 per pixel to the raw T_B itself, so a bad pixel removes only that pixel, not its scan line.
 - Scan positions 1–4 and 75–78 are **not** removed yet.
 - `sst` and `siconc` are NaN over land (41 % of the orbit).
 - **No cloud liquid water variable** in the files; only `tcw` (total column water) and `tcwv` (water vapour). → L = `tcw − tcwv` (decided with Tonboe, see A2).

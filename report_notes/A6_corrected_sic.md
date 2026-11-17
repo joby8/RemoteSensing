@@ -49,3 +49,13 @@ Correct the measured T_B for the influence of water vapour, wind, SST and ice te
 - **Task 2 (B1):** exclusion test with the same code. Keep one of V, W, Ts at its mean and see how much the std grows. The diagnosis already suggests V > W ≫ Ts.
 - **Task 3 (B2):** std vs. θ from `A6_water_pixels.mat`. It already contains θ, sic_u and sic_c per pixel.
 - Paper uses a 15-day running mean of the tie points. We use daily values; mention it.
+
+## Rerun 2026-11-17 with the central preprocessing (`o.valid`, raw T_B, Eq. 1–4 with the Eq. 3 line buffer; before: DMI field)
+- Std of open-water SIC:
+  - N 10.57 → 8.73 % (was 10.56 → 8.72)
+  - S 11.53 → 9.57 % (was 11.54 → 9.57)
+  - still −17 % in both hemispheres
+- Std of T_B: N 8.51 → 7.01 K, S 8.41 → 6.97 K.
+- Per-pixel L variant: 11.53 % N, 13.69 % S.
+- Days improved: 27/27 N, 26/27 S.
+- The table above still holds at the printed precision.

@@ -18,14 +18,14 @@ Meeting with Tonboe on 2026-11-17: do a study on how L enters the correction. We
 | | uncorrected | mean L | per-pixel L | days mean L better |
 |---|---|---|---|---|
 | Arctic water | 9.61 % | **7.05 %** | 9.99 % | 27 / 27 |
-| Antarctic water | 11.88 % | **9.33 %** | 13.59 % | 27 / 27 |
+| Antarctic water | 11.88 % | **9.34 %** | 13.61 % | 27 / 27 |
 | Arctic ice | 12.53 % | 10.86 % | 10.85 % | 10 / 27 |
 | Antarctic ice | 24.57 % | 23.70 % | 23.65 % | 9 / 27 |
 
 - The mean SIC is 0 % (water) and 100 % (ice) in every case, because the tie points are the cluster means.
 - **Water:** the per-pixel L is worse than no correction at all (N +0.4, S +1.7 percentage points vs. uncorrected). The mean L is better on every day in both hemispheres.
 - **Ice:** no difference (≤ 0.05 percentage points). L hardly changes the T_B of ice (B1: < 0.4 K per σ), so L only matters on the water side.
-- The mean-L numbers equal the A6b iteration 2 rerun with the new masks (7.05 / 9.33 %), a consistency check.
+- The mean-L numbers equal the A6b iteration 2 rerun with the new masks and the preprocessing default of 2026-11-17 (7.05 / 9.34 %), a consistency check.
 
 ## Figure `output/B1i_L_study.png` (Arctic top, Antarctic bottom)
 1. Std of open-water SIC per day: the per-pixel L curve lies above the uncorrected curve on most days, and the mean L curve lies below both.

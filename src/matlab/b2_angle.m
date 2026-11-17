@@ -14,7 +14,8 @@ files = dir(fullfile('ESMR_colocated_filtered','*.nc'));
 fday  = string(regexp({files.name}, '1973m(\d{4})t', 'tokens', 'once'));
 days  = unique(fday); days = days(days ~= "0228");       % 28 Feb: only 1 orbit
 NIT   = 2;                                                % final iteration (A6b)
-edge  = [1:4, 75:78];
+cfg   = preproc_config(); edge = cfg.edge;           % analysis cut (positions 1-4, 75-78)
+cfg.edge = [];                                        % B2 preprocesses WITHOUT the edge cut (all 78 positions)
 vars  = {'tb','th','sp','V','W','L','Ts','Ti','ci'};
 hemi  = ["N","S"];
 
@@ -33,12 +34,12 @@ for d = days(:)'
     for h = 1:2, for t = 1:2, for v = vars, G{h, t}.(v{1}) = []; end, end, end
     for k = fi
         fn = fullfile(files(k).folder, files(k).name);
-        q = load_orbit(fn);
+        q = load_orbit(fn, cfg);
         q.L  = double(ncread(fn, 'tcw'))' - q.V;
         q.th = q.theta; q.tb = q.tb_f; q.ci = q.siconc;
         q.sp = repmat(1:78, size(q.tb, 1), 1);
-        valid = ~isnan(q.tb_f) & abs(q.lat) >= 50;          % NO edge cut here
-        [mw_, mi_] = tp_masks(q, valid, q.tb, double(ncread(fn, 'lsm'))');   % masks 2026-11-17
+        valid = q.valid;                                     % preprocessing with cfg.edge = [] (NO edge cut here)
+        [mw_, mi_] = tp_masks(q, valid, q.tb, q.lsm);        % masks 2026-11-17
         m = {mw_, mi_};
         for h = 1:2
             hs = (q.lat > 0) == (h == 1);

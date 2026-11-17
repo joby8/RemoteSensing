@@ -50,7 +50,7 @@ for i = 1:numel(days)
             [r, q] = cellidx(o.lat(m), o.lon(m)); ok = r >= 1 & r <= n & q >= 1 & q <= n;
             s = s + accumarray([r(ok) q(ok)], sic(ok), [n n]);
             c = c + accumarray([r(ok) q(ok)], 1, [n n]);
-            ml = o.lat < -45 & o.lat >= -90 & isnan(o.sst);  % ERA5 land
+            ml = o.lat < -45 & o.lat >= -90 & isnan(o.sst);  % ERA5 land; display only (land cells of the map), not o.valid
             [r, q] = cellidx(o.lat(ml), o.lon(ml)); ok = r >= 1 & r <= n & q >= 1 & q <= n;
             cl = cl + accumarray([r(ok) q(ok)], 1, [n n]);
         end

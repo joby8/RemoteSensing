@@ -2,7 +2,8 @@
 %  Masks from tp_masks.m (Table 2, changed after the Tonboe meeting 2026-11-17):
 %  Water: siconc <= 0.01, sst > 278 K, 90 K < TB < 180 K, lsm == 0.
 %  Ice:   siconc > 0.8, 180 K < TB < 274 K, lsm == 0.
-%  Both: |lat| >= 50 deg, scan positions 5..74. The 5x5-box criterion is not applied.
+%  Both: preprocessed valid pixels o.valid (esmr_preprocess.m: Eq. 1-4, scan positions 5..74, |lat| >= 50 deg,
+%  ocean). The 5x5-box criterion is not applied.
 % Run from the project root:  matlab -batch "run('src/matlab/a4_mask.m')"
 cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
 addpath(fullfile('src','matlab'));
@@ -12,10 +13,9 @@ if ~exist('f','var') || isempty(f)
 end
 o = load_orbit(f);
 
-edge  = false(1, 78); edge([1:4, 75:78]) = true;
-valid = ~isnan(o.tb_f) & ~repmat(edge, size(o.tb, 1), 1) & abs(o.lat) >= 50;
+valid = o.valid;                                   % preprocessing (esmr_preprocess.m, preproc_config.m)
 tb    = o.tb_f;
-[water, ice] = tp_masks(o, valid, tb, double(ncread(f, 'lsm'))');   % current masks (tp_masks.m, 2026-11-17)
+[water, ice] = tp_masks(o, valid, tb, o.lsm);   % current masks (tp_masks.m, 2026-11-17)
 N = o.lat > 0;
 
 fprintf('%-6s %-5s %7s %9s %7s\n', 'class', 'hemi', 'n', 'mean TB', 'std');

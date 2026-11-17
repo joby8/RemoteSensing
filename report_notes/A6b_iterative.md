@@ -42,7 +42,7 @@
 | 3 | 0.1 / 0.3 | 0.05 / 0.06 |
 
 - **Iteration 2 is the best.** Iteration 3 changes almost nothing; the std even goes up slightly (0.1–0.2 %). This agrees with the paper: "updates are small after one iteration". Use iteration 2.
-- Tie points (corrected): T_p,water ≈ 144.5 K (N) and 140.9 K (S), hardly changed by the correction; T_p,ice 226.5 K (N), 211.2 K (S).
+- Tie points (corrected): T_p,water ≈ 144.5 K (N) and 140.8 K (S), hardly changed by the correction; T_p,ice 226.5 K (N), 211.2 K (S).
 
 ## Important finding: the Southern ice tie point with siconc > 0.8
 (Numbers in this section are from the old masks with 100 K. With the 180 K limit (2026-11-17) the Southern T_p,ice rises to 211 K, contrast 70 K, ice T_B std 17 K, ice SIC std 23.7 %: most of the problem came from clear-ocean pixels in the ice cluster.)
@@ -87,8 +87,24 @@ Effect (iteration 2, mean of 1–27 Feb):
 
 | | water px/day | ice px/day | T_p,ice | std water SIC | std ice SIC |
 |---|---|---|---|---|---|
-| N old → new | 17.0k → 15.8k | 79k → 60k | 226.3 → 226.5 K | 8.15 → **7.05 %** | 13.0 → **10.9 %** |
-| S old → new | 35.7k → 35.3k | 12.9k → 8.9k | 201.2 → **211.2 K** | 10.97 → **9.33 %** | 40.5 → **23.7 %** |
+| N old → new | 17.0k → 15.8k (15.9k*) | 79k → 60k (61k*) | 226.3 → 226.5 K | 8.15 → **7.05 %** | 13.0 → **10.9 %** |
+| S old → new | 35.7k → 35.3k (35.6k*) | 12.9k → 8.9k | 201.2 → **211.2 K** | 10.97 → **9.33 %** (9.34*) | 40.5 → **23.7 %** |
 
 Uncorrected → corrected (iteration 2, new masks): water N 9.6 → 7.05 %, S 11.9 → 9.3 %; ice N 12.5 → 10.9 %, S 24.6 → 23.7 %. Water improved on 27/27 (N) and 26/27 (S) days.
 The southern ice tie point was the weak point (contrast 59 K, ice std 40 %): with ocean pixels removed it rises 10 K and the ice std almost halves. The remaining southern ice noise (~24 %) fits Antarctic summer (melt, wet snow, water vapour; meeting note 7).
+(* = after the preprocessing change of 2026-11-17, below.)
+
+## Update 2026-11-17 (later): rerun with the central preprocessing default
+- `a6b_iterative.m` now uses `o.valid` from `esmr_preprocess.m` (default `preproc_config()`: raw T_B, Eq. 1, per-pixel Eq. 2, **Eq. 3 line mode ± 1 line**, Eq. 4, edge, |lat| ≥ 50°, land = SST missing; analog filter off). Before, the run used DMI's `brightness_temperature_filtered`.
+- Effect on the result is ≤ 0.01 points (iteration 2, 1–27 Feb):
+  - water N 9.61 → 7.05 % (unchanged), S 11.88 → 9.34 % (was 9.33)
+  - ice N 12.53 → 10.86 %, S 24.57 → 23.70 % (unchanged)
+- About 1 % more tie-point pixels, because DMI's analog-based line removal is gone:
+  - water N 15.75k → 15.93k, S 35.34k → 35.59k per day
+  - ice N 60.2k → 60.8k, S 8.86k → 8.91k per day
+- Tie points (corrected): N 144.49 / 226.48 K, S 140.84 / 211.18 K. Contrast 82.0 / 70.3 K.
+- Iteration 3: water N 7.12 %, S 9.45 % (≤ 0.12 points above iteration 2).
+- Our iteration scheme is an **intentional deviation** from the paper:
+  - The paper (p. 1253–1254) does one RTM correction, starting from the uncorrected SIC.
+  - We start from ERA5 c (iteration 1) and iterate once more (iteration 2).
+  - Question for Tonboe: `questions_2026-11-17.md`.

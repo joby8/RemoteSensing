@@ -124,7 +124,7 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
 <div class="stage"><div class="tag"><b>A2</b>inputs</div>
 <div class="row c2">
   <div class="n esmr"><h3>Measured T<sub>B</sub> and geometry</h3>
-    <p class="eq"><i>T</i><sub>B</sub> = <code>brightness_temperature_filtered</code> [K]</p>
+    <p class="eq"><i>T</i><sub>B</sub> = <code>Brightness_temperature</code> after Eq. 1–4 (A3) [K]</p>
     <p class="eq"><i>θ</i> = spos2ia(scan position) [°], &nbsp;0° … ±64°</p>
     <p class="from"><b>from:</b> NetCDF; θ table <code>provided/spos2ia.txt</code></p>
     <span class="code">load_orbit.m</span></div>
@@ -138,12 +138,12 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
 <div class="arrows" style="grid-template-columns:1fr"><div><span class="lab">ESMR + ERA5 on the same pixel grid</span></div></div>
 
 <!-- A3 filters -->
-<div class="stage"><div class="tag"><b>A3</b>filters</div>
+<div class="stage"><div class="tag"><b>A3</b>preprocessing</div>
 <div class="row">
-  <div class="n"><h3>Valid pixels (all three must hold)</h3>
-    <p class="eq">90 K &lt; <i>T</i><sub>B</sub> ≤ 273.15 K <span class="eqn">Eq. 1</span> &nbsp;∧&nbsp; scan pos. 5–74 (|θ| ≤ 55.67°) &nbsp;∧&nbsp; |lat| ≥ 50° &nbsp;∧&nbsp; sst ≠ NaN (ERA5 ocean)</p>
-    <p class="from"><b>why:</b> Eq. 1 removes land/bad values (already in <code>_filtered</code>); swath edges 1–4/75–78 have the largest θ; |lat| ≥ 50° agreed with Tonboe; sst = NaN marks ERA5 land. <b>Orbit 02:23:</b> 91.8 % <span class="to">→</span> 82.5 % <span class="to">→</span> 40 % of pixels left.</p>
-    <span class="code">a3_filter.m · correct_day.m (valid, corr)</span></div>
+  <div class="n"><h3>Valid pixels: one configurable step, in this order (default 2026-11-17)</h3>
+    <p class="eq">source = raw <code>Brightness_temperature</code> &nbsp;<span class="to">→</span> analog filter (off) <span class="to">→</span> 90 K &lt; <i>T</i><sub>B</sub> ≤ 273.15 K <span class="eqn">Eq. 1</span> <span class="to">→</span> scan-line jump, per pixel <span class="eqn">Eq. 2</span> <span class="to">→</span> spike + ± 1 line <span class="eqn">Eq. 3</span> <span class="to">→</span> 7 stuck values <span class="eqn">Eq. 4</span> <span class="to">→</span> scan pos. 5–74 (|θ| ≤ 55.67°) <span class="to">→</span> |lat| ≥ 50° <span class="to">→</span> land (sst = NaN)</p>
+    <p class="from"><b>why:</b> Kolbe et al. 2024 filter chain (p. 1249) on the raw T<sub>B</sub> instead of DMI's <code>_filtered</code> field. Eq. 2 removes only the shifted pixels of offset blocks. Eq. 3 is tested on the raw T<sub>B</sub>, and a spike removes its line ± 1 line, because the neighbouring lines are degraded (matches DMI's rule, A3b). The analog filter is off (units unknown, no effect downstream). The swath edges have the largest θ; |lat| ≥ 50° was agreed with Tonboe; sst = NaN marks ERA5 land. <code>o.flag</code> = first step that removed a pixel, <code>o.valid</code> = kept. <b>Orbit 02:23:</b> 92.1 % (Eq. 1) <span class="to">→</span> 91.8 % (Eq. 2–4) <span class="to">→</span> 82.5 % (edge) <span class="to">→</span> 40.0 % (lat) <span class="to">→</span> 23.8 % (land) of pixels left.</p>
+    <span class="code">preproc_config.m · esmr_preprocess.m (via load_orbit.m) · a3_filter.m</span></div>
 </div></div>
 <div class="arrows c2" style="grid-template-columns:1fr 1fr"><div><span class="lab">per day and hemisphere (N, S)</span></div><div></div></div>
 
@@ -294,7 +294,7 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
 <h2>Where each value comes from</h2>
 <table>
 <tr><th style="width:15%">Symbol</th><th style="width:30%">Meaning</th><th style="width:31%">Source / formula</th><th>Code</th></tr>
-<tr class="g-esmr"><td class="k"><i>T</i><sub>B</sub></td><td>measured brightness temperature, 19.35 GHz H</td><td><code>brightness_temperature_filtered</code> (Eq. 1 applied)</td><td><code>load_orbit.m</code> (tb_f)</td></tr>
+<tr class="g-esmr"><td class="k"><i>T</i><sub>B</sub></td><td>measured brightness temperature, 19.35 GHz H</td><td><code>Brightness_temperature</code>, Eq. 1–4 (A3)</td><td><code>load_orbit.m</code> (tb_f)</td></tr>
 <tr class="g-esmr"><td class="k">θ</td><td>incidence angle</td><td><code>spos2ia.txt</code>, per scan position</td><td><code>load_orbit.m</code></td></tr>
 <tr class="g-esmr"><td class="k">lat, lon</td><td>pixel position</td><td><code>Latitude</code>, <code>Longitude</code></td><td><code>load_orbit.m</code></td></tr>
 <tr class="g-era5"><td class="k"><i>V</i></td><td>total column water vapour</td><td>ERA5 <code>tcwv</code></td><td><code>load_orbit.m</code></td></tr>
@@ -303,7 +303,7 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
 <tr class="g-era5"><td class="k"><i>T</i><sub>s</sub></td><td>sea surface temperature</td><td>ERA5 <code>sst</code> (271.35 K under ice where NaN, weight ≈ 0)</td><td><code>correct_day.m</code> (Tsx)</td></tr>
 <tr class="g-era5"><td class="k"><i>T</i><sub>i</sub></td><td>emitting layer temperature of the ice</td><td>0.4·<code>t2m</code> + 0.6·272 K (Eq. 15)</td><td><code>load_orbit.m</code></td></tr>
 <tr class="g-era5"><td class="k"><i>c</i><sup>(0)</sup></td><td>start ice fraction</td><td>ERA5 <code>siconc</code></td><td><code>correct_day.m</code></td></tr>
-<tr class="g-calc"><td class="k">M<sub>w</sub>, M<sub>i</sub></td><td>water / ice tie-point clusters</td><td>Table 2 thresholds + A3 filters, per day and hemisphere</td><td><code>correct_day.m</code> (mw, mi)</td></tr>
+<tr class="g-calc"><td class="k">M<sub>w</sub>, M<sub>i</sub></td><td>water / ice tie-point clusters</td><td>Table 2 thresholds + A3 preprocessing (<code>o.valid</code>), per day and hemisphere</td><td><code>correct_day.m</code> (mw, mi)</td></tr>
 <tr class="g-calc"><td class="k"><i>X̄</i><sub>w</sub>, <i>X̄</i><sub>i</sub></td><td>mean RTM inputs of the clusters</td><td>mean over M<sub>w</sub> / M<sub>i</sub></td><td><code>correct_day.m</code> (Mw, Mi)</td></tr>
 <tr class="g-calc"><td class="k"><i>X</i><sub>ref</sub></td><td>reference state per pixel</td><td>(1 − c)·X̄<sub>w</sub> + c·X̄<sub>i</sub></td><td><code>correct_day.m</code> (r)</td></tr>
 <tr class="g-rtm"><td class="k">Δ<i>T</i><sub>B</sub></td><td>weather correction</td><td>RTM(ref) − RTM(pixel), Eq. 14</td><td><code>esmr_rtm_vec.m</code></td></tr>
@@ -316,11 +316,11 @@ tr.g-rtm  td:first-child { box-shadow: inset 2.4mm 0 0 var(--rtm-b);  padding-le
 <h2>Typical numbers (Feb 1973, monthly mean)</h2>
 <table>
 <tr><th></th><th>North</th><th>South</th></tr>
-<tr><td><i>T</i><sub>p,water</sub> raw <span class="to">→</span> corr.</td><td>144.4 <span class="to">→</span> 144.5 K</td><td>140.8 <span class="to">→</span> 140.9 K</td></tr>
+<tr><td><i>T</i><sub>p,water</sub> raw <span class="to">→</span> corr.</td><td>144.4 <span class="to">→</span> 144.5 K</td><td>140.8 <span class="to">→</span> 140.8 K</td></tr>
 <tr><td><i>T</i><sub>p,ice</sub> raw <span class="to">→</span> corr.</td><td>226.0 <span class="to">→</span> 226.5 K</td><td>210.6 <span class="to">→</span> 211.2 K</td></tr>
 <tr><td>contrast ice − water</td><td>≈ 82 K</td><td>≈ 70 K</td></tr>
 <tr><td>1 % SIC equals</td><td>≈ 0.8 K</td><td>≈ 0.7 K</td></tr>
-<tr><td>pixels M<sub>w</sub> / M<sub>i</sub> per day</td><td>16 000 / 60 000</td><td>35 000 / 9 000</td></tr>
+<tr><td>pixels M<sub>w</sub> / M<sub>i</sub> per day</td><td>16 000 / 61 000</td><td>36 000 / 9 000</td></tr>
 </table>
 <p class="small" style="font-size:8pt">The water tie point barely moves: the correction pulls every pixel towards the cluster mean, so the mean of M<sub>w</sub> stays the same and only the spread shrinks.</p>
 </div>

@@ -21,14 +21,17 @@ N = 'N';
 cnt = arrayfun(@(o) nnz((o.mw | o.mi) & o.lat > 0), O2);
 [~, k] = max(cnt);
 o = O2(k); o1 = O1(k);
-edge = false(1, 78); edge([1:4, 75:78]) = true;
+% Display bits for the player (one bit per layer, independent; not the first-step code o.flag).
+% Settings from the central preprocessing (preproc_config.m), so the layers match o.valid.
+cfg = preproc_config();
+edge = false(1, 78); edge(cfg.edge) = true;
 isedge = repmat(edge, size(o.tb, 1), 1);
 north = o.lat > 0;
 sic_u = (o.tb_f - T2.(N).water_u) / (T2.(N).ice_u - T2.(N).water_u);
 sic1  = (o.tb_f + o1.dtb - T1.(N).water_c) / (T1.(N).ice_c - T1.(N).water_c);
 sic2  = (o.tb_f + o.dtb  - T2.(N).water_c) / (T2.(N).ice_c - T2.(N).water_c);
 c1 = min(max(sic1, 0), 1); c1(c1 < 0.15) = 0;            % c used in iteration 2
-flags = uint8(~isnan(o.tb_f) == 0) + 2*uint8(isedge) + 4*uint8(abs(o.lat) < 50) + 8*uint8(isnan(o.sst)) ...
+flags = uint8(~isnan(o.tb_f) == 0) + 2*uint8(isedge) + 4*uint8(abs(o.lat) < cfg.lat_min) + 8*uint8(isnan(o.sst)) ... % land bit = cfg.land 'sst'
       + 16*uint8(o.mw) + 32*uint8(o.mi) + 64*uint8(north);
 t = regexp(files(fi(k)).name, 't(\d{2})(\d{2})', 'tokens', 'once');
 P = struct('name', sprintf('1973-02-%s %s:%s UTC', extractAfter(vday, 2), t{1}, t{2}), ...

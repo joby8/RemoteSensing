@@ -29,10 +29,11 @@ for d = days(:)'
     [O, TP] = correct_day(fn, 2);
     for k = 1:numel(O)
         o = O(k);
-        lsm = double(ncread(fn{k}, 'lsm'))';
+        lsm = o.lsm;                                      % display only (land background)
         for h = 1:2
             hs = (o.lat > 0) == (h == 1); hn = 'NS'; tp = TP.(hn(h));
-            % land field for the background (all pixels |lat| >= 50 of this hemisphere)
+            % land field for the background (all pixels |lat| >= 50 of this hemisphere). Display only: the
+            % background must cover land too, so this deliberately does NOT use o.valid (which removes land).
             ml = hs & abs(o.lat) >= 50;
             [ix, iy, ok] = cell_of(o.lat(ml), o.lon(ml), h, edges);
             l = lsm(ml) > 0.5;

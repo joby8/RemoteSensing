@@ -13,7 +13,6 @@ addpath(fullfile('src','matlab'));
 files = dir(fullfile('ESMR_colocated_filtered','*.nc'));
 fday  = string(regexp({files.name}, '1973m(\d{4})t', 'tokens', 'once'));
 days  = unique(fday);
-edge = false(1, 78); edge([1:4, 75:78]) = true;
 vars = {'tb','th','V','W','L','Ts','Ti','ci'};
 hemi = ["N","S"];
 
@@ -29,8 +28,7 @@ for d = days(:)'
         o = load_orbit(fn);
         o.L = double(ncread(fn, 'tcw'))' - o.V;
         o.th = o.theta; o.tb = o.tb_f; o.ci = o.siconc;
-        valid = ~isnan(o.tb_f) & ~repmat(edge, size(o.tb_f, 1), 1) & abs(o.lat) >= 50;
-        [mw_, mi_] = tp_masks(o, valid, o.tb, double(ncread(fn, 'lsm'))');
+        [mw_, mi_] = tp_masks(o, o.valid, o.tb, o.lsm);   % o.valid: preprocessing (preproc_config.m)
         m = {mw_, mi_};
         for h = 1:2
             hs = (o.lat > 0) == (h == 1);

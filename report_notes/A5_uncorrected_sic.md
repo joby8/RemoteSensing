@@ -37,3 +37,12 @@ Compute SIC with uncorrected T_B and report mean and standard deviation over the
 
 ## Open
 - Next (A6): fix and vectorise the RTM (`provided/esmr_rtm.m` uses Octave `endif`, is scalar only, NaN for SST outside −5…25 °C), then corrected T_B → corrected tie points → corrected SIC std.
+
+## Rerun 2026-11-17 with the central preprocessing (`o.valid`, raw T_B, Eq. 1–4 with the Eq. 3 line buffer; before: DMI field)
+- Masks unchanged: the original Table 2 masks (siconc = 0 / ≥ 0.95).
+- Std of open-water SIC:
+  - N 10.44 → 10.45 % (range 7.09–12.88 %)
+  - S 11.64 % (range 9.07–14.51 %, was 9.04–14.51 %)
+- T_p,water 144.8 / 140.9 K and T_p,ice 225.7 / 213.3 K: unchanged.
+- About 1 % more pixels per day (water N 16.5k → 16.7k, S 34.6k → 34.9k).
+- The numbers in the table above still hold at the printed precision.

@@ -58,6 +58,7 @@ std of SIC [%], 1–27 Feb, pooled pixels, no RTM → with RTM:
 | N water | 9.1 → 6.8 | 9.3 → 6.9 | 10.4 → 7.4 | 11.6 → 8.2 | 13.9 → 9.9 |
 | N ice | 12.1 → 10.4 | 12.3 → 10.6 | 13.2 → 11.5 | 13.7 → 11.9 | 14.7 → 12.5 |
 | S water | 11.0 → 8.9 | 11.6 → 9.1 | 12.6 → 9.6 | 14.5 → 10.8 | 17.5 → 13.0 |
-| S ice | 24.2 → 23.6 | 24.7 → 23.9 | 24.7 → 23.6 | 24.8 → 23.3 | 25.2 → 23.2 |
+| S ice | 24.2 → 23.5 | 24.7 → 23.9 | 24.7 → 23.6 | 24.8 → 23.3 | 25.2 → 23.1 |
 
 Same shape as before: water noise flat to ~40°, then rises; ice almost flat.
+Rerun 2026-11-17 with the new preprocessing default (`preproc_config.m`; B2 uses it with `cfg.edge = []`, so all 78 positions are kept): only S ice changed by 0.1 point (0–20° and edge); the check against A6b is still 0.0000 %.

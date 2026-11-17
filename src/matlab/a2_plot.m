@@ -15,7 +15,7 @@ end
 [~, name] = fileparts(f);
 fig = figure('Visible','off','Position',[100 100 1800 650]);
 tl = tiledlayout(1, 2, 'TileSpacing', 'compact');
-fld = {'tb', 'tb_f'}; ttl = {'T_B raw', 'T_B filtered (file)'};
+fld = {'tb', 'tb_file'}; ttl = {'T_B raw', 'T_B filtered (file)'};
 for i = 1:2
     ax = nexttile; hold(ax, 'on');
     scatter(o.lon(:), o.lat(:), 9, o.(fld{i})(:), 'filled', 'MarkerEdgeColor', 'none');

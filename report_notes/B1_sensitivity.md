@@ -105,12 +105,12 @@ This is the literal Task 2 wording: "evaluate by exclusion which ERA5 parameters
 
 | std of SIC [%] (increase vs. full) | Arctic water | Arctic ice | Antarctic water | Antarctic ice |
 |---|---|---|---|---|
-| no RTM correction | 9.61 (+2.56) | 12.53 (+1.67) | 11.88 (+2.55) | 24.57 (+0.87) |
-| **full correction (V, W, Ts, Ti)** | **7.05** | **10.86** | **9.33** | **23.70** |
-| without V | 8.25 (**+1.20**) | 11.03 (+0.17) | 11.19 (**+1.86**) | 24.22 (+0.53) |
-| without W | 8.45 (**+1.40**) | 10.84 (−0.02) | 9.90 (+0.57) | 23.79 (+0.09) |
-| without Ts | 7.05 (+0.01) | 10.82 (−0.04) | 9.31 (−0.02) | 23.58 (−0.12) |
-| without Ti | 7.13 (+0.08) | 12.36 (**+1.51**) | 9.42 (+0.09) | 24.03 (+0.34) |
+| no RTM correction | 9.61 (+2.56) | 12.53 (+1.67) | 11.88 (+2.54) | 24.57 (+0.87) |
+| **full correction (V, W, Ts, Ti)** | **7.05** | **10.86** | **9.34** | **23.70** |
+| without V | 8.25 (**+1.20**) | 11.03 (+0.17) | 11.19 (**+1.85**) | 24.22 (+0.53) |
+| without W | 8.45 (**+1.40**) | 10.85 (−0.02) | 9.90 (+0.57) | 23.79 (+0.09) |
+| without Ts | 7.06 (+0.01) | 10.82 (−0.04) | 9.32 (−0.02) | 23.58 (−0.12) |
+| without Ti | 7.13 (+0.08) | 12.37 (**+1.51**) | 9.43 (+0.09) | 24.04 (+0.34) |
 
 (Old masks, full correction: 8.15 / 13.02 / 10.97 / 40.50.)
 
@@ -141,7 +141,7 @@ Tonboe asked for a sweep, e.g. over wind speed.
 |---|---|---|---|---|
 | V | **21.6 K (26 % SIC)** | **22.5 K (32 %)** | 0.8 K (1 %) | 1.1 K (2 %) |
 | W | **12.0 K (15 %)** | **9.8 K (14 %)** | 0 | 0 |
-| L (not corrected) | 25.5 K (31 %) | 25.2 K (36 %) | 0.6 K (1 %) | 1.0 K (1 %) |
+| L (not corrected) | 25.4 K (31 %) | 25.2 K (36 %) | 0.6 K (1 %) | 1.0 K (1 %) |
 | Ts | −0.4 K (−0.5 %) | −0.3 K (−0.4 %) | 0 | 0 |
 | Ti | 0 | 0 | **7.9 K (10 %)** | **3.6 K (5 %)** |
 
@@ -161,7 +161,7 @@ Tonboe 2026-11-17: compare (a) iteration 1 mean L, iteration 2 per-pixel L with 
 | std of SIC [%], iteration 2 | uncorrected | mean L | per-pixel L |
 |---|---|---|---|
 | Arctic water | 9.61 | **7.05** | 9.99 |
-| Antarctic water | 11.88 | **9.33** | 13.59 |
+| Antarctic water | 11.88 | **9.34** | 13.61 |
 | Arctic ice | 12.53 | 10.86 | 10.85 |
 | Antarctic ice | 24.57 | 23.70 | 23.65 |
 

@@ -2,7 +2,7 @@
 
 All numbers below come from `B1_sensitivity.md` and `B1i_L_study.md`. Figures are in `output/`.
 Length target: about 1.5 pages, plus 2–3 figures.
-**State 2026-11-17:** all numbers are from the rerun with the new tie-point masks (`tp_masks.m`, Tonboe meeting 2026-11-17: water siconc ≤ 0.01, ice 180 K < T_B < 274 K, ERA5 lsm = 0). Old-mask values only where they matter for the story, marked "(old masks: x)".
+**State 2026-11-17:** all numbers are from the rerun with the new tie-point masks (`tp_masks.m`, Tonboe meeting 2026-11-17: water siconc ≤ 0.01, ice 180 K < T_B < 274 K, ERA5 lsm = 0) and the new preprocessing default (Eq. 3 line buffer, `preproc_config.m`; it changes the std values by ≤ 0.02 points). Old-mask values only where they matter for the story, marked "(old masks: x)".
 
 ---
 
@@ -49,7 +49,7 @@ Numbers: ΔT_B between the observed 5 % and 95 % values, θ = 50° (from `B1d_sw
 |---|---|---|---|---|
 | V | 22 K (26 % SIC) | 23 K (32 %) | 0.8 K | 1.1 K |
 | W | 12 K (15 %) | 10 K (14 %) | 0 | 0 |
-| L (not corr.) | 26 K (31 %) | 25 K (36 %) | 0.6 K | 1.0 K |
+| L (not corr.) | 25 K (31 %) | 25 K (36 %) | 0.6 K | 1.0 K |
 | Ts | −0.4 K | −0.3 K | 0 | 0 |
 | Ti | 0 | 0 | 7.9 K (10 %) | 3.6 K (5 %) |
 
@@ -69,12 +69,12 @@ Mean of the daily std of SIC, 1–27 Feb (`B1c_exclusion.csv`); increase vs. ful
 
 | | Arctic water | Antarctic water | Arctic ice | Antarctic ice |
 |---|---|---|---|---|
-| full correction | 7.05 | 9.33 | 10.86 | 23.70 |
-| without V | +1.20 | **+1.86** | +0.17 | +0.53 |
+| full correction | 7.05 | 9.34 | 10.86 | 23.70 |
+| without V | +1.20 | **+1.85** | +0.17 | +0.53 |
 | without W | **+1.40** | +0.57 | −0.02 | +0.09 |
 | without Ts | +0.01 | −0.02 | −0.04 | −0.12 |
 | without Ti | +0.08 | +0.09 | **+1.51** | +0.34 |
-| no correction | +2.56 | +2.55 | +1.67 | +0.87 |
+| no correction | +2.56 | +2.54 | +1.67 | +0.87 |
 
 (Old masks, full correction: 8.15 / 10.97 / 13.02 / 40.50.)
 
@@ -100,7 +100,7 @@ Details and simple explanation: `B1e_tonboe_style.md`. Style follows Tonboe et a
 | | no corr. | corrected | RTM alone |
 |---|---|---|---|
 | Arctic V / W / L | +4.0 / +5.1 / +3.9 | −1.0 / +1.9 / +1.0 | +5.8 / +3.3 / +8.5 |
-| Antarctic V / W / L | +6.2 / +3.6 / +4.0 | −1.1 / −0.1 / −0.1 | +7.3 / +3.2 / +10.0 |
+| Antarctic V / W / L | +6.2 / +3.6 / +4.0 | −1.2 / −0.1 / −0.1 | +7.3 / +3.2 / +10.0 |
 
 Points to make:
 - **V and W:** the data follow the RTM line; after the correction the line is (nearly) flat. This confirms the model sensitivities (and the tornado) for the two inputs we correct. Arctic W keeps a small residual slope (+1.9 %).
@@ -129,7 +129,7 @@ Mean of the daily std of SIC, 1–27 Feb, iteration 2 (`B1i_L_study.csv`):
 | | uncorrected | mean L | per-pixel L |
 |---|---|---|---|
 | Arctic water | 9.61 | **7.05** | 9.99 |
-| Antarctic water | 11.88 | **9.33** | 13.59 |
+| Antarctic water | 11.88 | **9.34** | 13.61 |
 | Arctic ice | 12.53 | 10.86 | 10.85 |
 | Antarctic ice | 24.57 | 23.70 | 23.65 |
 
@@ -142,7 +142,7 @@ Points to make:
 ### 4. Discussion (≈ 1 paragraph)
 - **Model and data agree:** V > W ≫ Ts over water; Ti over ice. The direct data view (B1f) confirms the size of the V and W effects, not only their ranking.
 - **Largest remaining noise source is L.** In the model it is larger than V, but in the real data less than half as large (B1f). It is not corrected, because ERA5 clouds do not match the 1973 scenes pixel by pixel. Per-pixel L makes Task 1 worse:
-  - L study (3c): 7.05 → 9.99 % (N), 9.33 → 13.59 % (S), worse than uncorrected.
+  - L study (3c): 7.05 → 9.99 % (N), 9.34 → 13.61 % (S), worse than uncorrected.
   - Earlier A6 test (old masks, one iteration): std of SIC 11.5 % N / 13.7 % S, worse than uncorrected.
   - Check on one orbit (1 Feb, Antarctic open water): the correlation of the measured T_B with the modelled ΔT_B is ≈ 0 for L and V, but 0.38 for W. This comes from the review of Axel's code (`Matlab/README.md` on branch `axel-concept`). Quote it only as "one orbit".
 - **SST:** not usable with one 19 GHz channel; an SST correction would need another (lower) frequency (Tonboe 2026-11-17).

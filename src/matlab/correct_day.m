@@ -1,6 +1,11 @@
-function [O, TP] = correct_day(fnames, NIT)
+function [O, TP] = correct_day(fnames, NIT, cfg)
 % Iterative RTM correction (A6b method) for ALL valid pixels of one day.
-% fnames: cell array of the day's swath files. NIT: number of iterations (default 2 = paper).
+% fnames: cell array of the day's swath files. NIT: number of iterations (default 2 = our final A6b scheme).
+%   Intentional deviation from the paper: Kolbe et al. (2024, p. 1253-1254) do ONE RTM correction, starting
+%   from the uncorrected SIC (c_ice from the uncorrected TB). We start from ERA5 siconc (iteration 1) and
+%   iterate once more with c from the corrected SIC (iteration 2); see report_notes/A6b_iterative.md.
+% cfg: preprocessing settings (preproc_config.m; default preproc_config()). Pixels used = o.valid from load_orbit
+%      (outlier filters + swath edge + |lat| >= lat_min + land rule).
 % Same steps as a6b_iterative.m:
 %   clusters per hemisphere (tp_masks.m, |lat| >= 50): water siconc <= 0.01, sst > 278, 90 < TB < 180, lsm == 0;
 %                                                      ice siconc > 0.8, 180 < TB < 274, lsm == 0
@@ -13,14 +18,13 @@ function [O, TP] = correct_day(fnames, NIT)
 %   TP.N / TP.S: water_u, ice_u, water_c, ice_c, nw, ni, w_std_u, w_std_c, i_std_u, i_std_c (std SIC in %),
 %         Mw, Mi (cluster means of V, W, L, Ts, Ti: the reference is (1-c)*Mw + c*Mi)
 if nargin < 2 || isempty(NIT), NIT = 2; end
-edge = false(1, 78); edge([1:4, 75:78]) = true;
+if nargin < 3 || isempty(cfg), cfg = preproc_config(); end
 inp = {'V','W','L','Ts','Ti'};
 for k = 1:numel(fnames)
-    o = load_orbit(fnames{k});
+    o = load_orbit(fnames{k}, cfg);
     o.L = double(ncread(fnames{k}, 'tcw'))' - o.V;
-    o.valid = ~isnan(o.tb_f) & ~repmat(edge, size(o.tb_f, 1), 1) & abs(o.lat) >= 50;
-    [o.mw, o.mi] = tp_masks(o, o.valid, o.tb_f, double(ncread(fnames{k}, 'lsm'))');  % masks 2026-11-17
-    o.corr = o.valid & ~isnan(o.sst);                % pixels we correct (ocean)
+    [o.mw, o.mi] = tp_masks(o, o.valid, o.tb_f, o.lsm);   % masks 2026-11-17 (o.valid from esmr_preprocess)
+    o.corr = o.valid;                                % pixels we correct (o.valid already excludes land, cfg.land)
     o.Tsx = o.sst; o.Tsx(isnan(o.Tsx)) = 271.35;     % SST under ice where missing (weight ~0)
     O(k) = o; %#ok<AGROW>
 end

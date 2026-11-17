@@ -20,7 +20,6 @@ fday  = string(regexp({files.name}, '1973m(\d{4})t', 'tokens', 'once'));
 if ~exist('days','var') || isempty(days), days = unique(fday); end
 if ~exist('NIT','var') || isempty(NIT), NIT = 3; end
 FINAL = min(2, NIT);   % iteration used for figures and pixel file (iteration 2 = final, see report_notes/A6b)
-edge = false(1, 78); edge([1:4, 75:78]) = true;
 vars = {'tb','th','V','W','L','Ts','Ti','ci'};
 inp  = {'V','W','L','Ts','Ti'};
 hemi = ["N","S"];
@@ -36,8 +35,7 @@ for d = days(:)'
         o = load_orbit(fn);
         o.L = double(ncread(fn, 'tcw'))' - o.V;
         o.th = o.theta; o.tb = o.tb_f; o.ci = o.siconc;
-        valid = ~isnan(o.tb_f) & ~repmat(edge, size(o.tb_f, 1), 1) & abs(o.lat) >= 50;
-        [mw_, mi_] = tp_masks(o, valid, o.tb, double(ncread(fn, 'lsm'))');   % masks 2026-11-17
+        [mw_, mi_] = tp_masks(o, o.valid, o.tb, o.lsm);   % masks 2026-11-17; o.valid: preprocessing (preproc_config.m)
         m = {mw_, mi_};
         for h = 1:2
             hs = (o.lat > 0) == (h == 1);

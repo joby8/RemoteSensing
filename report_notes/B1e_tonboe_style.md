@@ -1,6 +1,6 @@
 # B1e/B1f: sensitivity figures in the style of Tonboe et al. (2022)
 
-**Status:** built 2026-11-16 **in addition to** the existing figures (`B1d_sweep.png`, `B1_tornado.png`, `B1c_exclusion.png` stay). Not yet decided which ones go into the report.
+**Status:** built 2026-11-16 **in addition to** the existing figures (`B1d_sweep.png`, `B1_tornado.png`, `B1c_exclusion.png` stay). Not yet decided which ones go into the report. **Tables B1f/B1g/B1h updated 2026-11-17** to the current outputs (new tie-point masks + preprocessing default of 2026-11-17).
 **Why:** our supervisor's paper (Tonboe et al. 2022, notes in `ref_Tonboe2022_plots.md`) plots SIC (not T_B) against one geophysical parameter, uses the same y range in every panel and summarises each parameter as "slope × 1σ".
 
 ## B1e: sweep in % SIC (`src/matlab/b1e_sweep_sic.m` → `output/B1e_sweep_sic.png`, `.csv`)
@@ -27,7 +27,7 @@
   - The Antarctic numbers drop mostly because the contrast grew (60 → 70 K, new ice mask), not because of L = 0; in K the water values barely change (Antarctic V 7.2 → 7.3 K, W 2.97 → 2.95 K, L 8.62 → 8.61 K).
 
 ## B1f: real pixels (`src/matlab/b1f_scatter_ow.m` → `output/B1f_scatter_ow.png`, `.csv`)
-- Tonboe's Figs. 12/13, but with **real** open-water tie-point pixels (1–27 Feb 1973, A6b iteration 2; 460 k Arctic, 964 k Antarctic). Columns V, W, L, Ts; rows Arctic/Antarctic.
+- Tonboe's Figs. 12/13, but with **real** open-water tie-point pixels (1–27 Feb 1973, A6b iteration 2; 430 k Arctic, 961 k Antarctic). Columns V, W, L, Ts; rows Arctic/Antarctic.
 - **What is plotted:**
   - Grey dots: uncorrected SIC (a subsample of 15 k pixels).
   - Black line: bin mean of the uncorrected SIC.
@@ -37,25 +37,25 @@
 
 | | slope × 1σ, no corr. | corrected | RTM alone | r no corr. → corr. |
 |---|---|---|---|---|
-| Arctic V | +4.0 % | −1.0 % | +5.8 % | 0.38 → −0.12 |
-| Arctic W | +4.5 % | +1.4 % | +3.4 % | 0.42 → 0.16 |
-| Arctic L | +3.9 % | +0.9 % | +8.5 % | 0.36 → 0.11 |
-| Antarctic V | +7.3 % | −1.3 % | +8.5 % | 0.51 → −0.12 |
-| Antarctic W | +4.2 % | −0.0 % | +3.7 % | 0.29 → −0.00 |
-| Antarctic L | +4.7 % | −0.1 % | +11.7 % | 0.33 → −0.01 |
-| Ts (both) | +1.3 / +2.2 % | −0.8 / −0.2 % | −0.2 / −0.3 % | small |
+| Arctic V | +4.0 % | −1.0 % | +5.8 % | 0.41 → −0.14 |
+| Arctic W | +5.0 % | +1.9 % | +3.3 % | 0.52 → 0.27 |
+| Arctic L | +3.9 % | +1.0 % | +8.5 % | 0.40 → 0.14 |
+| Antarctic V | +6.2 % | −1.2 % | +7.3 % | 0.52 → −0.12 |
+| Antarctic W | +3.6 % | −0.1 % | +3.2 % | 0.30 → −0.01 |
+| Antarctic L | +4.0 % | −0.1 % | +10.0 % | 0.33 → −0.01 |
+| Ts (both) | +1.5 / +1.7 % | −0.6 / −0.4 % | −0.25 / −0.25 % | small |
 
 **Findings:**
 - **V and W: the data follow the RTM.** The black line lies on the orange line, which means the model sensitivity is real. After the correction the blue line is flat.
   - V is slightly over-corrected: corrected slope −1 %, r = −0.12.
-- **L: the data show only about half of the RTM slope** (Antarctic 4.7 vs. 11.7 % per 1σ). The correction does not use L, yet the corrected line is still flat, because L is correlated with V and W.
+- **L: the data show only about half of the RTM slope** (Antarctic 4.0 vs. 10.0 % per 1σ). The correction does not use L, yet the corrected line is still flat, because L is correlated with V and W.
   - This supports Kolbe et al.'s choice not to correct L.
   - Possible reason: tcw − tcwv also contains cloud ice/snow, which hardly emits at 19 GHz. So the L proxy overestimates the liquid water. This is a hypothesis, not checked.
-- **Ts:** the uncorrected slope (+1.3 to +2.2 %) is larger than the RTM slope (−0.2 %). That is correlation with V/W (warm water comes with moist air), not the SST effect itself.
+- **Ts:** the uncorrected slope (+1.5 to +1.7 %) is larger than the RTM slope (−0.25 %). That is correlation with V/W (warm water comes with moist air), not the SST effect itself.
 - **Caveat for the report:** a data slope mixes correlated inputs and the θ distribution; only the orange line is a clean single-input sensitivity.
 
 ## B1g: real pixels, ice side (`src/matlab/b1g_scatter_ice.m` → `output/B1g_scatter_ice.png`, `.csv`)
-- Counterpart of B1f for the **ice** tie-point pixels (siconc > 0.8, A6b iteration 2, 1–27 Feb; 2.1 M Arctic, 347 k Antarctic). Style of Tonboe et al. (2022) Figs. 7/10 (c_ice of 100 % ice vs. T_si).
+- Counterpart of B1f for the **ice** tie-point pixels (siconc > 0.8, A6b iteration 2, 1–27 Feb; 1.64 M Arctic, 241 k Antarctic). Style of Tonboe et al. (2022) Figs. 7/10 (c_ice of 100 % ice vs. T_si).
 - Columns: the inputs that act over ice (tornado): Ti, V, L. Same lines as B1f.
   - The RTM line uses each pixel's own θ and c_ice (c_used, as in the correction).
   - Ideal after the correction: flat at 100 %.
@@ -63,18 +63,18 @@
 
 | | slope × 1σ, no corr. | corrected | RTM alone | r no corr. → corr. |
 |---|---|---|---|---|
-| Arctic Ti (σ 2.8 K) | +3.4 % | +0.3 % | +2.8 % | 0.23 → 0.02 |
-| Arctic V | +2.5 % | +0.0 % | +0.4 % | 0.17 → 0.00 |
-| Arctic L | +0.7 % | −0.5 % | +0.4 % | 0.05 → −0.04 |
-| Antarctic Ti (σ 1.4 K) | −4.6 % | −6.0 % | +1.8 % | −0.10 → −0.15 |
-| Antarctic V | +0.6 % | −1.2 % | +0.8 % | ≈ 0 |
-| Antarctic L | +2.1 % | +0.9 % | +1.6 % | ≈ 0 |
+| Arctic Ti (σ 2.7 K) | +4.8 % | +1.8 % | +2.8 % | 0.39 → 0.17 |
+| Arctic V | +3.4 % | +1.0 % | +0.3 % | 0.27 → 0.09 |
+| Arctic L | +1.1 % | −0.1 % | +0.4 % | 0.09 → −0.01 |
+| Antarctic Ti (σ 1.3 K) | −2.1 % | −3.5 % | +1.6 % | −0.08 → −0.15 |
+| Antarctic V | +1.7 % | +0.2 % | +0.6 % | ≈ 0 |
+| Antarctic L | +1.3 % | +0.5 % | +1.0 % | ≈ 0 |
 
 **Findings:**
-- **Arctic Ti: the data follow the RTM** (+3.4 vs. +2.8 % per 1σ), and the correction makes the line flat up to ≈ 266 K. This confirms the Ti sensitivity that the tornado shows for ice, on real data. Tonboe et al. (2022) found the same for the simulated ESMR (0.007/K, "sensitive to T_si").
+- **Arctic Ti: same sign as the RTM, but a larger data slope** (+4.8 vs. +2.8 % per 1σ); the correction removes part of it (+1.8 % left; old masks: +3.4 → +0.3 %, line flat up to ≈ 266 K). This confirms the Ti sensitivity that the tornado shows for ice, on real data. Tonboe et al. (2022) found the same for the simulated ESMR (0.007/K, "sensitive to T_si").
   - Drop above ≈ 266 K: these are ice-edge pixels. In the warmest Ti decile the ERA5 siconc is 0.95 and c_used is 0.92 (vs. 0.95–0.96 elsewhere), so more open water is in the footprint. That is not a Ti effect.
-- **Arctic V:** the data slope (+2.5 %) is larger than the RTM slope (+0.4 %) because V is correlated with Ti (warm air is moist). After the correction it is flat.
-- **Antarctic Ti: the model does not explain the data.** The data show a U shape (≈ 140 % at 267 K, 90 % at 271 K, 115 % at 273 K), and the correction changes nothing (blue = black).
+- **Arctic V:** the data slope (+3.4 %) is larger than the RTM slope (+0.3 %) because V is correlated with Ti (warm air is moist). After the correction it is almost flat (+1.0 %).
+- **Antarctic Ti: the model does not explain the data.** The data show a U shape (≈ 140 % at 267 K, 90 % at 271 K, 115 % at 273 K; numbers of this sentence and the decile check below are from the old masks, not re-read), and the correction changes nothing (blue = black).
   - Check per Ti decile: the ERA5 siconc is ≈ 0.91 in every decile, but the ESMR-based c_used varies from 0.79 to 0.93 and the T_B from 194 to 212 K. The cold decile has c_used 0.93, T_B 212 K and SIC 123 %.
   - So the pattern comes from **different ice types/compactness inside the cluster**, which ERA5 does not see. Compact (cold) pack ice lies above the tie point, which is pulled down by the many low-c pixels. The warm end (> 272.5 K, T_B 211 K) has a similar high T_B; the cause there is not checked (wet snow? coast?).
   - This is the same weakness of the Antarctic ice cluster as in Task 1 (std 40 %) and B1c (ice reacts to V). It is **not a Ti sensitivity**. Do not report the Antarctic Ti slope as one.
@@ -86,14 +86,14 @@
 
 | new panel | RTM alone (per 1σ) | data, no corr. → corr. | what it teaches |
 |---|---|---|---|
-| water vs. Ti (Arctic / Antarctic) | 0.0 % (flat) | +2.3 → −1.4 % / +4.8 → −0.8 % | **A slope in the data is not a sensitivity.** The model says Ti does nothing over water, yet the data have a slope: Ti comes from the 2 m air temperature (Eq. 15), and warm air is moist (V). The correction removes it via V. |
-| ice vs. W | +0.2 / +0.6 % (≈ flat; only through the water fraction of mixed pixels) | −0.8 → −1.7 % / −1.8 → −2.7 % | Over ice the RTM has no wind effect. In the data the SIC drops at strong wind (Antarctic ≈ 90 % at 13 m/s), and the correction makes it slightly worse. Possible reason (not checked): strong wind opens leads, so the footprint has less ice than ERA5 says. |
+| water vs. Ti (Arctic / Antarctic) | 0.0 % (flat) | +2.3 → −1.4 % / +4.0 → −0.9 % | **A slope in the data is not a sensitivity.** The model says Ti does nothing over water, yet the data have a slope: Ti comes from the 2 m air temperature (Eq. 15), and warm air is moist (V). The correction removes it via V. |
+| ice vs. W | +0.1 / +0.3 % (≈ flat; only through the water fraction of mixed pixels) | −0.2 → −1.2 % / −1.7 → −2.3 % | Over ice the RTM has no wind effect. In the data the SIC drops at strong wind (Antarctic ≈ 90 % at 13 m/s), and the correction makes it slightly worse. Possible reason (not checked): strong wind opens leads, so the footprint has less ice than ERA5 says. |
 | ice vs. Ts | – | – | **ERA5 SST under ice is constant** (271.46 K = −1.69 °C, the freezing point of sea water; 99 % Arctic, 100 % Antarctic). Ts gives no information over ice. That is why leaving Ts out has no effect on the ice side in B1c. |
 
 - Water vs. L with the full x range (up to 1.5 kg/m²): the gap between the RTM and the data grows further (Antarctic RTM ≈ +48 % at 1.5 kg/m², data ≈ +15 %).
 - Arctic ice: about 1 % of the pixels have SST = 273.15 K (0 °C), probably coastal/fjord pixels. Not used.
 
-**Teaching point for the talk/report:** with all panels side by side, it becomes clear why the orange line is needed. Without the model, the data slope of Ti over water (+4.8 %) would look like a real Ti effect over water.
+**Teaching point for the talk/report:** with all panels side by side, it becomes clear why the orange line is needed. Without the model, the data slope of Ti over water (+4.0 %) would look like a real Ti effect over water.
 
 ## How to read B1f (simple explanation, e.g. for the talk)
 - All points are **open water**, so the true SIC is 0 % everywhere. Any deviation from 0 is error (noise).
