@@ -373,6 +373,28 @@ button.cell:disabled:hover { background: transparent; }
         </div>
         <p class="gfoot">σ of SIC per scan position over the cluster pixels. Shaded: |θ| &gt; 55.7°, removed in the analysis (step 1).</p>
       </section>
+
+      <section class="pstep" id="s8">
+        <h2 class="shead"><span class="sn">8</span>February 1973 vs. book</h2>
+        <div class="list">
+          <label class="cell plain"><span class="ttl"><span>Show Feb 1973 overlay</span><small>monthly map on the globe instead of the swath</small></span><input type="checkbox" class="switch" id="mon-on"></label>
+        </div>
+        <p class="gfoot" id="mon-msg" hidden></p>
+        <div id="mon-body" style="display:contents" hidden>
+          <div class="segc" role="radiogroup" aria-label="Layer" id="mon-layer">
+            <button role="radio" data-v="sic" aria-checked="true">Our SIC</button>
+            <button role="radio" data-v="book" aria-checked="false">Book</button>
+            <button role="radio" data-v="edge" aria-checked="false">Ice edge</button>
+            <button role="radio" data-v="diff" aria-checked="false">Difference</button>
+          </div>
+          <div class="list">
+            <label class="cell plain"><span class="ttl"><span><i class="lkey" style="--c:var(--label)"></i>Our edge (15 %)</span></span><input type="checkbox" class="switch" id="mon-eo"></label>
+            <label class="cell plain"><span class="ttl"><span><i class="lkey dash" style="--c:var(--orange)"></i>Book edge</span></span><input type="checkbox" class="switch" id="mon-eb"></label>
+          </div>
+          <div class="list"><div class="inner"><table id="mon-tab"></table></div></div>
+          <p class="gfoot" id="mon-src"></p>
+        </div>
+      </section>
     </aside>
   </div>
 </div>
@@ -732,7 +754,7 @@ function draw() {
   // pass 0: removed pixels, pass 1: kept "other", pass 2: kept tie-point pixels (on top)
   // pass 3: pixels a disabled step WOULD remove (selected step not applied), drawn as a checker pattern on top
   const wb = !stepOn(step) && STEPS[step].wb || 0, eo = edgeOn();
-  for (let pass = 0; pass < 4; pass++) for (const o of selected()) {
+  for (let pass = 0; pass < (MON.on && MON.ready ? 0 : 4); pass++) for (const o of selected()) {
     const { x, y, z, col, top, bits, stage, n, would, flag, dtb } = o;
     if (pass === 3 && (!wb || !would)) continue;
     for (let i = 0; i < n; i++) {
@@ -754,9 +776,11 @@ function draw() {
       }
     }
   }
+  if (MON.on) monDraw(lr, cp, sp, cl, sl, k, X0, Y0);
   octx.putImageData(img, 0, 0);
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(off, 0, 0);
-  if (pin) {                                           // marker of the pinned pixel
+  if (MON.on) monEdges();
+  if (pin && !MON.on) {                                           // marker of the pinned pixel
     const ll = [pin.o.lon[pin.i] / 100, pin.o.lat[pin.i] / 100];
     if (d3.geoDistance(ll, [-rot[0], -rot[1]]) < Math.PI / 2) {
       const [mx, my] = proj(ll);
@@ -813,6 +837,7 @@ function nearest(e) {
 }
 const posTxt = (lat, lon) => `${Math.abs(lat).toFixed(1)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(1)}° ${lon >= 0 ? 'E' : 'W'}`;
 function doHover(e) {
+  if (MON.on) return monHover(e);
   if (!cur || pin) return;
   const h = nearest(e);
   if (!h) { hc.hidden = true; return; }
@@ -821,7 +846,7 @@ function doHover(e) {
   card(h.o, h.i);
 }
 function pinAt(e) {
-  if (!cur) return;
+  if (!cur || MON.on) return;
   const h = nearest(e);
   if (!h || !h.o) { unpin(); return; }
   pin = { o: h.o, i: h.i }; refreshCard(); redraw();
@@ -1019,6 +1044,7 @@ async function setDay(i) {
 }
 
 function setMode(m) {
+  monOff();
   if (m !== 'mask') crit = null;
   mode = m; renderLayers();
   if (NEEDS_OCEAN.has(m) && step < LAST) { step = LAST; $('step').value = LAST; steps(); }   // the state A6b works on
@@ -1027,6 +1053,7 @@ function setMode(m) {
 }
 function legend() {
   const L = $('legend'), cap = $('caption');
+  if (MON.on && MON.ready) return monLegend(L, cap);
   const nd = NEEDS_OCEAN.has(mode) ? `<div class="keys"><span><span class="dot" style="--c:var(--nodata)"></span>no value (land or filtered)</span></div>` : '';
   if (mode === 'mask' && crit) {
     const G = CRIT[crit.g], c = G.steps[crit.k], k1 = crit.k + 1;
@@ -1073,9 +1100,9 @@ function legend() {
 }
 
 const sl = $('step');
-sl.oninput = e => { step = +e.target.value; steps(); redraw(); refreshCard(); };
+sl.oninput = e => { monOff(); step = +e.target.value; steps(); redraw(); refreshCard(); };
 $('showrm').onchange = e => { showRm = e.target.checked; redraw(); };
-$('steps').addEventListener('click', e => { const b = e.target.closest('[data-step]'); if (b) { step = +b.dataset.step; sl.value = step; steps(); redraw(); refreshCard(); } });
+$('steps').addEventListener('click', e => { const b = e.target.closest('[data-step]'); if (b) { monOff(); step = +b.dataset.step; sl.value = step; steps(); redraw(); refreshCard(); } });
 // pixel counts per step for a set of orbits (|lat| < lat_min thinned: weight 16)
 function stepCounts(orbits) {
   const rm = new Array(STEPS.length).fill(0), wo = new Array(STEPS.length).fill(0); let total = 0, kept = 0, hasW = false;
@@ -1304,6 +1331,157 @@ $('showedge').onchange = e => {
   if (showEdge && !EDGE_MODES.has(mode)) setMode('sicc'); else { redraw(); refreshCard(); }
 };
 
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { recolor(); legend(); steps(); redraw(); });
+// ---- step 8: February 1973 monthly map vs. the NASA atlas ------------------------------------------------------
+// feb1973.js (src/matlab/c2_feb1973_books.m) = ESMR_MONTH({N: H, S: H}); loaded the first time the overlay is switched on.
+// Per hemisphere H: polar-stereographic 30 km grid cropped to bbox, uint8 arrays row-major (row r0 first, column c0 first).
+const MON = { on: false, ready: false, state: 'idle', layer: 'sic', eo: false, eb: false, D: null };
+const MH = { N: 'Arctic', S: 'Antarctic' };
+const LUT_MD = Array.from({length: 201}, (_, i) => pack(lerpStops(DTB.map(([v, c]) => [v * 50 / 15, c]), i - 100)));   // ours − book, ±50 %
+function monPrepare(raw) {
+  const D = {};
+  for (const h of ['N', 'S']) {
+    const H = raw[h]; if (!H) continue;
+    const p = H.proj, b = H.bbox, nr = b.r1 - b.r0 + 1, nc = b.c1 - b.c0 + 1, n = nr * nc;
+    const sic = dec(H.sic, Uint8Array), book = dec(H.book, Uint8Array), agree = dec(H.agree, Uint8Array);
+    const ci = [], X = [], Y = [], Z = [], ll = [];
+    for (let r = 0; r < nr; r++) for (let c = 0; c < nc; c++) {
+      const i = r * nc + c;
+      if (!(sic[i] <= 100 || book[i] <= 100 || agree[i] > 0)) continue;       // land / no data in both: the globe shows land already
+      const u = -p.L + p.dx / 2 + (b.c0 - 1 + c) * p.dx, v = -p.L + p.dx / 2 + (b.r0 - 1 + r) * p.dx, rho = Math.hypot(u, v);
+      const colat = 2 * Math.atan(rho / (2 * p.Re)) / RAD;
+      const lat = p.hemi === 'N' ? 90 - colat : -(90 - colat), lon = (p.hemi === 'N' ? Math.atan2(u, -v) : Math.atan2(u, v)) / RAD;
+      const cl = Math.cos(lat * RAD);
+      ci.push(i); X.push(cl * Math.cos(lon * RAD)); Y.push(cl * Math.sin(lon * RAD)); Z.push(Math.sin(lat * RAD));
+    }
+    const geo = ek => ({ type: 'MultiLineString', coordinates: (H[ek] || []).map(l => l.map(q => [q[1], q[0]])).filter(l => l.length > 1) });
+    D[h] = { H, nr, nc, sic, book, agree, ci: Int32Array.from(ci), x: Float32Array.from(X), y: Float32Array.from(Y), z: Float32Array.from(Z),
+      col: new Uint32Array(ci.length), eo: geo('edge_ours'), eb: geo('edge_book') };
+  }
+  return D;
+}
+function monColor() {
+  if (!MON.D) return;
+  const AG = [0, pack(colOf('--cyan')), pack(colOf('--orange')), pack(colOf('--purple')), pack(colOf('--nodata'))];
+  for (const d of Object.values(MON.D)) for (let j = 0; j < d.ci.length; j++) {
+    const i = d.ci[j], s = d.sic[i], b = d.book[i]; let c = 0;
+    if (MON.layer === 'sic') { if (s <= 100) c = LUT_SIC[s + 20]; }
+    else if (MON.layer === 'book') { if (b <= 100) c = LUT_SIC[b + 20]; }
+    else if (MON.layer === 'edge') c = AG[d.agree[i]] || 0;
+    else if (s <= 100 && b <= 100) c = LUT_MD[Math.max(0, Math.min(200, Math.round(s - b) + 100))];
+    d.col[j] = c;
+  }
+}
+function monDraw(lr, cp, sp, cl, sl, k, X0, Y0) {
+  const ps = Math.max(2, Math.min(40, Math.ceil(1.25 * 30 / 6371 * k))), hh = ps >> 1;   // slightly oversized: no gaps between oblique cells
+  for (const d of Object.values(MON.D || {})) {
+    const { x, y, z, col } = d, n = col.length;
+    for (let j = 0; j < n; j++) {
+      const c = col[j]; if (!c) continue;
+      const xr = x[j] * cl - y[j] * sl, yr = x[j] * sl + y[j] * cl;
+      const X3 = xr * cp - z[j] * sp; if (X3 <= 0) continue;
+      const Z3 = z[j] * cp + xr * sp;
+      const px = Math.round(X0 + k * yr) - hh, py = Math.round(Y0 - k * Z3) - hh;
+      for (let dy = 0; dy < ps; dy++) {
+        const yy = py + dy; if (yy < 0 || yy >= H) continue;
+        let p = yy * W + px;
+        for (let dx = 0; dx < ps; dx++, p++) if (px + dx >= 0 && px + dx < W) buf[p] = c;
+      }
+    }
+  }
+}
+function monEdges() {
+  if (!MON.D) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  for (const d of Object.values(MON.D)) for (const [on, g, col, dash] of [[MON.eb, d.eb, '#ff9f0a', [5, 4]], [MON.eo, d.eo, '#ffffff', []]]) {
+    if (!on || !g.coordinates.length) continue;
+    ctx.beginPath(); path(g); ctx.setLineDash(dash); ctx.lineWidth = 3.6; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.stroke();
+    ctx.lineWidth = 1.7; ctx.strokeStyle = col; ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+const monLine = (c, dash) => `<span class="lkey${dash ? ' dash' : ''}" style="--c:${c}"></span>`;
+function monLegend(L, cap) {
+  const ly = MON.layer, dot = c => `<span class="dot" style="--c:var(${c})"></span>`;
+  const bar = (title, unit, stops, lo, hi, ticks) => {
+    L.innerHTML = `<div class="t">${title} <small>${unit}</small></div><canvas id="bar" width="300" height="8"></canvas><div class="ticks">${ticks.map(v => `<span>${v < 0 ? '−' + Math.abs(v) : v}</span>`).join('')}</div>`;
+    const g = $('bar').getContext('2d');
+    for (let i = 0; i < 300; i++) { const c = lerpStops(stops, lo + (hi - lo) * i / 299); g.fillStyle = `rgb(${c})`; g.fillRect(i, 0, 1, 8); }
+  };
+  if (ly === 'sic') { bar('Our SIC, Feb 1973 mean', '%', ICE, 0, 100, [0, 50, 100]); cap.innerHTML = 'Monthly mean of our corrected SIC on the 30 km polar grid.'; }
+  else if (ly === 'book') { bar('Book ice class', '% (lower bound)', ICE, 0, 100, [0, 50, 100]); cap.innerHTML = 'Concentration class read from the NASA atlas map, drawn at its lower bound.'; }
+  else if (ly === 'diff') { bar('Ours − book', '%', DTB.map(([v, c]) => [v * 50 / 15, c]), -50, 50, [-50, 0, 50]); cap.innerHTML = 'Where both maps have a value. Positive = we show more ice.'; }
+  else {
+    L.innerHTML = `<div class="t">Ice edge (15 %)</div><div class="keys"><span>${dot('--cyan')}both ice</span><span>${dot('--orange')}only ours</span><span>${dot('--purple')}only book</span><span>${dot('--nodata')}both water</span></div>`;
+    cap.innerHTML = 'Ice = SIC ≥ 15 % (book: class ≥ 15 %), where both maps are readable.';
+  }
+  if (MON.eo || MON.eb) L.innerHTML += `<div class="keys">${MON.eo ? `<span>${monLine('#fff')}our edge</span>` : ''}${MON.eb ? `<span>${monLine('#ff9f0a', 1)}book edge</span>` : ''}</div>`;
+}
+function monCell(e) {
+  const r = cv.getBoundingClientRect(), p = proj.invert([e.clientX - r.left, e.clientY - r.top]);
+  if (!p || d3.geoDistance(p, [-rot[0], -rot[1]]) > Math.PI / 2) return null;
+  const h = p[1] >= 0 ? 'N' : 'S', d = MON.D && MON.D[h], res = { p, h };
+  if (!d) return res;
+  const P = d.H.proj, B = d.H.bbox, rho = 2 * P.Re * Math.tan((90 - Math.abs(p[1])) * RAD / 2), lo = p[0] * RAD;
+  const u = rho * Math.sin(lo), v = (h === 'N' ? -1 : 1) * rho * Math.cos(lo);
+  const c = Math.round((u + P.L - P.dx / 2) / P.dx) + 1 - B.c0, rr = Math.round((v + P.L - P.dx / 2) / P.dx) + 1 - B.r0;
+  if (c < 0 || rr < 0 || c >= d.nc || rr >= d.nr) return res;
+  res.d = d; res.i = rr * d.nc + c; return res;
+}
+const AGN = ['not compared', 'both ice', 'only ours', 'only book', 'both water'], AGC = [null, '--cyan', '--orange', '--purple', '--nodata'];
+function monHover(e) {
+  if (!MON.ready) return;
+  const q = monCell(e);
+  if (!q) { hc.hidden = true; return; }
+  hc.hidden = false; hc.classList.remove('pinned');
+  if (!q.d) { hc.innerHTML = `<div class="h">${posTxt(q.p[1], q.p[0])}</div><div class="s">No data</div>`; return; }
+  const i = q.i, s = q.d.sic[i], b = q.d.book[i], a = q.d.agree[i];
+  const sT = s <= 100 ? `${s} %` : s === 254 ? 'land' : 'no data', bT = b === 0 ? 'open water' : b <= 100 ? `≥ ${b} %` : b === 254 ? 'land' : 'unreadable / outside';
+  const kv = [['Our SIC', sT], ['Book class', bT]];
+  if (s <= 100 && b <= 100) kv.push(['Ours − book', `${sg(s - b, 0)} %`]);
+  hc.innerHTML = `<div class="h"><span style="color:var(--label);font-weight:600">${posTxt(q.p[1], q.p[0])}</span><span>Feb 1973 · ${MH[q.h]}</span></div>
+    <div class="kv">${kv.map(([x, y]) => `<span>${x}</span><b>${y}</b>`).join('')}</div>
+    <div class="s">${a ? `<span class="dot" style="--c:var(${AGC[a]})"></span>` : ''}Ice edge: ${AGN[a] || '–'}</div>`;
+}
+function monTable() {
+  const D = MON.D, v = (h, k, d = 2) => { const x = D[h] && D[h].H.stats && D[h].H.stats[k]; return x == null || isNaN(x) ? '–' : x.toFixed(d); };
+  const row = (t, N, S) => `<tr><td>${t}</td><td>${N}</td><td>${S}</td></tr>`;
+  $('mon-tab').innerHTML = `<tr><th></th><th>Arctic</th><th>Antarctic</th></tr>` +
+    row('Extent, ours', v('N', 'extent_ours'), v('S', 'extent_ours')) + row('Extent, book', v('N', 'extent_book'), v('S', 'extent_book')) +
+    row('Ice area, ours', v('N', 'area_ours'), v('S', 'area_ours')) + row('Ice area, book', v('N', 'area_book_classes'), v('S', 'area_book_classes')) +
+    row('Book Table 3-2', '–', v('S', 'area_book_table')) + row('Edge agreement', v('N', 'agree_pct', 1) + ' %', v('S', 'agree_pct', 1) + ' %');
+  const src = ['N', 'S'].map(h => D[h] && D[h].H.src && D[h].H.src.book).filter(Boolean);
+  $('mon-src').innerHTML = `10<sup>6</sup> km². Extent and area at 15 %. ${[...new Set(src)].join(' · ')}`;
+}
+function monUI() {
+  const msg = $('mon-msg'), body = $('mon-body');
+  body.hidden = !(MON.on && MON.ready);
+  msg.hidden = !MON.on || MON.ready;
+  if (MON.state === 'loading') msg.textContent = 'Loading Feb 1973 map …';
+  else if (MON.state === 'err') msg.innerHTML = 'Run <b>src/matlab/c2_feb1973_books.m</b>';
+  $('mon-on').checked = MON.on;
+  for (const b of $('mon-layer').children) b.setAttribute('aria-checked', b.dataset.v === MON.layer);
+  $('mon-eo').checked = MON.eo; $('mon-eb').checked = MON.eb;
+}
+function monRefresh() { monUI(); monColor(); legend(); redraw(); if (!hc.hidden) hc.hidden = true; }
+function monLoad() {
+  if (MON.state !== 'idle') return;
+  MON.state = 'loading';
+  window.ESMR_MONTH = raw => { try { MON.D = monPrepare(raw); MON.state = 'ok'; MON.ready = true; monTable(); } catch (e) { console.error(e); MON.state = 'err'; } monRefresh(); };
+  const s = document.createElement('script');
+  s.src = 'feb1973.js'; s.onerror = () => { MON.state = 'err'; monRefresh(); };
+  document.head.appendChild(s);
+}
+function monOff() { if (MON.on) { MON.on = false; monRefresh(); } }
+$('mon-on').onchange = e => { MON.on = e.target.checked; if (MON.on) { if (MON.state === 'idle') monLoad(); unpin(); } monRefresh(); };
+$('mon-layer').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]'); if (!b) return;
+  MON.layer = b.dataset.v;
+  if (MON.layer === 'edge') MON.eo = MON.eb = true;     // the edge layer is about the two lines
+  monRefresh();
+});
+$('mon-eo').onchange = e => { MON.eo = e.target.checked; monRefresh(); };
+$('mon-eb').onchange = e => { MON.eb = e.target.checked; monRefresh(); };
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { recolor(); monColor(); legend(); steps(); redraw(); });
 renderLayers(); renderCorr(); syncChecks(); legend(); edgeUI(); renderAngle(); resize(); setDay(0);
 </script>

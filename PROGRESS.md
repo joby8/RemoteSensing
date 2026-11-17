@@ -154,3 +154,4 @@
 - 2026-11-17 · globe v3: whole processing step by step (Tasks 1–3) in `output/globe/ESMR_globe.html`; verified against the CSVs; next: B4 recommendation, B5 seminar, B6 report
 
 - 2026-11-17 · 5×5 box (Table 2 ice-edge distance) added to `tp_masks.m` (`opt.box`, default on); everything rerun. Task 1 (A6b it. 2): water σ N 9.60 → 7.04 %, S 11.65 → 9.18 %; ice N 12.45 → 10.74 %, S 24.02 → 23.18 %; Antarctic ice pixels −11 %, T_p,ice S 212.5 K. B1c ranking unchanged (V > W ≫ Ts). C1: ice area 3.43 × 10⁶ km² (was 3.48), agreement 96.0 %. Details: `report_notes/A4_tiepoint_masks.md`.
+- 2026-11-17 · C2: Feb 1973 both hemispheres vs SP-489 (N) and SP-459 (S), `c2_feb1973_books.m`: edge agreement N 93.4 % / S 97.3 %, extent N 15.68 vs 15.82, S 5.27 vs 5.12 (10⁶ km²); area ours 14.33 / 3.33 vs book classes 13.23 / 2.56; export `output/globe/feb1973.js`; notes `report_notes/C2_feb1973_books.md`
