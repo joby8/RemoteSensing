@@ -17,7 +17,14 @@ __pycache__/
 .venv/
 
 # Generated results (re-creatable)
-output/
+output/*
+# except the globe page and one sample day (1 Feb, the day it opens on); the other days stay local
+!output/globe/
+output/globe/*
+!output/globe/ESMR_globe.html
+!output/globe/days/
+output/globe/days/*
+!output/globe/days/0201.js
 
 # Large media
 *.mp3

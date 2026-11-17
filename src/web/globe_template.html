@@ -519,9 +519,14 @@ function draw() {
     if (d3.geoDistance(ll, [-rot[0], -rot[1]]) < Math.PI / 2) {
       const [mx, my] = proj(ll);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.beginPath(); ctx.arc(mx, my, 10, 0, 2 * Math.PI); ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.stroke();
+      // fill the ring with the pixel's displayed colour so it can be read at a glance
+      const removed = pin.o.stage[pin.i] <= step;
+      const c = removed ? (showRm ? RM[pin.o.stage[pin.i]] : 0) : pin.o.col[pin.i];
+      ctx.beginPath(); ctx.arc(mx, my, 14, 0, 2 * Math.PI);
+      if (c) { ctx.fillStyle = `rgb(${c & 255},${(c >> 8) & 255},${(c >> 16) & 255})`; ctx.fill(); }
+      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.stroke();
       ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff'; ctx.stroke();
-      ctx.beginPath(); ctx.arc(mx, my, 2.5, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill();
+      if (!c) { ctx.beginPath(); ctx.arc(mx, my, 2.5, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill(); }
     }
   }
 }
