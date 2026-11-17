@@ -37,9 +37,9 @@ Water pixels sit in the Labrador Sea / North Atlantic and the Southern Ocean; ic
 
 ## Decisions and reasons
 - **Water criteria = paper Table 2** (SST > 278 K, 90 < T_B < 180 K), with siconc ≤ 0.01 instead of = 0 (Tonboe 2026-11-17: 1 % SIC still counts as ocean). SST > 278 K keeps only water that is clearly ice-free (Tonboe: "water must be cold enough" – the only SST threshold in the paper is 278 K).
-- **Ice: siconc > 0.8** (Table 2, used since A6b) and **T_B > 180 K** (Tonboe 2026-11-17, removes clear-ocean pixels). Paper Table 2 also has a 5×5-box mean > 0.8, which we skip.
+- **Ice: siconc > 0.8** (Table 2, used since A6b) and **T_B > 180 K** (Tonboe 2026-11-17, removes clear-ocean pixels). The 5×5-box mean > 0.8 of Table 2 was added later the same day (see section 5×5 box).
 - **Coastal pixels out (ERA5 lsm = 0)** for both clusters: land spill-over in the large ESMR footprint.
-- **5×5-box criterion not applied** (distance from the ice edge). Simplification; could reduce ice-edge contamination of the water tie point.
+- **5×5-box criterion applied since 2026-11-17** (distance from the ice edge, see section below).
 - **Separate hemispheres** (Tonboe: both hemispheres, separate calibration; no local tie points).
 
 ## For the report
@@ -48,9 +48,33 @@ Water pixels sit in the Labrador Sea / North Atlantic and the Southern Ocean; ic
 - Note: Antarctic ice tie point rests on few pixels (≈ 3–6 k per day vs. 40–100 k in the Arctic) and has a larger std.
 
 ## Open
-- Ask Tonboe: is the 5×5 box needed? Are 95 % pixels in the South enough?
+- Ask Tonboe: are 95 % pixels in the South enough?
 - ~~Coastal spill-over~~: solved with lsm = 0 (2026-11-17).
 
 ## Rerun 2026-11-17 with the central preprocessing (`o.valid`, default `preproc_config()`)
 - `a4_mask.m` now uses `o.valid` instead of its own edge and latitude cuts. `o.valid` also removes land (ERA5 SST missing), which the masks already exclude via lsm = 0.
 - The orbit 02:23 numbers in the table above are unchanged (identical pixel counts).
+
+## 5×5 box (2026-11-17)
+**Rule (paper Table 2, distance from the ice edge):** mean ERA5 siconc of a 5 × 5 box > 0.8 for ice and < 0.01 for open water, in addition to the pixel's own siconc criterion.
+
+**Implementation (`tp_masks.m`):**
+- Box = 5 scan lines × 5 scan positions, centred on the pixel, on the swath grid of one orbit.
+- Mean = sum / count of non-NaN siconc (`movsum`, two passes). Land (NaN) does not count. At the swath edge the box shrinks. No siconc in the box means the test fails.
+- The box is computed on the whole orbit siconc before any valid-masking, so neighbours count whatever the preprocessing removed.
+- New criteria `C.w_box`, `C.i_box`, included in `mw` / `mi`.
+- Switch: 5th argument `opt.box` (default true). `opt.box = false` reproduces the old masks.
+- Globe: the box is folded into the siconc bits (bit 0 = siconc ≤ 0.01 and box < 0.01; bit 4 = siconc > 0.8 and box > 0.8); the assert against `o.mw` / `o.mi` passes.
+
+**Comparison, 1–27 Feb, mean of the daily values, A6b iteration 2:**
+
+| | N off | N on | S off | S on |
+|---|---|---|---|---|
+| n water pixels / day | 15 930 | 15 909 | 35 591 | 35 591 |
+| n ice pixels / day | 60 809 | 60 329 | 8 913 | 7 950 |
+| T_p,water raw / corr [K] | 144.38 / 144.49 | 144.38 / 144.49 | 140.79 / 140.84 | 140.79 / 140.85 |
+| T_p,ice raw / corr [K] | 225.97 / 226.48 | 226.03 / 226.54 | 210.62 / 211.18 | 211.97 / 212.53 |
+| σ SIC water raw → corr [%] | 9.61 → 7.05 | 9.60 → 7.04 | 11.88 → 9.34 | 11.65 → 9.18 |
+| σ SIC ice raw → corr [%] | 12.53 → 10.86 | 12.45 → 10.74 | 24.57 → 23.70 | 24.02 → 23.18 |
+
+**Reading:** the box has almost no effect on the water tie point (SST > 278 K already keeps the water far from the ice edge; the Southern Ocean count is identical). It removes ≈ 1 % of the Arctic and 11 % of the Antarctic ice pixels (thin or broken ice near the edge), raises the Antarctic ice tie point by ≈ 1.3 K and lowers the ice σ by 0.1–0.6 points. Task 1 numbers do not change materially.

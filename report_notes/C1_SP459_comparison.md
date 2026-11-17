@@ -76,3 +76,8 @@ Numbers above (201.0 K, 3.86 × 10⁶ km², 95.7 %) are the **old** run; new:
 
 ## Rerun 2026-11-17 with the new preprocessing default (`preproc_config.m`, Eq. 3 line buffer; cache `output/C1_cache/` rebuilt)
 - No change at the printed precision: ice tie point 210.9 K, water 140.9 K, ice area 3.48 × 10⁶ km², agreement 96.0 %, extent (common cells) 5.35 × 10⁶ km².
+
+## Rerun 2026-11-17 with the 5×5 box in the tie-point masks (cache rebuilt)
+- South ice tie point (month mean): **212.1 K** (was 210.9 K); water 140.9 K (unchanged).
+- Ice area (cells ≥ 15 %): **3.43 × 10⁶ km²** (was 3.48) vs SP-459 2.71 × 10⁶ km² → +27 %.
+- Ice-edge agreement: **96.0 %** of the common area (unchanged).

@@ -78,3 +78,6 @@ The slider step "Eq. 1" showed whole red scan lines: the DMI field `brightness_t
 - **Check, mean over 1–27 Feb** (globe = script, all to < 1e-4 %): water std iteration 2 N 9.61 → 7.05 %, S 11.88 → 9.34 % (A6b); iteration 1 N 7.23 %, S 9.73 % (A6b); without V N 8.25 / S 11.19 %, without W 8.45 / 9.90 %, without Ts 7.06 / 9.32 %, without Ti 7.13 / 9.43 % (B1c); per-pixel L 9.99 / 13.61 % (B1i). The std per scan position pooled from `spos` equals `output/B2_angle.csv` (n, mean and std, all 78 positions, water and ice).
 - Quantisation (5 Feb, 329 960 pixels): rms error 0.05–0.07 K for `d1`, `xV`, `xW`, `xTs`, `xTi`, 0.14 K for `xL`; clipped at ±127 steps: 1 pixel (`d1`), 74 pixels (`xL`, > 63.5 K).
 - Day files now 481 MB for 28 days (was 394 MB).
+
+## Update 2026-11-17: 5×5 box in the masks
+- `tp_masks.m` now also applies the Table 2 box criterion (ERA5 siconc box mean < 0.01 water, > 0.8 ice). The page shows it folded into the siconc criteria (bit 0 and bit 4; labels in the template changed); all day files rebuilt, the assert against `o.mw` / `o.mi` passes.

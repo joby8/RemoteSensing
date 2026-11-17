@@ -643,12 +643,12 @@ const LAST = STEPS.length - 1;
 // tie-point criteria (tp_masks.m, 3rd output; one bit each in o.bits, set only for o.valid pixels), in the order tested
 const CRIT = {
   w: { name: 'Water', c: '--water', steps: [
-    { bit: 1, t: 'siconc ≤ 0.01', paper: 'paper: siconc = 0' },
+    { bit: 1, t: 'siconc ≤ 0.01, 5×5 box &lt; 0.01', paper: 'paper: siconc = 0, 5×5 box SIC &lt; 1 %' },
     { bit: 2, t: 'SST &gt; 278 K' },
     { bit: 4, t: '90 K &lt; T<sub>B</sub> &lt; 180 K' },
-    { bit: 8, t: 'ERA5 lsm = 0', paper: 'not in paper (paper: 5×5 box SIC &lt; 1 %)' }] },
+    { bit: 8, t: 'ERA5 lsm = 0', paper: 'not in paper' }] },
   i: { name: 'Ice', c: '--ice', steps: [
-    { bit: 16, t: 'siconc &gt; 0.8', paper: 'paper also: 5×5 box SIC &gt; 80 %' },
+    { bit: 16, t: 'siconc &gt; 0.8, 5×5 box &gt; 0.8', paper: 'paper: 5×5 box SIC &gt; 80 %' },
     { bit: 32, t: '180 K &lt; T<sub>B</sub> &lt; 274 K', paper: 'paper: 100 K &lt; T<sub>B</sub> &lt; 274 K' },
     { bit: 8, t: 'ERA5 lsm = 0', paper: 'not in paper' }] },
 };

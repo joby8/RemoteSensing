@@ -18,8 +18,8 @@
 %     flag       uint8 = o.flag of esmr_preprocess.m (step that removed the pixel; table cfg.codes:
 %                0 kept, 5 analog, 1 Eq. 1, 2 Eq. 2, 3 Eq. 3, 4 Eq. 4, 6 swath edge, 7 latitude, 8 land)
 %     bits       uint8: bits 0-5 = tie-point criteria of tp_masks.m (3rd output), only set for o.valid pixels:
-%                0 water siconc <= 0.01, 1 water sst > 278 K, 2 water 90 < TB < 180 K, 3 lsm == 0 (both),
-%                4 ice siconc > 0.8, 5 ice 180 < TB < 274 K;  water cluster = bits 0-3, ice = bits 3-5 (= o.mw/o.mi)
+%                0 water siconc <= 0.01 and 5x5 box mean < 0.01, 1 water sst > 278 K, 2 water 90 < TB < 180 K, 3 lsm == 0 (both),
+%                4 ice siconc > 0.8 and 5x5 box mean > 0.8, 5 ice 180 < TB < 274 K;  water cluster = bits 0-3, ice = bits 3-5 (= o.mw/o.mi)
 %                bit 6 thinned (|lat| < cfg.lat_min, stored every 4th line and position, counts x 16),
 %                bit 7 ERA5 sst missing (= land for cfg.land 'sst')
 %     would      uint8 (only if any bit set): what a DISABLED step would remove (o.would): bit 0 analog, 1 Eq. 1,
@@ -64,8 +64,8 @@ for d = days(:)'
         [mw, mi, C] = tp_masks(o, v, o.tb_f, o.lsm);           % same call as correct_day.m
         assert(isequal(mw, o.mw) && isequal(mi, o.mi), 'tp_masks criteria differ from correct_day clusters');
         lowlat = abs(o.lat) < cfg.lat_min;
-        bits = uint8(C.w_sic & v) + 2*uint8(C.w_sst & v) + 4*uint8(C.w_tb & v) + 8*uint8(C.sea & v) ...
-             + 16*uint8(C.i_sic & v) + 32*uint8(C.i_tb & v) + 64*uint8(lowlat) + 128*uint8(isnan(o.sst));
+        bits = uint8(C.w_sic & C.w_box & v) + 2*uint8(C.w_sst & v) + 4*uint8(C.w_tb & v) + 8*uint8(C.sea & v) ...
+             + 16*uint8(C.i_sic & C.i_box & v) + 32*uint8(C.i_tb & v) + 64*uint8(lowlat) + 128*uint8(isnan(o.sst));
         Wd = o.would;
         would = uint8(Wd.analog) + 2*uint8(Wd.eq1) + 4*uint8(Wd.eq2) + 8*uint8(Wd.eq3) + 16*uint8(Wd.eq4) + 32*uint8(Wd.land);
         [L, P] = ndgrid(1:nl, 1:np);

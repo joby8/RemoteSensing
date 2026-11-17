@@ -26,7 +26,7 @@
 
 - [x] A3 Filters: Eq. 1–4 of Kolbe et al. 2024 (p. 1249) **per pixel** in `load_orbit.m` → `esmr_preprocess.m` (config `preproc_config.m`; validated against DMI in `report_notes/A3b_filter_validation.md`) (2026-11-17; Eq. 2 adapted to remove only the offset pixels, not whole lines; **Eq. 3 in line mode: a raw-T_B spike removes its line ± 1 line, no wrap** (default decided by Jo 2026-11-17); analog filter off), then drop scan positions 1–4 and 75–78, |lat| &lt; 50° and land (SST missing). One step: `o.flag`/`o.valid`, used by every script. Notes: `report_notes/A3_filters.md`. A4–C1 re-run with it (2026-11-17).
 
-- [x] A4 Open-water mask, Table 2: siconc = 0, sst &gt; 278 K, 90 K &lt; T_B &lt; 180 K, lat &gt; 32° N or &lt; −48° S (5×5 box optional). Meeting: only use |lat| ≥ 50° (skip the low latitudes, less data); SST &gt; 278 K as in Table 2.
+- [x] A4 Open-water mask, Table 2: siconc = 0, sst &gt; 278 K, 90 K &lt; T_B &lt; 180 K, lat &gt; 32° N or &lt; −48° S. **5×5 box criterion (ERA5 box mean &lt; 0.01 water / &gt; 0.8 ice) added 2026-11-17** in `tp_masks.m` (`opt.box`, default on); everything rerun. Meeting: only use |lat| ≥ 50° (skip the low latitudes, less data); SST &gt; 278 K as in Table 2.
 
 - [x] A5 Uncorrected SIC (Eq. 16): Tp,water = mean T_B of the mask, Tp,ice from 95 %→100 % ice pixels (per day, per hemisphere; was 225 K placeholder). Mean and std on **raw** SIC (no clipping, no 15 % filter).
 
@@ -38,11 +38,11 @@
 
 - [x] B1 Task 2 (agreed 2026-11-13: **RTM sensitivity study**): `b1_sensitivity.m` → `output/B1_sensitivity.png` = static report version of the learning-page animation (θ on x axis, ΔT_B per +1σ of each input). Exclusion test with the data done 2026-11-16: `b1c_exclusion.m` → `output/B1c_exclusion.png` (V &gt; W ≫ Ts; Ts can be dropped; Ti only for ice).
 
-- [x] B2 Task 3: std of SIC per scan position over the whole swath, uncorrected vs corrected (`b2_angle.m` → `output/B2_std_vs_angle.png`, edge |θ| &gt; 55.7° dashed). Water noise flat to \~40°, then rises (Arctic corrected 7.8 → 9.3 → 11.1 %); ice flat. Notes: `report_notes/B2_angle.md`
+- [x] B2 Task 3: std of SIC per scan position over the whole swath, uncorrected vs corrected (`b2_angle.m` → `output/B2_std_vs_angle.png`, edge |θ| &gt; 55.7° dashed). Water noise flat to \~40°, then rises (Arctic corrected, with 5×5 box: 6.6 % at 0–20°, 7.8 % at 50–55.7°, 9.3 % at the edge; n-weighted mean of the per-position std); ice flat. Notes: `report_notes/B2_angle.md`
 
-- [x] Tie-point masks updated 2026-11-17 (Tonboe): `tp_masks.m`, water siconc ≤ 0.01, ice T_B &gt; 180 K, lsm == 0. A6b, B1c/d/e/f/g/h, B2 rerun. Water std (iter. 2) N 8.2 → 7.05 %, S 11.0 → 9.3 %; ice S 40.5 → 23.7 %.
+- [x] Tie-point masks updated 2026-11-17 (Tonboe): `tp_masks.m`, water siconc ≤ 0.01, ice T_B &gt; 180 K, lsm == 0. A6b, B1c/d/e/f/g/h, B2 rerun. Water std (iter. 2) N 8.2 → 7.05 %, S 11.0 → 9.3 %; ice S 40.5 → 23.7 %. With the 5×5 box (below): N 7.04 %, S 9.18 %; ice N 10.74, S 23.18 %.
 
-- [x] B1i L study (`b1i_L_study.m` → `output/B1i_L_study.png`): mean L in both iterations best (N 7.05 / S 9.34 %); per-pixel L in iteration 2 worse than uncorrected (10.0 / 13.6 %).
+- [x] B1i L study (`b1i_L_study.m` → `output/B1i_L_study.png`): mean L in both iterations best (N 7.04 / S 9.18 %); per-pixel L in iteration 2 worse than uncorrected (10.0 / 13.4 %; with 5×5 box).
 
 - [x] B7 correction map (`b7_correction_map.m` → `output/B7_correction_map.png`): largest over open water near the ice edge / Southern Ocean (V), storm tracks (W), Ti on pack ice.
 
@@ -152,3 +152,5 @@
   - Questions for Tonboe: `report_notes/questions_2026-11-17.md`.
 
 - 2026-11-17 · globe v3: whole processing step by step (Tasks 1–3) in `output/globe/ESMR_globe.html`; verified against the CSVs; next: B4 recommendation, B5 seminar, B6 report
+
+- 2026-11-17 · 5×5 box (Table 2 ice-edge distance) added to `tp_masks.m` (`opt.box`, default on); everything rerun. Task 1 (A6b it. 2): water σ N 9.60 → 7.04 %, S 11.65 → 9.18 %; ice N 12.45 → 10.74 %, S 24.02 → 23.18 %; Antarctic ice pixels −11 %, T_p,ice S 212.5 K. B1c ranking unchanged (V > W ≫ Ts). C1: ice area 3.43 × 10⁶ km² (was 3.48), agreement 96.0 %. Details: `report_notes/A4_tiepoint_masks.md`.
