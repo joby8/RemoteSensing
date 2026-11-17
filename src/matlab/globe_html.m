@@ -1,9 +1,15 @@
 % Build the interactive HTML globe in output/globe/:
 %   ESMR_globe.html        page (libraries + coastlines inlined, works offline by double-click)
 %   days/MMDD.js           one data file per day, loaded when the day is selected
-% Day file (format of 2026-11-17, v2): ESMR_DAY({day, cfg, tp, orbits}); arrays are base64 typed arrays.
+% Day file (format of 2026-11-17, v3): ESMR_DAY({day, cfg, tp, orbits}); arrays are base64 typed arrays.
 %   cfg    = the preprocessing settings used (preproc_config.m), the page builds its step captions from it.
-%   tp     = daily tie points per hemisphere (tp_masks.m clusters, uncorrected and corrected) from correct_day.m.
+%   tp     = daily tie points per hemisphere (tp_masks.m clusters, uncorrected and corrected) from correct_day.m
+%            with opts.extra = true (v3): tp.N/S also has w_mean_u/c, i_mean_u/c [% SIC]; it1 (iteration 1:
+%            water_c, ice_c [K], w_std_c, i_std_c, w_mean_c [%]); X.without_V/W/Ts/Ti, X.L_pixel (water_c, ice_c [K],
+%            w_std, i_std, w_mean [%]; Task 2, = b1c_exclusion.m / b1i_L_study.m); spos (Task 3, = b2_angle.m):
+%            w_n, w_s1u, w_s2u, w_s1c, w_s2c, i_n, ... = 1x78 count, sum, sum of squares of SIC [%] raw (u) and
+%            corrected (c) per scan position over the cluster-criteria pixels incl. the swath edge.
+%            The same tp is in the manifest (days/*.mat meta), so the page can average over days.
 %   orbit  = {name, lpc, lat, lon, tb, spos, flag, bits, dtb, inp, la, lao, l2, l3, l3o [, would, p3]}
 %   Pixels are stored ROW-MAJOR (scan line by scan line); lpc (uint8, one per scan line) = number of stored pixels
 %   of that line, so the page recovers the line number of every pixel.
@@ -18,7 +24,9 @@
 %                bit 7 ERA5 sst missing (= land for cfg.land 'sst')
 %     would      uint8 (only if any bit set): what a DISABLED step would remove (o.would): bit 0 analog, 1 Eq. 1,
 %                2 Eq. 2, 3 Eq. 3, 4 Eq. 4, 5 land
-%     dtb        int16, RTM correction (A6b method, iteration 2, via correct_day.m) in 0.1 K, -32768 = not corrected
+%     dtb        int16, RTM correction (A6b method, iteration 2, via correct_day.m) in 0.1 K, -32768 = not corrected.
+%                v3: also set for swath-edge pixels (flag 6) that pass latitude and land (B2 method: corrected with
+%                the inner-swath clusters/tie points); edge-corrected pixel = flag == 6 && dtb != -32768.
 %   Per scan line (reason values for the hover card, int16 0.1 units, -32768 = none; int8 offsets):
 %     la/lao     analog test: largest housekeeping jump of the line that triggered (+ its offset in lines, pad)
 %     l2         Eq. 2: row-mean jump D [K] of the jump(s) that removed this line / bracket its offset block
@@ -27,6 +35,9 @@
 %   Correction inputs, only for corrected pixels (dtb valid, same order as the stored pixels), uint8 / int8:
 %   V 0.25 kg/m2, W 0.1 m/s, L 0.02 kg/m2, Ts 260 K + 0.2 K, Ti 230 K + 0.25 K, c 1/250;
 %   parts of dtb per input (dV, dW, dL, dTs, dTi) in 0.25 K (dL 0.5 K, int8). dL = not applied (L is not corrected).
+%   v3, also in inp (int8, clipped to +-127, same order): d1 = (dtb iteration 1 - dtb) in 0.25 K;
+%   xV, xW, xTs, xTi = (dtb without that input - dtb) in 0.25 K (exclusion test, b1c_exclusion.m);
+%   xL = (dtb with the pixel's own L - dtb) in 0.5 K (L study variant a, b1i_L_study.m). Decode: dtb + q*step.
 % Preprocessing settings: variable cfg (default preproc_config()), e.g. cfg = preproc_config('paper'); before run().
 % Run from the project root:  matlab -batch "run('src/matlab/globe_html.m')"
 % Only some days:             matlab -batch "days=[""0201"",""0202""]; run('src/matlab/globe_html.m')"
@@ -44,7 +55,7 @@ man = struct('day', {}, 'label', {}, 'n_orbits', {}, 'tp', {});
 for d = days(:)'
     fi = find(fday == d);
     fn = arrayfun(@(k) fullfile(files(k).folder, files(k).name), fi, 'UniformOutput', false);
-    [O, tp] = correct_day(fn, 2, cfg);                % A6b method, iteration 2, all valid ocean pixels
+    [O, tp] = correct_day(fn, 2, cfg, struct('extra', true));   % A6b method, iteration 2, valid + swath-edge pixels
     D = struct('day', char(d), 'cfg', cfg, 'orbits', {{}});
     for j = 1:numel(fi)
         o = O(j);
@@ -62,12 +73,14 @@ for d = days(:)'
         R = @(x) rsel(x, keep);                                    % row-major selection of the stored pixels
         tbr = o.tb; tbr(isnan(tbr)) = -3276.8;                     % -32768 = no value
         dt  = o.dtb; dt(isnan(dt)) = -3276.8;
-        ck = keep & ~isnan(o.dtb);                                 % corrected pixels among the stored ones
+        ck = keep & ~isnan(o.dtb);                                 % corrected pixels among the stored ones (incl. edge)
         u8 = @(x, a, d) b64(uint8(min(max(round((rsel(x, ck) - a) / d), 0), 255)));
         i8 = @(x, d) b64(int8(min(max(round(rsel(x, ck) / d), -127), 127)));
         inp = struct('V', u8(o.V, 0, 0.25), 'W', u8(o.W, 0, 0.1), 'L', u8(o.L, 0, 0.02), ...
             'Ts', u8(o.Tsx, 260, 0.2), 'Ti', u8(o.Ti, 230, 0.25), 'c', u8(o.c, 0, 1/250), ...
-            'dV', i8(o.dV, 0.25), 'dW', i8(o.dW, 0.25), 'dL', i8(o.dL, 0.5), 'dTs', i8(o.dTs, 0.25), 'dTi', i8(o.dTi, 0.25));
+            'dV', i8(o.dV, 0.25), 'dW', i8(o.dW, 0.25), 'dL', i8(o.dL, 0.5), 'dTs', i8(o.dTs, 0.25), 'dTi', i8(o.dTi, 0.25), ...
+            'd1', i8(o.dtb1 - o.dtb, 0.25), 'xV', i8(o.dx.V - o.dtb, 0.25), 'xW', i8(o.dx.W - o.dtb, 0.25), ...
+            'xTs', i8(o.dx.Ts - o.dtb, 0.25), 'xTi', i8(o.dx.Ti - o.dtb, 0.25), 'xL', i8(o.dx.L - o.dtb, 0.5));
         rs = reasons(o, cfg);
         t = regexp(files(fi(j)).name, 't(\d{2})(\d{2})', 'tokens', 'once');
         ob = struct('name', sprintf('%s:%s UTC', t{1}, t{2}), ...

@@ -209,6 +209,49 @@ tr + tr td { border-top: .5px solid var(--sep); }
 th { font-weight: 400; color: var(--label2); font-size: 12px; padding-top: 0; }
 th:first-child, td:first-child { text-align: left; color: var(--label2); }
 td .arr { color: var(--label3); }
+td + td, th + th { white-space: nowrap; padding-left: 8px; }
+/* ---- pipeline steps ---- */
+aside { gap: 34px; }
+.pstep { display: grid; gap: 8px; min-width: 0; }
+.pstep > .ghead { margin-top: 8px; }
+.shead { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; margin: 0 4px 2px; }
+.shead .sn { width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 14px; font-weight: 700; display: grid; place-items: center; flex: none; letter-spacing: 0; }
+.shead .task { margin-left: auto; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--tint); color: var(--blue); letter-spacing: 0; }
+button.cell:disabled { cursor: default; }
+button.cell:disabled .ttl, button.cell:disabled .trail, button.cell:disabled .tile { opacity: .45; }
+button.cell:disabled:hover { background: transparent; }
+.crit button:disabled { opacity: .45; cursor: default; }
+.crit button:disabled:hover { background: transparent; }
+.note { color: var(--label2); font-size: 12px; }
+.xt { display: grid; justify-items: end; font-size: 13px; }
+.xt b { color: var(--label); font-weight: 500; }
+.xt span { font-size: 11px; }
+.xbars { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; font-size: 12px; }
+.xbars .l { color: var(--label2); white-space: nowrap; }
+.xbars .b { display: grid; gap: 2px; }
+.xbars .b i { display: block; height: 6px; border-radius: 3px; background: var(--c); min-width: 1px; }
+.xbars .v { text-align: right; line-height: 1.15; font-size: 11.5px; }
+.xbars .v span { display: block; }
+.xbars .ttl2 { grid-column: 1 / -1; font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+.xbars .l.on { color: var(--blue); font-weight: 600; }
+/* angle chart (inline SVG, colours from the theme) */
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .grid line { stroke: var(--sep); stroke-width: .7; }
+.chart .ax { stroke: var(--label3); stroke-width: .8; }
+.chart text { fill: var(--label2); font-size: 10px; font-family: var(--font); }
+.chart .shade { fill: var(--fill); }
+.chart .raw { stroke: var(--gray); }
+.chart .cor { stroke: var(--blue); }
+.chart path { fill: none; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.chart path.dash { stroke-dasharray: 3 3; }
+.chart .hl { stroke: var(--label3); stroke-width: 1; }
+.chart circle.raw { fill: var(--gray); stroke: var(--cell); stroke-width: 1.2; }
+.chart circle.cor { fill: var(--blue); stroke: var(--cell); stroke-width: 1.2; }
+.ctip { position: absolute; top: 4px; pointer-events: none; background: var(--cell); border-radius: 8px; padding: 5px 8px; font-size: 11.5px; box-shadow: var(--shadow); white-space: nowrap; line-height: 1.3; }
+.ctip span { color: var(--label2); }
+.lkey { display: inline-block; width: 16px; height: 0; border-top: 2px solid var(--c); vertical-align: middle; margin-right: 5px; }
+.lkey.dash { border-top-style: dashed; }
 </style>
 
 <div class="wrap">
@@ -234,54 +277,19 @@ td .arr { color: var(--label3); }
     </div>
 
     <aside>
-      <section class="group">
+      <section class="pstep">
+        <h2 class="shead"><span class="sn">0</span>Data</h2>
         <div class="list">
           <div class="cell plain"><span class="ttl"><span>Day</span></span>
             <span class="trail"><select id="day" aria-label="Day"></select><span class="stepper"><button id="dprev" aria-label="Previous day">‹</button><button id="dnext" aria-label="Next day">›</button></span></span></div>
           <div class="cell plain"><span class="ttl"><span>Orbit</span></span><span class="trail"><select id="orbit" aria-label="Orbit"></select></span></div>
         </div>
+        <div class="list" role="radiogroup" aria-label="Base layers" id="lay0"></div>
+        <p class="gfoot">Measured swaths, all 78 scan positions, before any filter.</p>
       </section>
 
-      <section class="group">
-        <h2 class="ghead">Map</h2>
-        <div class="list" role="radiogroup" aria-label="Map layer" id="layers"></div>
-      </section>
-
-      <section class="group">
-        <h2 class="ghead big">Correction</h2>
-        <div class="segc" role="radiogroup" aria-label="Show for the selected input" id="views">
-          <button role="radio" data-view="val" aria-checked="false">Value</button>
-          <button role="radio" data-view="anom" aria-checked="false">Difference</button>
-          <button role="radio" data-view="part" aria-checked="true">Effect</button>
-        </div>
-        <div class="gfoot">
-          <span class="dimhint">Select an input below to use these views.</span>
-          <span><b>Value</b> – input at the pixel</span>
-          <span><b>Difference</b> – pixel minus reference</span>
-          <span><b>Effect</b> – ΔT<sub>B</sub> from this input alone</span>
-        </div>
-      </section>
-
-      <section class="group">
-        <h2 class="ghead">Corrected inputs</h2>
-        <div class="list" role="radiogroup" aria-label="Corrected inputs" id="corr"></div>
-        <p class="gfoot">Bar = typical size of the effect on this day.</p>
-      </section>
-
-      <section class="group">
-        <h2 class="ghead">Cloud water L · not corrected</h2>
-        <div class="list" role="radiogroup" aria-label="Not corrected" id="notcorr"></div>
-        <p class="gfoot">L goes into both model runs with the same value, so it cancels in ΔT<sub>B</sub>. Per-pixel ERA5 L made the result worse (A6): its clouds don't match 1973.</p>
-      </section>
-
-      <section class="group">
-        <h2 class="ghead">Reference</h2>
-        <div class="list" role="radiogroup" aria-label="Reference" id="ref"></div>
-        <p class="gfoot">Reference = (1 − c) · water mean + c · ice mean.</p>
-      </section>
-
-      <section class="group">
-        <h2 class="ghead">Preprocessing</h2>
+      <section class="pstep">
+        <h2 class="shead"><span class="sn">1</span>Preprocessing</h2>
         <div class="list">
           <div class="inner"><input type="range" id="step" min="0" max="8" step="1" value="7" aria-label="Preprocessing step"><div class="ticks5"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div></div>
           <div id="steps" style="display:contents"></div>
@@ -290,10 +298,78 @@ td .arr { color: var(--label3); }
         <p class="gfoot"><span>Paper order (Kolbe et al. 2024, Sect. 2.2). Counts for the selected orbits (|lat| &lt; 50° thinned, × 16).</span><span id="stepnote"></span></p>
       </section>
 
-      <section class="group">
-        <h2 class="ghead">Daily tie points</h2>
+      <section class="pstep">
+        <h2 class="shead"><span class="sn">2</span>Tie-point clusters</h2>
+        <div class="list" role="radiogroup" aria-label="Tie-point clusters" id="lay2"></div>
+        <p class="gfoot">Table 2 with the 17 Nov masks (water SIC ≤ 1 %, ice T<sub>B</sub> &gt; 180 K, no coastal pixels). Tap the layer to see each criterion.</p>
+      </section>
+
+      <section class="pstep">
+        <h2 class="shead"><span class="sn">3</span>Raw SIC</h2>
+        <div class="list" role="radiogroup" aria-label="Raw SIC" id="lay3"></div>
+        <p class="gfoot">Eq. 16: SIC = (T<sub>B</sub> − T<sub>p,water</sub>) / (T<sub>p,ice</sub> − T<sub>p,water</sub>), tie points = cluster means of step 2, no correction.</p>
+      </section>
+
+      <section class="pstep">
+        <h2 class="shead"><span class="sn">4</span><span>RTM correction ΔT<sub>B</sub></span></h2>
+        <div class="segc" role="radiogroup" aria-label="Show for the selected input" id="views">
+          <button role="radio" data-view="val" aria-checked="false">Value</button>
+          <button role="radio" data-view="anom" aria-checked="false">Difference</button>
+          <button role="radio" data-view="part" aria-checked="true">Effect</button>
+        </div>
+        <div class="gfoot">
+          <span class="dimhint">Select an input below to use these views.</span>
+          <span><b>Value</b> – input at the pixel · <b>Difference</b> – pixel minus reference · <b>Effect</b> – ΔT<sub>B</sub> from this input alone</span>
+        </div>
+        <div class="list" role="radiogroup" aria-label="Corrected inputs" id="corr"></div>
+        <p class="gfoot">Eq. 13–14. Bar = typical size of the effect on this day.</p>
+        <h3 class="ghead">Cloud water L · not corrected</h3>
+        <div class="list" role="radiogroup" aria-label="Not corrected" id="notcorr"></div>
+        <p class="gfoot">L goes into both model runs with the same value, so it cancels in ΔT<sub>B</sub>.</p>
+        <h3 class="ghead">Reference</h3>
+        <div class="list" role="radiogroup" aria-label="Reference" id="ref"></div>
+        <p class="gfoot">Reference = (1 − c) · water mean + c · ice mean.</p>
+      </section>
+
+      <section class="pstep">
+        <h2 class="shead"><span class="sn">5</span>Corrected SIC<span class="task">Task 1</span></h2>
+        <div class="list" role="radiogroup" aria-label="Corrected SIC" id="lay5"></div>
+        <p class="gfoot">Eq. 13 + 16: SIC from T<sub>B</sub> + ΔT<sub>B</sub> with tie points from the corrected clusters.</p>
+        <h3 class="ghead">Daily tie points</h3>
+        <div class="segc" role="radiogroup" aria-label="Tie-point period" id="tpper">
+          <button role="radio" data-per="day" aria-checked="true">This day</button>
+          <button role="radio" data-per="feb" aria-checked="false">Feb 1973</button>
+        </div>
         <div class="list"><div class="inner"><table id="tp"></table></div></div>
-        <p class="gfoot">Raw → corrected. Clusters: Table 2 with the 17 Nov masks (water SIC ≤ 1 %, ice T<sub>B</sub> &gt; 180 K, no coastal pixels).</p>
+        <p class="gfoot" id="tpfoot"></p>
+      </section>
+
+      <section class="pstep">
+        <h2 class="shead"><span class="sn">6</span>Exclusion test<span class="task">Task 2</span></h2>
+        <p class="gfoot">σ SIC water (%) of this day, North · South. Tap a row for its corrected SIC map.</p>
+        <div class="list" role="radiogroup" aria-label="Exclusion cases" id="xlist"></div>
+        <div class="list"><div class="inner" id="xbars"></div></div>
+        <p class="gfoot" id="xfoot">Excluded input = set to the reference in the model run, so it corrects nothing. L is never corrected in the method; the last row tests it.</p>
+      </section>
+
+      <section class="pstep">
+        <h2 class="shead"><span class="sn">7</span>Noise vs. incidence angle<span class="task">Task 3</span></h2>
+        <div class="segc" role="radiogroup" aria-label="Hemisphere" id="ang-h">
+          <button role="radio" data-v="N" aria-checked="true">Arctic</button>
+          <button role="radio" data-v="S" aria-checked="false">Antarctic</button>
+        </div>
+        <div class="segc" role="radiogroup" aria-label="Period" id="ang-src">
+          <button role="radio" data-v="day" aria-checked="true">This day</button>
+          <button role="radio" data-v="feb" aria-checked="false">Feb 1973</button>
+        </div>
+        <div class="segc" role="radiogroup" aria-label="Surface" id="ang-g">
+          <button role="radio" data-v="w" aria-checked="true">Water</button>
+          <button role="radio" data-v="i" aria-checked="false">Ice</button>
+        </div>
+        <div class="list"><div class="inner" id="angle"></div>
+          <label class="cell plain" id="edgecell"><span class="ttl"><span>Show swath edges on the map</span><small id="edgenote">in the SIC and ΔT<sub>B</sub> maps</small></span><input type="checkbox" class="switch" id="showedge"></label>
+        </div>
+        <p class="gfoot">σ of SIC per scan position over the cluster pixels. Shaded: |θ| &gt; 55.7°, removed in the analysis (step 1).</p>
       </section>
     </aside>
   </div>
@@ -415,6 +491,8 @@ async function loadDay(d, progress) {
 // storage of the correction inputs (globe_html.m): value = offset + step * stored integer
 const ENC = { V: [0, 0.25], W: [0, 0.1], L: [0, 0.02], Ts: [260, 0.2], Ti: [230, 0.25], c: [0, 0.004],
               dV: [0, 0.25], dW: [0, 0.25], dL: [0, 0.5], dTs: [0, 0.25], dTi: [0, 0.25] };
+// optional (globe_html.m v3), int8: d1 = dtb of iteration 1 − dtb, x* = dtb of an exclusion case − dtb, in K per unit
+const OPT = { d1: 0.25, xV: 0.25, xW: 0.25, xTs: 0.25, xTi: 0.25, xL: 0.5 };
 function prep(o) {
   const lat = dec(o.lat, Int16Array), lon = dec(o.lon, Int16Array), tb = dec(o.tb, Int16Array), spos = dec(o.spos, Uint8Array), dtb = dec(o.dtb, Int16Array);
   const flag = dec(o.flag, Uint8Array), bits = dec(o.bits, Uint8Array), lpc = dec(o.lpc, Uint8Array);
@@ -440,13 +518,20 @@ function prep(o) {
       for (let j = 0; j < r.length; j++) v[j] = a + d * r[j];
       inp[f] = v;
     }
+    for (const [f, d] of Object.entries(OPT)) if (o.inp[f]) {
+      const r = dec(o.inp[f], Int8Array), v = new Float32Array(r.length);
+      for (let j = 0; j < r.length; j++) v[j] = d * r[j];
+      inp[f] = v;
+    }
   }
+  let nEdge = 0;                                                    // swath-edge pixels with a correction (v3 files)
+  for (let i = 0; i < n; i++) if (flag[i] === 6 && dtb[i] !== -32768) nEdge++;
   // Eq. 3 pixel mode: spike value per pixel with flag 3 or would-Eq. 3 (stored order)
   let p3 = null, p3i = null;
   if (o.p3) { p3 = dec(o.p3, Int16Array); p3i = new Int32Array(n).fill(-1); let m = 0;
     for (let i = 0; i < n; i++) if (flag[i] === 3 || (would && would[i] & 8)) p3i[i] = m++; }
   const ln = (f, T) => o[f] ? dec(o[f], T) : new T(lpc.length).fill(T === Int16Array ? -32768 : 0);
-  return { name: o.name, n, lat, lon, tb, spos, dtb, flag, bits, cls, would, line, stage, x, y, z, ci, inp, p3, p3i,
+  return { name: o.name, n, lat, lon, tb, spos, dtb, flag, bits, cls, would, line, stage, x, y, z, ci, inp, p3, p3i, nEdge,
     la: ln('la', Int16Array), lao: ln('lao', Int8Array), l2: ln('l2', Int16Array), l3: ln('l3', Int16Array), l3o: ln('l3o', Int8Array),
     col: new Uint32Array(n), top: new Uint8Array(n) };
 }
@@ -510,12 +595,50 @@ function refOf(o, i, f) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S, c = o.in
 // ---- state ------------------------------------------------------------------
 let cur = null, dayIdx = 0, sel = 'all', mode = 'tb', step = 7, showRm = false, inp = 'V', view = 'part';
 let crit = null;                                     // tie-point criterion view: null = default clusters, else {g: 'w'|'i', k}
+let iter = 2;                                        // corrected SIC: iteration 1 or 2 (step 5)
+let xcase = 'full';                                  // exclusion case of the 'sicx' map (step 6)
+let showEdge = false;                                // draw swath-edge pixels that have a correction (step 7)
+let tpPer = 'day';                                   // tie-point table: this day or Feb mean
+const ang = { h: 'N', src: 'day', g: 'w' };          // angle chart: hemisphere, period, surface
 let rot = [50, -62], zoom = 1;
 const selected = () => !cur ? [] : sel === 'all' ? cur.orbits : [cur.orbits[sel]];
-function sicOf(o, i) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S; return 100 * (o.tb[i] / 10 - t.water_u) / (t.ice_u - t.water_u); }
-function sicCorr(o, i) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S; return 100 * ((o.tb[i] + o.dtb[i]) / 10 - t.water_c) / (t.ice_c - t.water_c); }
+const hemiT = (o, i) => o.lat[i] > 0 ? cur.tp.N : cur.tp.S;
+function sicOf(o, i) { const t = hemiT(o, i); return 100 * (o.tb[i] / 10 - t.water_u) / (t.ice_u - t.water_u); }
+// Eq. 16 on T_B + ΔT_B (+ extra K of an other run) with tie points t
+const sicT = (o, i, t, xk) => 100 * ((o.tb[i] + o.dtb[i]) / 10 + xk - t.water_c) / (t.ice_c - t.water_c);
+function sicCorr(o, i) { return sicT(o, i, hemiT(o, i), 0); }                      // iteration 2 (final)
+function sicIt1(o, i) {
+  const j = o.ci[i], t = hemiT(o, i);
+  return j < 0 || !o.inp || !o.inp.d1 || !t.it1 ? NaN : sicT(o, i, t.it1, o.inp.d1[j]);
+}
+// exclusion cases (step 6): key in tp.X, per-pixel ΔT_B difference in o.inp
+const XC = [
+  { k: 'full', name: 'Full correction', sym: 'V, W, T_s, T_i', tile: '--c-dtb', icon: 'delta' },
+  { k: 'V', key: 'without_V', f: 'xV', name: 'Without V', tile: '--c-V', icon: 'drop' },
+  { k: 'W', key: 'without_W', f: 'xW', name: 'Without W', tile: '--c-W', icon: 'wind' },
+  { k: 'Ts', key: 'without_Ts', f: 'xTs', name: 'Without T_s', tile: '--c-Ts', icon: 'wave' },
+  { k: 'Ti', key: 'without_Ti', f: 'xTi', name: 'Without T_i', tile: '--c-Ti', icon: 'snow' },
+  { k: 'L', key: 'L_pixel', f: 'xL', name: 'With ERA5 L per pixel', tile: '--c-L', icon: 'cloud' },
+];
+const XBY = Object.fromEntries(XC.map(c => [c.k, c]));
+function sicX(o, i, c = xcase) {
+  if (c === 'full') return sicCorr(o, i);
+  const X = XBY[c], j = o.ci[i], t = hemiT(o, i), tx = t.X && t.X[X.key];
+  return j < 0 || !o.inp || !o.inp[X.f] || !tx ? NaN : sicT(o, i, tx, o.inp[X.f][j]);
+}
+// what the data of this day can show (older day files lack the v3 fields)
+const HAS = {
+  it1: () => !!(cur && cur.tp.N.it1 && cur.orbits.some(o => o.inp && o.inp.d1)),
+  X: () => !!(cur && cur.tp.N.X),
+  xmap: c => c === 'full' || !!(cur && cur.tp.N.X && cur.orbits.some(o => o.inp && o.inp[XBY[c].f])),
+  edge: () => !!(cur && cur.orbits.some(o => o.nEdge > 0)),
+};
 let RM = [];
-const NEEDS_OCEAN = new Set(['sic', 'dtb', 'sicc', 'inp']);   // modes that only make sense for ocean pixels after all steps
+const NEEDS_OCEAN = new Set(['sic', 'dtb', 'sicc', 'sicx', 'inp']);   // modes that only make sense for ocean pixels after all steps
+const EDGE_MODES = new Set(['sic', 'dtb', 'sicc', 'sicx']);          // modes that can show the swath edges (step 7)
+const edgeOn = () => showEdge && EDGE_MODES.has(mode);
+// pixel removed by the slider, unless it is a corrected swath-edge pixel and the edge switch is on
+const hiddenAt = (o, i) => o.stage[i] <= step && !(edgeOn() && o.flag[i] === 6 && o.dtb[i] !== -32768);
 const LAST = STEPS.length - 1;
 // tie-point criteria (tp_masks.m, 3rd output; one bit each in o.bits, set only for o.valid pixels), in the order tested
 const CRIT = {
@@ -553,7 +676,10 @@ function recolor() {
     else if (mode === 'tb') o.col[i] = LUT_TB[Math.max(0, Math.min(180, Math.round(tbv / 10 - 100)))];
     else if (mode === 'sic') o.col[i] = LUT_SIC[Math.max(0, Math.min(140, Math.round(sicOf(o, i) + 20)))];
     else if (mode === 'dtb') o.col[i] = LUT_DTB[Math.max(0, Math.min(300, o.dtb[i] + 150))];
-    else if (mode === 'sicc') o.col[i] = LUT_SIC[Math.max(0, Math.min(140, Math.round(sicCorr(o, i) + 20)))];
+    else if (mode === 'sicc' || mode === 'sicx') {
+      const v = mode === 'sicx' ? sicX(o, i) : iter === 1 ? sicIt1(o, i) : sicCorr(o, i);
+      o.col[i] = isNaN(v) ? ND : LUT_SIC[Math.max(0, Math.min(140, Math.round(v + 20)))];
+    }
     else if (crit) { const q = critState(o, i, crit.g, crit.k); o.col[i] = CR[q]; o.top[i] = q >= 2; continue; }
     else { o.col[i] = C[o.cls[i]]; o.top[i] = o.cls[i] > 0; continue; }
     o.top[i] = 0;
@@ -596,12 +722,12 @@ function draw() {
   const ps4 = Math.max(ps, Math.min(40, Math.round(4 * 30 / 6371 * k)));  // thinned low-lat pixels drawn 4x larger
   // pass 0: removed pixels, pass 1: kept "other", pass 2: kept tie-point pixels (on top)
   // pass 3: pixels a disabled step WOULD remove (selected step not applied), drawn as a checker pattern on top
-  const wb = !stepOn(step) && STEPS[step].wb || 0;
+  const wb = !stepOn(step) && STEPS[step].wb || 0, eo = edgeOn();
   for (let pass = 0; pass < 4; pass++) for (const o of selected()) {
-    const { x, y, z, col, top, bits, stage, n, would } = o;
+    const { x, y, z, col, top, bits, stage, n, would, flag, dtb } = o;
     if (pass === 3 && (!wb || !would)) continue;
     for (let i = 0; i < n; i++) {
-      const removed = stage[i] <= step;
+      const removed = stage[i] <= step && !(eo && flag[i] === 6 && dtb[i] !== -32768);
       let c;
       if (pass === 0) { if (!removed || !showRm || crit) continue; c = RM[stage[i]]; }   // criterion view: only valid pixels
       else if (pass === 3) { if (removed || !(would[i] & wb)) continue; c = RM[step]; }
@@ -627,7 +753,7 @@ function draw() {
       const [mx, my] = proj(ll);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       // fill the ring with the pixel's displayed colour so it can be read at a glance
-      const removed = pin.o.stage[pin.i] <= step;
+      const removed = hiddenAt(pin.o, pin.i);
       const c = removed ? (showRm ? RM[pin.o.stage[pin.i]] : 0) : pin.o.col[pin.i];
       ctx.beginPath(); ctx.arc(mx, my, 14, 0, 2 * Math.PI);
       if (c) { ctx.fillStyle = `rgb(${c & 255},${(c >> 8) & 255},${(c >> 16) & 255})`; ctx.fill(); }
@@ -654,7 +780,7 @@ cv.addEventListener('wheel', e => { e.preventDefault(); setZoom(zoom * Math.exp(
 function setZoom(z) { zoom = Math.max(0.8, Math.min(12, z)); redraw(); }
 $('zin').onclick = () => setZoom(zoom * 1.4);
 $('zout').onclick = () => setZoom(zoom / 1.4);
-function setView(n) { rot = n ? [50, -62] : [-60, 62]; redraw(); }
+function setView(n) { rot = n ? [50, -62] : [-60, 62]; ang.h = n ? 'N' : 'S'; renderAngle(); redraw(); }
 $('v-n').onclick = () => setView(true);
 $('v-s').onclick = () => setView(false);
 window.addEventListener('resize', resize);
@@ -670,7 +796,7 @@ function nearest(e) {
   const px = Math.cos(p[1]*RAD)*Math.cos(p[0]*RAD), py = Math.cos(p[1]*RAD)*Math.sin(p[0]*RAD), pz = Math.sin(p[1]*RAD);
   let best = -1, bo = null, bi = -1;
   for (const o of selected()) for (let i = 0; i < o.n; i++) {
-    if (o.stage[i] <= step && (!showRm || crit)) continue;
+    if (hiddenAt(o, i) && (!showRm || crit)) continue;
     const d = o.x[i]*px + o.y[i]*py + o.z[i]*pz; if (d > best) { best = d; bo = o; bi = i; }
   }
   const km = Math.acos(Math.min(1, best)) * 6371, maxKm = Math.max(30, 8 * 6371 / radius()) * (bo && (bo.bits[bi] & 64) ? 4 : 1);
@@ -702,7 +828,7 @@ function card(bo, bi) {
   const st = bo.stage[bi], tbv = bo.tb[bi], dv = bo.dtb[bi], hasC = dv !== -32768;
   const dot = c => `<span class="dot" style="--c:var(${c})"></span>`;
   const lines = [];
-  if (st <= step) lines.push(`${dot(STEPS[st].c)}Removed · ${reason(bo, bi, st)}`);
+  if (st <= step) lines.push(`${dot(STEPS[st].c)}Removed · ${reason(bo, bi, st)}${hiddenAt(bo, bi) ? '' : ' · shown by “Show swath edges”'}`);
   else {
     lines.push(['Kept', `${dot('--water')}Kept · water tie point`, `${dot('--ice')}Kept · ice tie point`][bo.cls[bi]]);
     if (st <= LAST) lines.push(`${dot(STEPS[st].c)}Later step ${st} · ${reason(bo, bi, st)}`);
@@ -717,6 +843,13 @@ function card(bo, bi) {
     ['T<sub>B</sub>', tbv === -32768 ? '–' : `${(tbv/10).toFixed(1)} K${hasC ? ` → ${((tbv + dv) / 10).toFixed(1)} K` : ''}`]];
   if (hasC) kv.push(['ΔT<sub>B</sub>', `${sg(dv/10)} K`]);
   if (tbv !== -32768) kv.push(['SIC', `${sicOf(bo, bi).toFixed(1)} %${hasC ? ` → ${sicCorr(bo, bi).toFixed(1)} %` : ''}`]);
+  const pc = v => isNaN(v) ? '–' : `${v.toFixed(1)} %`;
+  if (hasC && mode === 'sicc' && iter === 1) kv.push(['SIC · iteration 1', pc(sicIt1(bo, bi))]);
+  if (hasC && mode === 'sicx' && xcase !== 'full') {
+    const X = XBY[xcase], j = bo.ci[bi], xv = j >= 0 && bo.inp && bo.inp[X.f] ? bo.inp[X.f][j] : NaN;
+    kv.push([`SIC · ${sub(X.name)}`, pc(sicX(bo, bi))]);
+    if (!isNaN(xv)) kv.push([`ΔT<sub>B</sub> · this case`, `${sg(dv / 10 + xv)} K`]);
+  }
   const head = pin ? `<div class="pin"><svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z" fill="currentColor"/></svg>Pinned</div>` : '';
   hc.innerHTML = `${head}<div class="h"><span style="color:var(--label);font-weight:600">${pos}</span><span style="display:flex;align-items:flex-start">${bo.name}${pin ? '<button class="x" aria-label="Unpin">✕</button>' : ''}</span></div>
     <div class="kv">${kv.map(([a, b]) => `<span>${a}</span><b>${b}</b>`).join('')}</div>
@@ -743,7 +876,8 @@ const LAYERS = [
   { key: 'sic', name: 'Sea ice concentration', sub: 'raw', tile: '--gray', icon: 'snow' },
   { key: 'sicc', name: 'Sea ice concentration', sub: 'corrected', tile: '--blue', icon: 'snow' },
 ];
-const keyOf = () => mode === 'inp' ? 'inp:' + inp : mode;
+const keyOf = () => mode === 'inp' ? 'inp:' + inp : mode === 'sicx' ? 'sicx:' + xcase : mode;
+const LAYER_GROUPS = { lay0: ['tb', 'th'], lay2: ['mask'], lay3: ['sic'], lay5: ['sicc'] };   // pipeline step of each layer
 function row(key, tile, icon, title, small, trail = '') {
   return `<button class="cell" role="radio" data-key="${key}" aria-checked="${keyOf() === key}">
     <span class="tile" style="--t:var(${tile})">${svg(icon)}</span>
@@ -751,30 +885,41 @@ function row(key, tile, icon, title, small, trail = '') {
     <span class="trail">${trail}${CHECK}</span></button>`;
 }
 function renderLayers() {
-  $('layers').innerHTML = LAYERS.map(L => {
-    const small = L.key === 'sicc' ? 'corrected · iteration 2 of 2' : (L.sub || '');
-    return row(L.key, L.tile, L.icon, `${L.name}${L.sym ? `<span class="sym">${sub(L.sym)}</span>` : ''}`, small) + (mode === L.key ? methodHTML(L.key) : '');
+  for (const [id, keys] of Object.entries(LAYER_GROUPS)) $(id).innerHTML = keys.map(k => {
+    const L = LAYERS.find(q => q.key === k);
+    const small = k === 'sicc' ? `corrected · iteration ${iter} of 2` : (L.sub || '');
+    return row(L.key, L.tile, L.icon, `${L.name}${L.sym ? `<span class="sym">${sub(L.sym)}</span>` : ''}`, small) + (mode === L.key || k === 'sicc' ? methodHTML(L.key) : '');
   }).join('');
+  renderX();
 }
 // how the selected SIC map was computed (same steps as a6b_iterative.m / correct_day.m)
 function methodHTML(k) {
   if (k === 'mask') return critHTML();
-  if (k === 'sic') return `<div class="method"><div class="badge"><i>No correction</i></div></div>`;
+  const t = cur && cur.tp, f = v => v == null || isNaN(v) ? '–' : v.toFixed(1);
+  if (k === 'sic') return `<div class="method"><div class="badge"><i>No correction</i></div>${t ? `<span class="note">Tie points N ${f(t.N.water_u)} / ${f(t.N.ice_u)} K · S ${f(t.S.water_u)} / ${f(t.S.ice_u)} K · σ water N ${f(t.N.w_std_u)} · S ${f(t.S.w_std_u)} %</span>` : ''}</div>`;
   if (k !== 'sicc') return '';
-  return `<div class="method"><ol>
-    <li><div><b>Iteration 1</b> <span>– c from ERA5</span></div></li>
-    <li><div><b>Iteration 2</b> <span class="badge"><i class="on">shown</i></span> <span>– c from result of 1</span></div></li>
-    </ol></div>`;
+  // the two iterations of the A6b method; tap one to map it
+  const it1 = HAS.it1(), on = mode === 'sicc';
+  const it = (n, title, small, a) => `<button data-iter="${n}" role="radio" aria-checked="${on && iter === n}" style="--c:var(--blue)"${n === 1 && !it1 ? ' disabled' : ''}>
+    <span class="n">${n}</span><span class="lbl"><span>${title}</span><small>${small}</small></span>
+    <span class="ct">${a ? `<b>${f(a.N)} · ${f(a.S)}</b><span>σ water %</span>` : ''}</span></button>`;
+  const s1 = t && t.N.it1 ? { N: t.N.it1.w_std_c, S: t.S.it1.w_std_c } : null, s2 = t ? { N: t.N.w_std_c, S: t.S.w_std_c } : null;
+  return `<div class="method"><div class="crit" role="radiogroup" aria-label="Iteration">
+    ${it(1, 'Iteration 1', 'c from ERA5 siconc', s1)}
+    ${it(2, 'Iteration 2', 'c from the SIC of iteration 1 · final', s2)}</div>
+    ${!it1 && cur ? '<span class="note">Iteration 1 map: rebuild with globe_html.m.</span>' : ''}</div>`;
 }
 // typical size (mean |effect|) of each input's part for the selected orbits
 function stats() {
   const s = { n: 0, dtb: 0, c: 0, V: 0, W: 0, L: 0, Ts: 0, Ti: 0 };
   for (const o of selected()) {
     if (!o.inp) continue;
-    const I = o.inp, m = I.c.length;
-    for (let j = 0; j < m; j++) { s.V += Math.abs(I.dV[j]); s.W += Math.abs(I.dW[j]); s.L += Math.abs(I.dL[j]); s.Ts += Math.abs(I.dTs[j]); s.Ti += Math.abs(I.dTi[j]); s.c += I.c[j]; }
-    for (let i = 0; i < o.n; i++) if (o.ci[i] >= 0) s.dtb += Math.abs(o.dtb[i]) / 10;
-    s.n += m;
+    const I = o.inp;
+    for (let i = 0; i < o.n; i++) {
+      const j = o.ci[i]; if (j < 0 || o.flag[i] !== 0) continue;        // valid pixels only, not the swath edges
+      s.V += Math.abs(I.dV[j]); s.W += Math.abs(I.dW[j]); s.L += Math.abs(I.dL[j]); s.Ts += Math.abs(I.dTs[j]); s.Ti += Math.abs(I.dTi[j]); s.c += I.c[j];
+      s.dtb += Math.abs(o.dtb[i]) / 10; s.n++;
+    }
   }
   if (s.n) for (const f of ['dtb', 'c', 'V', 'W', 'L', 'Ts', 'Ti']) s[f] /= s.n;
   return s;
@@ -805,9 +950,13 @@ document.querySelector('aside').addEventListener('click', e => {
     if (crit && step < LAST) { step = LAST; sl.value = step; steps(); }
     renderLayers(); recolor(); legend(); redraw(); refreshCard(); return;
   }
-  const b = e.target.closest('button.cell[data-key]'); if (!b) return;
+  const ib = e.target.closest('button[data-iter]');
+  if (ib) { iter = +ib.dataset.iter; setMode('sicc'); tpTable(); return; }
+  const b = e.target.closest('button.cell[data-key]'); if (!b || b.disabled) return;
   const k = b.dataset.key;
-  if (k.startsWith('inp:')) { inp = k.slice(4); setMode('inp'); } else setMode(k);
+  if (k.startsWith('inp:')) { inp = k.slice(4); setMode('inp'); }
+  else if (k.startsWith('sicx:')) { xcase = k.slice(5); setMode('sicx'); }
+  else setMode(k);
 });
 for (const b of $('views').children) b.onclick = () => { view = b.dataset.view; if (mode === 'inp') setMode('inp'); else syncChecks(); };
 function syncChecks() {
@@ -852,7 +1001,11 @@ async function setDay(i) {
   sel = prevSel !== 'all' && prevSel < cur.orbits.length ? prevSel : 'all'; os.value = sel;
   const dl = new Date(DAYS[i].label + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
   $('sub').textContent = `${dl} · Nimbus 5 ESMR · 19.35 GHz H-pol`;
-  renderLayers(); renderCorr(); syncChecks();
+  // fall back where this day file has no data for the chosen view (older files)
+  if (iter === 1 && !HAS.it1()) iter = 2;
+  if (!HAS.xmap(xcase)) { xcase = 'full'; }
+  edgeUI();
+  renderLayers(); renderCorr(); syncChecks(); renderAngle();
   recolor(); legend(); tpTable(); steps(); redraw();
 }
 
@@ -896,7 +1049,8 @@ function legend() {
       tb:  [100, 280, TB_STOPS, 'Brightness temperature', 'K', 'Measured, 19.35 GHz H-pol.'],
       th:  [-64, 64, THETA, 'Incidence angle θ', '°', 'Per scan position.'],
       sic: [-20, 120, ICE, 'SIC raw', '%', 'Uncorrected. Below 0 % or above 100 % = noise.'],
-      sicc: [-20, 120, ICE, 'SIC corrected · iteration 2', '%', 'RTM-corrected, iteration 2 of 2.'],
+      sicc: [-20, 120, ICE, `SIC corrected · iteration ${iter}`, '%', iter === 1 ? 'RTM-corrected, iteration 1 (c from ERA5).' : 'RTM-corrected, iteration 2 of 2 (final).'],
+      sicx: [-20, 120, ICE, `SIC · ${sub(XBY[xcase].name)}`, '%', xcase === 'full' ? 'Full correction (= iteration 2).' : xcase === 'L' ? 'Corrected with ERA5 L per pixel in the model run.' : `Corrected with ${sub(XBY[xcase].name.slice(8))} set to the reference.`],
       dtb: [-15, 15, DTB, 'Correction ΔT<sub>B</sub>', 'K', 'Added to T<sub>B</sub>.'],
     }[mode];
     [lo, hi, stops, title, unit, text] = cfg;
@@ -983,17 +1137,164 @@ function critHTML() {
     ${grp('w')}${grp('i')}
     <span style="color:var(--label2);font-size:12px">After preprocessing (step ${LAST}). Tap a criterion: passing pixels coloured, drop-outs red. Removed pixels hidden.</span></div></div>`;
 }
+// ---- step 5: tie points (Task 1) -----------------------------------------------
+// Feb 1973 mean = mean of the daily values; 28 Feb has only 1 orbit and is left out
+const FEB = () => DAYS.filter(d => d.day !== '0228' && d.tp);
+function febMean(H, fn) {
+  let s = 0, n = 0;
+  for (const d of FEB()) { const t = d.tp[H]; if (!t) continue; const v = fn(t); if (v != null && isFinite(v)) { s += +v; n++; } }
+  return n ? s / n : NaN;
+}
+// corrected fields (…_c) come from iteration 1 when it is selected
+function tpGet(t, f) { if (!t) return NaN; const src = iter === 1 && /_c$/.test(f) ? t.it1 : t; const v = src ? src[f] : null; return v == null ? NaN : +v; }
+const fx = (v, d = 1) => v == null || isNaN(v) ? '–' : (+v.toFixed(d) || 0).toFixed(d);   // no "−0.00"
 function tpTable() {
-  const t = cur.tp, f = (v, d = 1) => v.toFixed(d);
-  const uc = (a, b) => `${f(a)} <span class="arr">→</span> ${f(b)}`;
-  $('tp').innerHTML = `<tr><th></th><th>North</th><th>South</th></tr>
-    <tr><td>T<sub>p,water</sub> (K)</td><td>${uc(t.N.water_u, t.N.water_c)}</td><td>${uc(t.S.water_u, t.S.water_c)}</td></tr>
-    <tr><td>T<sub>p,ice</sub> (K)</td><td>${uc(t.N.ice_u, t.N.ice_c)}</td><td>${uc(t.S.ice_u, t.S.ice_c)}</td></tr>
-    <tr><td>σ SIC water (%)</td><td>${uc(t.N.w_std_u, t.N.w_std_c)}</td><td>${uc(t.S.w_std_u, t.S.w_std_c)}</td></tr>
-    <tr><td>σ SIC ice (%)</td><td>${uc(t.N.i_std_u, t.N.i_std_c)}</td><td>${uc(t.S.i_std_u, t.S.i_std_c)}</td></tr>
-    <tr><td>Water / ice pixels</td><td>${fmt(t.N.nw)} / ${fmt(t.N.ni)}</td><td>${fmt(t.S.nw)} / ${fmt(t.S.ni)}</td></tr>`;
+  if (!cur) return;
+  const feb = tpPer === 'feb', g = (H, f) => feb ? febMean(H, t => tpGet(t, f)) : tpGet(cur.tp[H], f);
+  const uc = (H, a, b, d) => `${fx(g(H, a), d)} <span class="arr">→</span> ${fx(g(H, b), d)}`;
+  const R = (lbl, a, b, d = 1) => ['N', 'S'].every(H => isNaN(g(H, a)) && isNaN(g(H, b))) ? '' : `<tr><td>${lbl}</td><td>${uc('N', a, b, d)}</td><td>${uc('S', a, b, d)}</td></tr>`;
+  const n0 = v => isNaN(v) ? '–' : fmt(v), px = H => `${n0(g(H, 'nw'))} / ${n0(g(H, 'ni'))}`;
+  $('tp').innerHTML = `<tr><th>${feb ? 'Feb mean' : ''}</th><th>North</th><th>South</th></tr>
+    ${R('T<sub>p,water</sub> (K)', 'water_u', 'water_c')}${R('T<sub>p,ice</sub> (K)', 'ice_u', 'ice_c')}
+    ${R('mean SIC water (%)', 'w_mean_u', 'w_mean_c', 2)}${R('σ SIC water (%)', 'w_std_u', 'w_std_c', 2)}
+    ${R('mean SIC ice (%)', 'i_mean_u', 'i_mean_c', 2)}${R('σ SIC ice (%)', 'i_std_u', 'i_std_c', 2)}
+    <tr><td>Water / ice pixels${feb ? ' per day' : ''}</td><td>${px('N')}</td><td>${px('S')}</td></tr>`;
+  const fm = (H, f) => fx(febMean(H, t => tpGet(t, f)), 2);
+  const miss = cur.tp.N.w_mean_u == null ? ' Mean SIC: rebuild with globe_html.m.' : '';
+  const it1miss = iter === 1 && !cur.tp.N.it1 ? ' No iteration 1 numbers in this file.' : '';
+  $('tpfoot').innerHTML = `Raw → corrected, iteration ${iter}.${it1miss}<br><b>Feb 1973</b> σ water: N <b>${fm('N', 'w_std_u')} → ${fm('N', 'w_std_c')}</b> · S <b>${fm('S', 'w_std_u')} → ${fm('S', 'w_std_c')} %</b> (mean of ${FEB().length} days, 28 Feb left out: 1 orbit).${miss}`;
+  for (const b of $('tpper').children) b.setAttribute('aria-checked', b.dataset.per === tpPer);
+}
+$('tpper').addEventListener('click', e => { const b = e.target.closest('[data-per]'); if (b) { tpPer = b.dataset.per; tpTable(); } });
+
+// ---- step 6: exclusion test (Task 2) --------------------------------------------
+function xVal(t, c, fld) {                           // fld: 'w_std' | 'w_mean' | …
+  if (!t) return NaN;
+  if (c.k === 'full') { const v = t[fld + '_c']; return v == null ? NaN : +v; }
+  const x = t.X && t.X[c.key]; return x && x[fld] != null ? +x[fld] : NaN;
+}
+function renderX() {
+  if (!cur) { $('xlist').innerHTML = ''; $('xbars').innerHTML = ''; return; }
+  const f = v => fx(v, 2), d = (a, b) => isNaN(a) || isNaN(b) ? '' : ` (${sg(a - b, 2)})`;
+  const febs = XC.map(c => ({ N: febMean('N', t => xVal(t, c, 'w_std')), S: febMean('S', t => xVal(t, c, 'w_std')) }));
+  const F0 = febs[0];
+  $('xlist').innerHTML = XC.filter(c => c.k === 'full' || HAS.X()).map(c => {
+    const q = XC.indexOf(c);
+    const F = febs[q], dN = xVal(cur.tp.N, c, 'w_std'), dS = xVal(cur.tp.S, c, 'w_std'), dis = !HAS.xmap(c.k);
+    const small = isNaN(F.N) && isNaN(F.S) ? 'no data – rebuild with globe_html.m'
+      : `Feb: N ${f(F.N)}${q ? d(F.N, F0.N) : ''} · S ${f(F.S)}${q ? d(F.S, F0.S) : ''}`;
+    const title = c.k === 'full' ? `${c.name}<span class="sym">${sub(c.sym)}</span>` : sub(c.name);
+    return `<button class="cell" role="radio" data-key="sicx:${c.k}" aria-checked="${keyOf() === 'sicx:' + c.k}"${dis ? ' disabled' : ''}>
+      <span class="tile" style="--t:var(${c.tile})">${svg(c.icon)}</span>
+      <span class="ttl"><span>${title}</span><small>${small}</small></span>
+      <span class="trail"><span class="xt"><b>${f(dN)} · ${f(dS)}</b></span>${CHECK}</span></button>`;
+  }).join('') + (HAS.X() ? '' : `<div class="inner gfoot" style="margin:0">Exclusion cases: rebuild with globe_html.m.</div>`);
+  // Feb means per case, both hemispheres, from 0
+  const short = { full: 'Full', L: 'ERA5 L per pixel' };
+  const bars = [{ name: 'No correction', N: febMean('N', t => t.w_std_u), S: febMean('S', t => t.w_std_u) },
+    ...XC.map((c, q) => ({ name: sub(short[c.k] || c.name), k: c.k, ...febs[q] }))].filter(b => !isNaN(b.N) || !isNaN(b.S));
+  const mx = Math.max(1e-9, ...bars.flatMap(b => [b.N, b.S]).filter(isFinite));
+  const w = v => isNaN(v) ? 0 : 100 * v / mx;
+  $('xbars').innerHTML = `<div class="xbars"><div class="ttl2"><span>Feb 1973 · σ SIC water (%)</span><span class="keys2"><span><span class="dot" style="--c:var(--blue)"></span>Arctic</span><span><span class="dot" style="--c:var(--orange)"></span>Antarctic</span></span></div>
+    ${bars.map(b => `<span class="l${mode === 'sicx' && b.k === xcase ? ' on' : ''}">${b.name}</span>
+      <span class="b"><i style="--c:var(--blue);width:${w(b.N)}%"></i><i style="--c:var(--orange);width:${w(b.S)}%"></i></span>
+      <span class="v"><span>${f(b.N)}</span><span>${f(b.S)}</span></span>`).join('')}</div>`;
 }
 
+// ---- step 7: noise vs. incidence angle (Task 3) ---------------------------------
+const pstd = (n, s1, s2) => n > 1 ? Math.sqrt(Math.max(0, (s2 - s1 * s1 / n) / (n - 1))) : NaN;
+// pooled per scan position: sums of count, SIC and SIC² over the day or over Feb (tp[H].spos)
+function sposAcc(H, g, src) {
+  const m = SPOS.length, K = ['n', 's1u', 's2u', 's1c', 's2c'], A = Object.fromEntries(K.map(k => [k, new Float64Array(m)]));
+  let ok = false;
+  const add = sp => {
+    if (!sp || !sp[g + '_n']) return; ok = true;
+    for (const k of K) { const a = [].concat(sp[`${g}_${k}`] || []); for (let j = 0; j < m; j++) A[k][j] += +a[j] || 0; }
+  };
+  if (src === 'day') add(cur && cur.tp[H] && cur.tp[H].spos); else for (const d of FEB()) add(d.tp[H] && d.tp[H].spos);
+  if (!ok) return null;
+  return SPOS.map((th, j) => ({ j, th, n: A.n[j], u: pstd(A.n[j], A.s1u[j], A.s2u[j]), c: pstd(A.n[j], A.s1c[j], A.s2c[j]) }));
+}
+const hasSpos = src => src === 'day' ? !!(cur && cur.tp.N.spos) : FEB().some(d => d.tp.N && d.tp.N.spos);
+function syncSeg(id, v, dis = {}) { for (const b of $(id).children) { b.setAttribute('aria-checked', b.dataset.v === v); b.disabled = !!dis[b.dataset.v]; } }
+let angP = null;
+function renderAngle() {
+  const el = $('angle');
+  if (!hasSpos(ang.src) && hasSpos(ang.src === 'day' ? 'feb' : 'day')) ang.src = ang.src === 'day' ? 'feb' : 'day';
+  syncSeg('ang-h', ang.h); syncSeg('ang-src', ang.src, { day: !hasSpos('day'), feb: !hasSpos('feb') }); syncSeg('ang-g', ang.g);
+  if (!cur) { el.innerHTML = ''; return; }
+  const P = angP = sposAcc(ang.h, ang.g, ang.src);
+  if (!P) { el.innerHTML = '<span class="note">No statistics per scan position in this file – rebuild with globe_html.m.</span>'; return; }
+  const Wd = 340, Hd = 196, m = { l: 32, r: 8, t: 8, b: 34 };
+  const xs = th => m.l + (th + 66) / 132 * (Wd - m.l - m.r);
+  const vals = P.flatMap(p => [p.u, p.c]).filter(isFinite);
+  const top = Math.max(1, ...vals) * 1.08, stp = [1, 2, 2.5, 5, 10, 20, 25, 50].find(q => top / q <= 5) || 100, ymax = Math.ceil(top / stp) * stp;
+  const ys = v => Hd - m.b - v / ymax * (Hd - m.t - m.b);
+  const edge = new Set([].concat(cfgNow().edge));
+  // shaded swath edges: one band per removed position (half-way to the neighbours)
+  const mid = (a, b) => (SPOS[a] + SPOS[b]) / 2;
+  const shade = [...edge].filter(p => p >= 1 && p <= SPOS.length).map(p => {
+    const j = p - 1, a = j > 0 ? mid(j - 1, j) : -66, b = j < SPOS.length - 1 ? mid(j, j + 1) : 66;
+    return `<rect class="shade" x="${xs(a)}" y="${m.t}" width="${xs(b) - xs(a)}" height="${Hd - m.t - m.b}"/>`; }).join('');
+  // lines: solid where kept, dashed where a segment touches a removed position
+  const lines = key => {
+    let out = '', d = '', dash = null, last = -2;
+    const flush = () => { if (d) out += `<path class="${key === 'u' ? 'raw' : 'cor'}${dash ? ' dash' : ''}" d="${d}"/>`; d = ''; };
+    for (let j = 0; j < P.length - 1; j++) {
+      const a = P[j], b = P[j + 1]; if (!isFinite(a[key]) || !isFinite(b[key])) continue;
+      const ds = edge.has(j + 1) || edge.has(j + 2);
+      if (ds !== dash || last !== j) { flush(); dash = ds; d = `M${xs(a.th).toFixed(1)},${ys(a[key]).toFixed(1)}`; }
+      d += `L${xs(b.th).toFixed(1)},${ys(b[key]).toFixed(1)}`; last = j + 1;
+    }
+    flush(); return out;
+  };
+  const yt = []; for (let v = 0; v <= ymax + 1e-9; v += stp) yt.push(v);
+  const xt = [-60, -40, -20, 0, 20, 40, 60];
+  const H = ang.h === 'N' ? 'Arctic' : 'Antarctic', G = ang.g === 'w' ? 'water' : 'ice', N = P.reduce((a, p) => a + p.n, 0);
+  el.innerHTML = `<div class="chart" id="achart"><svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="σ SIC ${G} vs incidence angle, ${H}">
+    ${shade}
+    <g class="grid">${yt.map(v => `<line x1="${m.l}" x2="${Wd - m.r}" y1="${ys(v)}" y2="${ys(v)}"/>`).join('')}</g>
+    <line class="ax" x1="${m.l}" x2="${Wd - m.r}" y1="${Hd - m.b}" y2="${Hd - m.b}"/>
+    ${yt.map(v => `<text x="${m.l - 5}" y="${ys(v) + 3.5}" text-anchor="end">${v}</text>`).join('')}
+    ${xt.map(v => `<text x="${xs(v)}" y="${Hd - m.b + 13}" text-anchor="middle">${v < 0 ? '−' + -v : v}</text>`).join('')}
+    <text x="${(m.l + Wd - m.r) / 2}" y="${Hd - 4}" text-anchor="middle">Incidence angle θ (°)</text>
+    <text transform="translate(9 ${(m.t + Hd - m.b) / 2}) rotate(-90)" text-anchor="middle">σ SIC ${G} (%)</text>
+    ${lines('u')}${lines('c')}
+    <g id="ahl" style="display:none"><line class="hl" y1="${m.t}" y2="${Hd - m.b}"/><circle class="raw" r="3.2"/><circle class="cor" r="3.2"/></g>
+    <rect x="${m.l}" y="${m.t}" width="${Wd - m.l - m.r}" height="${Hd - m.t - m.b}" fill="transparent" id="ahit"/>
+    </svg><div class="ctip" id="atip" hidden></div></div>
+    <div class="keys2"><span><span class="lkey" style="--c:var(--gray)"></span>Raw</span><span><span class="lkey" style="--c:var(--blue)"></span>Corrected</span><span><span class="lkey dash" style="--c:var(--label2)"></span>removed edge</span><span>${H} · ${G} · ${ang.src === 'day' ? 'this day' : 'Feb 1973'} · n ${fmt(N)}</span></div>`;
+  const svgEl = el.querySelector('svg'), hl = $('ahl'), tip = $('atip');
+  const move = e => {
+    const r = svgEl.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * Wd;
+    let best = P[0]; for (const p of P) if (Math.abs(xs(p.th) - x) < Math.abs(xs(best.th) - x)) best = p;
+    const X = xs(best.th); hl.style.display = '';
+    hl.children[0].setAttribute('x1', X); hl.children[0].setAttribute('x2', X);
+    const [cu, cc] = [hl.children[1], hl.children[2]];
+    cu.setAttribute('cx', X); cu.setAttribute('cy', isFinite(best.u) ? ys(best.u) : -99);
+    cc.setAttribute('cx', X); cc.setAttribute('cy', isFinite(best.c) ? ys(best.c) : -99);
+    tip.hidden = false;
+    tip.innerHTML = `<b>θ ${best.th < 0 ? '−' : ''}${Math.abs(best.th).toFixed(1)}°</b> <span>· position ${best.j + 1}${edge.has(best.j + 1) ? ' · removed' : ''}</span><br>
+      <span>n</span> ${fmt(best.n)} <span>· σ raw</span> ${fx(best.u, 2)} <span>· corrected</span> <b style="color:var(--blue)">${fx(best.c, 2)} %</b>`;
+    // tip in the half away from the cursor, below the top grid line, so it never hides the point
+    const px = X / Wd * r.width, tw = tip.offsetWidth;
+    tip.style.left = `${px < r.width / 2 ? Math.min(r.width - tw, px + 14) : Math.max(0, px - tw - 14)}px`;
+  };
+  $('ahit').addEventListener('pointermove', move);
+  $('ahit').addEventListener('pointerleave', () => { hl.style.display = 'none'; tip.hidden = true; });
+}
+for (const [id, k] of [['ang-h', 'h'], ['ang-src', 'src'], ['ang-g', 'g']])
+  $(id).addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b && !b.disabled) { ang[k] = b.dataset.v; renderAngle(); } });
+function edgeUI() {
+  const ok = HAS.edge(), cb = $('showedge');
+  cb.disabled = !ok; if (!ok) { cb.checked = false; showEdge = false; }
+  $('edgenote').innerHTML = ok ? 'positions 1–4 and 75–78 in the SIC and ΔT<sub>B</sub> maps' : 'no edge data in this file – rebuild with globe_html.m';
+}
+$('showedge').onchange = e => {
+  showEdge = e.target.checked;
+  if (showEdge && !EDGE_MODES.has(mode)) setMode('sicc'); else { redraw(); refreshCard(); }
+};
+
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { recolor(); legend(); steps(); redraw(); });
-renderLayers(); renderCorr(); syncChecks(); legend(); resize(); setDay(0);
+renderLayers(); renderCorr(); syncChecks(); legend(); edgeUI(); renderAngle(); resize(); setDay(0);
 </script>
