@@ -81,3 +81,10 @@ Numbers above (201.0 K, 3.86 × 10⁶ km², 95.7 %) are the **old** run; new:
 - South ice tie point (month mean): **212.1 K** (was 210.9 K); water 140.9 K (unchanged).
 - Ice area (cells ≥ 15 %): **3.43 × 10⁶ km²** (was 3.48) vs SP-459 2.71 × 10⁶ km² → +27 %.
 - Ice-edge agreement: **96.0 %** of the common area (unchanged).
+
+## Rerun 2026-11-18: common cells now lat ≤ −50° (was −52°), same limit as the preprocessing and the Arctic (C2)
+- The 52° limit had no reason; the 50°S circle is the outermost printed parallel of SP-459 (checked in `output/C2_classified_scans.png`).
+- Extent, common cells: SP-459 **5.90**, ours **5.39 × 10⁶ km²** (both 4.74, only ours 0.66, only SP-459 1.16). Agreement **96.0 %** (unchanged).
+- Per sector (SP-459 / ours): Weddell 1.66 / 1.68, Indian 0.86 / 0.56, Pacific 0.84 / 0.73, Ross 1.12 / 1.15, Bellingshausen-Amundsen 1.41 / 1.28.
+- Ice area (all cells ≥ 15 %, lat ≤ −50°): 3.43 × 10⁶ km² (unchanged).
+- C2 reads the same map with the coast fix (dark-grey 76 % class = coastline) and gives a book extent of 5.23 → use the C2 numbers in the report.

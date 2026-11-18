@@ -13,7 +13,7 @@
 %      colour of a 5x5 pixel window (removes the printed graticule lines) and is assigned to the
 %      nearest of the 23 legend colours or land (black). Ice = any class >= 16 %.
 %      Note: the "32 %" class is close to the "< 14 %" water colour; nearest-class matching keeps them apart.
-%   3. Common cells (lat <= -52, both have ocean data): ice extent, agreement map, extent per sector.
+%   3. Common cells (lat <= -50, both have ocean data): ice extent, agreement map, extent per sector.
 %      Ice area from SP-459 Table 3-2 (Feb 1973, all sectors): 2.712e6 km2.
 % Output: output/C1_sp459_side_by_side.png, output/C1_sp459_overlay.png, output/C1_sp459_extent.csv
 % Run from the project root:  matlab -batch "run('src/matlab/c1_sp459_compare.m')"
@@ -81,7 +81,7 @@ end
 pc = reshape(pc, size(img, 1), size(img, 2));
 % grid cell = majority of the non-line pixels in a 7x7 window around the cell centre
 cls = zeros(n);                                             % 0 outside, 1 ice, 2 water, 3 land
-use = LAT <= -52 & PX >= 4 & PY >= 4 & PX <= size(img, 2) - 3 & PY <= size(img, 1) - 3;
+use = LAT <= -50 & PX >= 4 & PY >= 4 & PX <= size(img, 2) - 3 & PY <= size(img, 1) - 3;
 iu = find(use); [ox, oy] = meshgrid(-3:3);
 w = pc(sub2ind(size(pc), round(PY(iu)) + oy(:)', round(PX(iu)) + ox(:)'));
 nIce = sum(w <= 22, 2); nWat = sum(w == 23, 2); nLand = sum(w == 24, 2);
@@ -93,7 +93,7 @@ iceS = cls == 1 & conv2(double(cls == 1), ones(3), 'same') >= 4;
 cls(cls == 1 & ~iceS) = 2;
 
 %% 3. comparison on common cells
-common = cls > 0 & cls < 3 & ~isnan(SIC) & LAT <= -52;
+common = cls > 0 & cls < 3 & ~isnan(SIC) & LAT <= -50;
 iceO = SIC >= 0.15;
 agr = zeros(n);                       % 1 both ice, 2 only ours, 3 only SP-459, 4 both water
 agr(common & iceO & iceS) = 1; agr(common & iceO & ~iceS) = 2;
@@ -142,7 +142,7 @@ exportgraphics(f1, fullfile('output', 'C1_sp459_side_by_side.png'), 'Resolution'
 %% figure 2: overlay of the SP-459 ice edge on our map + agreement map
 blue = hex2rgb_({'#cde2fb','#b7d3f6','#9ec5f4','#86b6ef','#6da7ec','#5598e7','#3987e5','#2a78d6','#256abf','#1c5cab','#184f95','#104281','#0d366b'});
 surf_ = [0.988 0.988 0.984]; landc = [0.66 0.66 0.64]; nodat = [0.92 0.92 0.91]; ink = [0.043 0.043 0.043];
-lim = 2*Re*tand(19);                                        % lat -52
+lim = 2*Re*tand(20);                                        % lat -50
 f2 = figure('Visible', 'off', 'Position', [0 0 1500 760], 'Color', 'w');
 tiledlayout(f2, 1, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 % (a) our SIC + edges
@@ -172,7 +172,7 @@ for j = 1:3
     nm{j} = sprintf('%s: %.2f x 10^6 km^2', nm{j}, km(agr == j));
 end
 legend(ax, hh, nm, 'Location', 'southoutside', 'Box', 'off');
-title(ax, sprintf('(b) Agreement (common cells, lat \\leq -52): extent SP-459 %.2f, this work %.2f x 10^6 km^2', ...
+title(ax, sprintf('(b) Agreement (common cells, lat \\leq -50): extent SP-459 %.2f, this work %.2f x 10^6 km^2', ...
     T.extent_SP459(1), T.extent_ours(1)), 'FontWeight', 'normal');
 exportgraphics(f2, fullfile('output', 'C1_sp459_overlay.png'), 'Resolution', 150);
 fprintf('saved output/C1_sp459_side_by_side.png, output/C1_sp459_overlay.png, output/C1_sp459_extent.csv\n');

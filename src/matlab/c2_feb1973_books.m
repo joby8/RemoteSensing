@@ -23,7 +23,7 @@
 %      (first-year column F_MY = 0) + land and water swatches sampled in the map.
 %      Classes: 22 ice classes of 4 % width, lower bounds 14,18,...,94,98 (label = midpoint 16,...,96, >= 98),
 %      water = "< 14 %", ice = any class >= 14 %.
-%   3. Common cells (book ocean + our ocean data, lat >= 50 N / <= -52 S): edge agreement, extent, ice area,
+%   3. Common cells (book ocean + our ocean data, lat >= 50 N / <= -50 S): edge agreement, extent, ice area,
 %      mean of our SIC per book class, ice edges as lat/lon polylines.
 % OUTPUT: output/C2_feb1973_maps.png, output/C2_conc_compare.png, output/C2_feb1973_books.csv,
 %         output/globe/feb1973.js  (ESMR_MONTH(<json>);)
@@ -38,7 +38,7 @@ rho = hypot(U, V); colat = 2*atand(rho/(2*Re));
 AREA = dx^2 * cosd(colat/2).^4;
 LATh = {90 - colat, -(90 - colat)}; LONh = {atan2d(U, -V), atan2d(U, V)};   % {North, South}
 hn = 'NS'; hname = {'Arctic', 'Antarctic'};
-latlim = [50 -52];                                         % common-cell limit (C1 for the South)
+latlim = [50 -50];                                         % common-cell limit, both hemispheres (= preprocessing |lat| >= 50)
 LO = 14:4:98; MID = [16:4:96 99]; nc = numel(LO);          % ice classes (ascending), lower bound / midpoint
 
 %% 1. our monthly mean SIC, both hemispheres, cached per day
@@ -407,8 +407,8 @@ G = double(M(:,:,1))*0.299 + double(M(:,:,2))*0.587 + double(M(:,:,3))*0.114;
 s = 2033; A = s/sqrt(2)*[1 1; -1 1]; t = [768; 787];        % start: pole, 50 N circle at the frame, 0 deg lower right
 % (X,Y) = [tan sin; tan cos]; lon 0 -> Y = 1 -> image (+,+) lower right; lon 90 -> X = 1 -> upper right
 tanc = @(lat) tand((90 - lat)/2);
-for it = 1:8
-    wd = max(10 - 1.2*it, 3.5); P = []; Q = [];
+for it = 1:12
+    wd = max(26 - 2.5*it, 3.5); P = []; Q = [];   % wide start window: the scan is ~3.5 % stretched vertically
     for lat = 50:5:85
         for lon = 0:1.5:359
             X = tanc(lat)*sind(lon); Y = tanc(lat)*cosd(lon); p = t + A*[X; Y];
