@@ -64,3 +64,20 @@ agree 0 not compared, 1 both ice, 2 only ours, 3 only book, 4 both water.
 ## For the report
 Figure `C2_feb1973_maps.png` (rows Arctic/Antarctic) and the results table above. Statements: edge agreement 93 % / 97 %; concentrations higher than the books
 (South: summer ice tie point; North: pseudo concentration from multiyear ice in the book). Cite Zwally et al. 1983 and Parkinson et al. 1987.
+
+## Cells only one map has (2026-11-18)
+All numbers use only the common cells (ocean in both maps, book readable, |lat| >= 50). Since 2026-11-18 the maps (`C2_feb1973_maps.png`, globe
+layers "Our SIC" / "Book") and both edge lines also show only these cells; ocean in one map only is light grey ("not compared"). Stats unchanged.
+Cells left out (10^6 km2, in brackets the part with ice):
+
+| | Arctic | Antarctic |
+|---|---|---|
+| ocean in both (compared) | 27.42 | 44.34 |
+| ours ocean, book land | 2.59 (2.37) | 0.08 (0.08) |
+| book ocean, ours land | 0.72 (0.51) | 0.44 (0.43) |
+| ours ocean, book unreadable / outside the scan | 0.08 | 1.61 (water) |
+
+- Reason: two land masks (ours: ERA5 sst missing; book: printed 1970s coastline), not the georeference (rms 4 km N, 9 km S < 1 cell).
+- North: mostly Canadian Archipelago channels and narrow bays printed as land; ERA5 also has sst on large lakes (Canada), which we would count as ocean.
+- South: ice shelf fronts (book ocean, ERA5 land).
+- We do not adjust one mask to the other: there is no reference for which coastline is right; comparing common cells is the fair choice.

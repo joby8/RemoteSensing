@@ -212,9 +212,9 @@ writetable(CT, fullfile('output', 'C2_feb1973_classes.csv')); disp(CT);
 for h = 1:2
     s = R(h).st; SIC = SICh(:,:,h); cl = CLS(:,:,h);
     if h == 1, inlat = LATh{1} >= latlim(1); else, inlat = LATh{2} <= latlim(2); end
-    invO = landO(:,:,h) | isnan(SIC) | ~inlat; invB = cl == 0 | cl == 3 | ~inlat;
-    R(h).edge_ours = edge_lines(SIC >= 0.15, invO, g, h, Re);
-    R(h).edge_book = edge_lines(ICEB(:,:,h), invB, g, h, Re);
+    inv = ~s.common;                                          % both edges only on the common ocean cells (same cells as the numbers)
+    R(h).edge_ours = edge_lines(SIC >= 0.15, inv, g, h, Re);
+    R(h).edge_book = edge_lines(ICEB(:,:,h), inv, g, h, Re);
     fprintf('%s: edge polylines ours %d, book %d\n', hname{h}, numel(R(h).edge_ours), numel(R(h).edge_book));
 end
 
@@ -230,14 +230,14 @@ for h = 1:2
     % (a) ours
     ax = nexttile; hold(ax, 'on');
     Z = SIC; Z(SIC < 0.15) = 0.14; rgb = ind2rgb_(Z, cm, [0.14 1]);
-    rgb = paint(rgb, isnan(SIC), nodat); rgb = paint(rgb, landO(:,:,h), landc);
+    rgb = paint(rgb, isnan(SIC) | ~s.common, nodat); rgb = paint(rgb, landO(:,:,h), landc);   % only common ocean cells coloured
     image(ax, g, g, rgb); set(ax, 'YDir', 'normal'); graticule_xy(ax, Re, h, lim);
     axis(ax, 'image'); axis(ax, [-lim lim -lim lim]); axis(ax, 'off');
     title(ax, sprintf('%s: this work, mean SIC February 1973', hname{h}), 'FontWeight', 'normal');
     % (b) book classified
     ax = nexttile; hold(ax, 'on');
     Zb = zeros(n); Zb(s.midB > 0) = s.midB(s.midB > 0)/100; Zb(Zb == 0) = 0.14; rgb = ind2rgb_(Zb, cm, [0.14 1]);
-    rgb = paint(rgb, cl == 0, nodat); rgb = paint(rgb, cl == 3, landc);
+    rgb = paint(rgb, cl == 0 | ~s.common, nodat); rgb = paint(rgb, cl == 3, landc);
     image(ax, g, g, rgb); set(ax, 'YDir', 'normal'); graticule_xy(ax, Re, h, lim);
     axis(ax, 'image'); axis(ax, [-lim lim -lim lim]); axis(ax, 'off');
     title(ax, sprintf('%s: %s, classified (class midpoints)', hname{h}, bookname_(h)), 'FontWeight', 'normal');
@@ -261,6 +261,7 @@ for h = 1:2
         s.extent_ours, bookname_(h), s.extent_book), 'FontWeight', 'normal', 'FontSize', 10);
 end
 ax2 = nexttile(2); colormap(ax2, cm(2:end, :)); clim(ax2, [15 100]); cb = colorbar(ax2, 'eastoutside'); cb.Label.String = 'SIC [%]';
+title(tl, 'Coloured: cells that are ocean in both maps (all numbers use these cells). Light grey: no data or ocean in one map only.', 'FontSize', 10);
 exportgraphics(f1, fullfile('output', 'C2_feb1973_maps.png'), 'Resolution', 130);
 
 %% figure 2: our SIC per book class

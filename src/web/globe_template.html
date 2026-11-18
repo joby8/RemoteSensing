@@ -1355,11 +1355,12 @@ function monPrepare(raw) {
 }
 function monColor() {
   if (!MON.D) return;
+  const NC = pack(colOf('--nodata'));                                       // ocean in one map only: not compared
   const AG = [0, pack(colOf('--cyan')), pack(colOf('--orange')), pack(colOf('--purple')), pack(colOf('--nodata'))];
   for (const d of Object.values(MON.D)) for (let j = 0; j < d.ci.length; j++) {
-    const i = d.ci[j], s = d.sic[i], b = d.book[i]; let c = 0;
-    if (MON.layer === 'sic') { if (s <= 100) c = LUT_SIC[s + 20]; }
-    else if (MON.layer === 'book') { if (b <= 100) c = LUT_SIC[b + 20]; }
+    const i = d.ci[j], s = d.sic[i], b = d.book[i], cm = d.agree[i] > 0; let c = 0;   // cm: ocean in both maps (compared)
+    if (MON.layer === 'sic') { if (s <= 100) c = cm ? LUT_SIC[s + 20] : NC; }
+    else if (MON.layer === 'book') { if (b <= 100) c = cm ? LUT_SIC[b + 20] : NC; }
     else if (MON.layer === 'edge') c = AG[d.agree[i]] || 0;
     else if (s <= 100 && b <= 100) c = LUT_MD[Math.max(0, Math.min(200, Math.round(s - b) + 100))];
     d.col[j] = c;
@@ -1401,8 +1402,8 @@ function monLegend(L, cap) {
     const g = $('bar').getContext('2d');
     for (let i = 0; i < 300; i++) { const c = lerpStops(stops, lo + (hi - lo) * i / 299); g.fillStyle = `rgb(${c})`; g.fillRect(i, 0, 1, 8); }
   };
-  if (ly === 'sic') { bar('Our SIC, Feb 1973 mean', '%', ICE, 0, 100, [0, 50, 100]); cap.innerHTML = 'Monthly mean of our corrected SIC on the 30 km polar grid.'; }
-  else if (ly === 'book') { bar('Book ice class', '% (lower bound)', ICE, 0, 100, [0, 50, 100]); cap.innerHTML = 'Concentration class read from the NASA atlas map, drawn at its lower bound.'; }
+  if (ly === 'sic') { bar('Our SIC, Feb 1973 mean', '%', ICE, 0, 100, [0, 50, 100]); cap.innerHTML = 'Monthly mean of our corrected SIC on the 30 km polar grid. Grey: ocean in one map only (not compared).'; }
+  else if (ly === 'book') { bar('Book ice class', '% (lower bound)', ICE, 0, 100, [0, 50, 100]); cap.innerHTML = 'Concentration class read from the NASA atlas map, drawn at its lower bound. Grey: ocean in one map only (not compared).'; }
   else if (ly === 'diff') { bar('Ours − book', '%', DTB.map(([v, c]) => [v * 50 / 15, c]), -50, 50, [-50, 0, 50]); cap.innerHTML = 'Where both maps have a value. Positive = we show more ice.'; }
   else {
     L.innerHTML = `<div class="t">Ice edge (15 %)</div><div class="keys"><span>${dot('--cyan')}both ice</span><span>${dot('--orange')}only ours</span><span>${dot('--purple')}only book</span><span>${dot('--nodata')}both water</span></div>`;
@@ -1462,7 +1463,7 @@ function monCard(P, pinned = true) {
   if (s <= 100 && b <= 100) kv.push(['Ours − book', `${sg(s - b, 0)} %`]);
   hc.innerHTML = `${head}<div class="h"><span style="color:var(--label);font-weight:600">${posTxt(q.p[1], q.p[0])}</span><span style="display:flex;align-items:flex-start">Feb 1973 · ${MH[q.h]}${pinned ? '<button class="x" aria-label="Unpin">✕</button>' : ''}</span></div>
     <div class="kv">${kv.map(([x, y]) => `<span>${x}</span><b>${y}</b>`).join('')}</div>
-    <div class="s">${a ? `<span class="dot" style="--c:var(${AGC[a]})"></span>` : ''}Ice edge: ${AGN[a] || '–'}</div>`;
+    <div class="s">${a ? `<span class="dot" style="--c:var(${AGC[a]})"></span>Ice edge: ${AGN[a]}` : 'Not compared: land, no data or unreadable in one of the maps'}</div>`;
 }
 function monTable() {
   const D = MON.D, v = (h, k, d = 2) => { const x = D[h] && D[h].H.stats && D[h].H.stats[k]; return x == null || isNaN(x) ? '–' : x.toFixed(d); };
