@@ -84,3 +84,6 @@ The slider step "Eq. 1" showed whole red scan lines: the DMI field `brightness_t
 
 ## Step 8 pinning (2026-11-18)
 - With the Feb 1973 overlay on, a click pins a 30 km grid cell (ring marker in the cell's colour). The card stays while hovering, rotating, changing the layer or the day: our SIC, book class, ours − book, ice-edge class. Esc or ✕ unpins; land / no-data cells cannot be pinned. Switching the overlay off clears the pin.
+
+## Step 8: cells that are not compared are not drawn (2026-11-18)
+- The "Our SIC" and "Book" layers used to draw cells that are ocean in only one map (outside the book map, swath edges, land-mask differences) in light grey (`--nodata`). That looked like real white ice pixels. These cells are now transparent, so the globe's own ocean or land shows. Only cells that are ocean in both maps get a colour, as in the numbers (extent, area, edge agreement). The hover card still says "Not compared" for them.

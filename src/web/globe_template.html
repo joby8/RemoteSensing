@@ -1355,12 +1355,11 @@ function monPrepare(raw) {
 }
 function monColor() {
   if (!MON.D) return;
-  const NC = pack(colOf('--nodata'));                                       // ocean in one map only: not compared
   const AG = [0, pack(colOf('--cyan')), pack(colOf('--orange')), pack(colOf('--purple')), pack(colOf('--nodata'))];
   for (const d of Object.values(MON.D)) for (let j = 0; j < d.ci.length; j++) {
     const i = d.ci[j], s = d.sic[i], b = d.book[i], cm = d.agree[i] > 0; let c = 0;   // cm: ocean in both maps (compared)
-    if (MON.layer === 'sic') { if (s <= 100) c = cm ? LUT_SIC[s + 20] : NC; }
-    else if (MON.layer === 'book') { if (b <= 100) c = cm ? LUT_SIC[b + 20] : NC; }
+    if (MON.layer === 'sic') { if (s <= 100 && cm) c = LUT_SIC[s + 20]; }          // not compared (ocean in one map only): not drawn
+    else if (MON.layer === 'book') { if (b <= 100 && cm) c = LUT_SIC[b + 20]; }
     else if (MON.layer === 'edge') c = AG[d.agree[i]] || 0;
     else if (s <= 100 && b <= 100) c = LUT_MD[Math.max(0, Math.min(200, Math.round(s - b) + 100))];
     d.col[j] = c;
@@ -1402,8 +1401,8 @@ function monLegend(L, cap) {
     const g = $('bar').getContext('2d');
     for (let i = 0; i < 300; i++) { const c = lerpStops(stops, lo + (hi - lo) * i / 299); g.fillStyle = `rgb(${c})`; g.fillRect(i, 0, 1, 8); }
   };
-  if (ly === 'sic') { bar('Our SIC, Feb 1973 mean', '%', ICE, 0, 100, [0, 50, 100]); cap.innerHTML = 'Monthly mean of our corrected SIC on the 30 km polar grid. Grey: ocean in one map only (not compared).'; }
-  else if (ly === 'book') { bar('Book ice class', '% (lower bound)', ICE, 0, 100, [0, 50, 100]); cap.innerHTML = 'Concentration class read from the NASA atlas map, drawn at its lower bound. Grey: ocean in one map only (not compared).'; }
+  if (ly === 'sic') { bar('Our SIC, Feb 1973 mean', '%', ICE, 0, 100, [0, 50, 100]); cap.innerHTML = 'Monthly mean of our corrected SIC on the 30 km polar grid. Only cells that are ocean in both maps are drawn.'; }
+  else if (ly === 'book') { bar('Book ice class', '% (lower bound)', ICE, 0, 100, [0, 50, 100]); cap.innerHTML = 'Concentration class read from the NASA atlas map, drawn at its lower bound. Only cells that are ocean in both maps are drawn.'; }
   else if (ly === 'diff') { bar('Ours − book', '%', DTB.map(([v, c]) => [v * 50 / 15, c]), -50, 50, [-50, 0, 50]); cap.innerHTML = 'Where both maps have a value. Positive = we show more ice.'; }
   else {
     L.innerHTML = `<div class="t">Ice edge (15 %)</div><div class="keys"><span>${dot('--cyan')}both ice</span><span>${dot('--orange')}only ours</span><span>${dot('--purple')}only book</span><span>${dot('--nodata')}both water</span></div>`;

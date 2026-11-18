@@ -67,7 +67,7 @@ Figure `C2_feb1973_maps.png` (rows Arctic/Antarctic) and the results table above
 
 ## Cells only one map has (2026-11-18)
 All numbers use only the common cells (ocean in both maps, book readable, |lat| >= 50). Since 2026-11-18 the maps (`C2_feb1973_maps.png`, globe
-layers "Our SIC" / "Book") and both edge lines also show only these cells; ocean in one map only is light grey ("not compared"). Stats unchanged.
+layers "Our SIC" / "Book") and both edge lines also show only these cells; ocean in one map only is not drawn (transparent, "not compared" in the hover card; was light grey before 2026-11-18). Stats unchanged.
 Cells left out (10^6 km2, in brackets the part with ice):
 
 | | Arctic | Antarctic |
