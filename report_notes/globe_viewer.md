@@ -81,3 +81,6 @@ The slider step "Eq. 1" showed whole red scan lines: the DMI field `brightness_t
 
 ## Update 2026-11-17: 5×5 box in the masks
 - `tp_masks.m` now also applies the Table 2 box criterion (ERA5 siconc box mean < 0.01 water, > 0.8 ice). The page shows it folded into the siconc criteria (bit 0 and bit 4; labels in the template changed); all day files rebuilt, the assert against `o.mw` / `o.mi` passes.
+
+## Step 8 pinning (2026-11-18)
+- With the Feb 1973 overlay on, a click pins a 30 km grid cell (ring marker in the cell's colour). The card stays while hovering, rotating, changing the layer or the day: our SIC, book class, ours − book, ice-edge class. Esc or ✕ unpins; land / no-data cells cannot be pinned. Switching the overlay off clears the pin.

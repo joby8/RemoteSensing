@@ -771,6 +771,7 @@ function draw() {
   octx.putImageData(img, 0, 0);
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(off, 0, 0);
   if (MON.on) monEdges();
+  if (MON.on && MON.pin) monMarker();
   if (pin && !MON.on) {                                           // marker of the pinned pixel
     const ll = [pin.o.lon[pin.i] / 100, pin.o.lat[pin.i] / 100];
     if (d3.geoDistance(ll, [-rot[0], -rot[1]]) < Math.PI / 2) {
@@ -792,12 +793,12 @@ const redraw = () => { if (!queued) { queued = true; requestAnimationFrame(() =>
 
 // ---- interaction ------------------------------------------------------------
 let drag = null;
-cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, r: rot.slice(), moved: false }; cv.setPointerCapture(e.pointerId); cv.classList.add('drag'); if (!pin) hc.hidden = true; });
+cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, r: rot.slice(), moved: false }; cv.setPointerCapture(e.pointerId); cv.classList.add('drag'); if (!pin && !MON.pin) hc.hidden = true; });
 cv.addEventListener('pointermove', e => {
   if (drag) { if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 4) drag.moved = true; const s = 0.25 / zoom; rot = [drag.r[0] + (e.clientX - drag.x) * s, Math.max(-90, Math.min(90, drag.r[1] - (e.clientY - drag.y) * s))]; redraw(); }
   else hover(e);
 });
-cv.addEventListener('pointerleave', () => { if (!drag && !pin) hc.hidden = true; });
+cv.addEventListener('pointerleave', () => { if (!drag && !pin && !MON.pin) hc.hidden = true; });
 const end = () => { drag = null; cv.classList.remove('drag'); };
 cv.addEventListener('pointerup', e => { const click = drag && !drag.moved; end(); if (click) pinAt(e); }); cv.addEventListener('pointercancel', end);
 cv.addEventListener('wheel', e => { e.preventDefault(); setZoom(zoom * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
@@ -828,7 +829,7 @@ function nearest(e) {
 }
 const posTxt = (lat, lon) => `${Math.abs(lat).toFixed(1)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(1)}° ${lon >= 0 ? 'E' : 'W'}`;
 function doHover(e) {
-  if (MON.on) return monHover(e);
+  if (MON.on) { if (!MON.pin) monHover(e); return; }
   if (!cur || pin) return;
   const h = nearest(e);
   if (!h) { hc.hidden = true; return; }
@@ -837,13 +838,15 @@ function doHover(e) {
   card(h.o, h.i);
 }
 function pinAt(e) {
-  if (!cur || MON.on) return;
+  if (MON.on) return monPinAt(e);
+  if (!cur) return;
   const h = nearest(e);
   if (!h || !h.o) { unpin(); return; }
   pin = { o: h.o, i: h.i }; refreshCard(); redraw();
 }
-function unpin() { if (!pin) return; pin = null; hc.hidden = true; hc.classList.remove('pinned'); redraw(); }
+function unpin() { if (MON.pin) { MON.pin = null; hc.hidden = true; hc.classList.remove('pinned'); redraw(); } if (!pin) return; pin = null; hc.hidden = true; hc.classList.remove('pinned'); redraw(); }
 function refreshCard() {
+  if (MON.on) { if (MON.pin) monCard(MON.pin); return; }
   if (pin) { hc.hidden = false; hc.classList.add('pinned'); card(pin.o, pin.i); }
   else if (lastEv && !hc.hidden) doHover(lastEv);
 }
@@ -1008,7 +1011,7 @@ const os = $('orbit');
 os.onchange = () => { sel = os.value === 'all' ? 'all' : +os.value; if (pin && !selected().includes(pin.o)) unpin(); steps(); renderCorr(); renderLayers(); redraw(); };
 
 async function setDay(i) {
-  unpin();
+  if (!MON.on) unpin();                                           // a pinned month cell stays (not day dependent)
   dayIdx = i; ds.value = i;
   $('dprev').disabled = i === 0; $('dnext').disabled = i === DAYS.length - 1;
   const ov = $('loading'), cached = cache.has(DAYS[i].day);
@@ -1325,7 +1328,7 @@ $('showedge').onchange = e => {
 // ---- step 8: February 1973 monthly map vs. the NASA atlas ------------------------------------------------------
 // feb1973.js (src/matlab/c2_feb1973_books.m) = ESMR_MONTH({N: H, S: H}); loaded the first time the overlay is switched on.
 // Per hemisphere H: polar-stereographic 30 km grid cropped to bbox, uint8 arrays row-major (row r0 first, column c0 first).
-const MON = { on: false, ready: false, state: 'idle', layer: 'sic', eo: false, eb: false, D: null };
+const MON = { on: false, ready: false, state: 'idle', layer: 'sic', eo: false, eb: false, D: null, pin: null };   // pin = {h, i, j, ll}
 const MH = { N: 'Arctic', S: 'Antarctic' };
 const LUT_MD = Array.from({length: 201}, (_, i) => pack(lerpStops(DTB.map(([v, c]) => [v * 50 / 15, c]), i - 100)));   // ours − book, ±50 %
 function monPrepare(raw) {
@@ -1425,11 +1428,39 @@ function monHover(e) {
   if (!q) { hc.hidden = true; return; }
   hc.hidden = false; hc.classList.remove('pinned');
   if (!q.d) { hc.innerHTML = `<div class="h">${posTxt(q.p[1], q.p[0])}</div><div class="s">No data</div>`; return; }
-  const i = q.i, s = q.d.sic[i], b = q.d.book[i], a = q.d.agree[i];
+  monCard({ h: q.h, i: q.i, ll: q.p }, false);
+}
+// pin a grid cell of the month map (click); the card then stays and shows the cell for every layer
+function monPinAt(e) {
+  if (!MON.ready) return;
+  const q = monCell(e);
+  if (!q || !q.d) { unpin(); return; }
+  const d = q.d, j = d.ci.indexOf(q.i);
+  if (j < 0) { unpin(); return; }                                  // land / no data in both maps
+  const ll = [Math.atan2(d.y[j], d.x[j]) / RAD, Math.asin(d.z[j]) / RAD];   // cell centre [lon, lat]
+  MON.pin = { h: q.h, i: q.i, j, ll }; monCard(MON.pin); redraw();
+}
+function monMarker() {
+  const P = MON.pin, d = MON.D && MON.D[P.h]; if (!d) return;
+  if (d3.geoDistance(P.ll, [-rot[0], -rot[1]]) >= Math.PI / 2) return;
+  const [mx, my] = proj(P.ll), c = d.col[P.j];
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.beginPath(); ctx.arc(mx, my, 14, 0, 2 * Math.PI);
+  if (c) { ctx.fillStyle = `rgb(${c & 255},${(c >> 8) & 255},${(c >> 16) & 255})`; ctx.fill(); }
+  ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.stroke();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+  if (!c) { ctx.beginPath(); ctx.arc(mx, my, 2.5, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill(); }
+}
+function monCard(P, pinned = true) {
+  const d = MON.D && MON.D[P.h]; if (!d) return;
+  hc.hidden = false; hc.classList.toggle('pinned', pinned);
+  const i = P.i, s = d.sic[i], b = d.book[i], a = d.agree[i];
+  const head = pinned ? `<div class="pin"><svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z" fill="currentColor"/></svg>Pinned</div>` : '';
+  const q = { p: P.ll, h: P.h };
   const sT = s <= 100 ? `${s} %` : s === 254 ? 'land' : 'no data', bT = b === 0 ? 'open water' : b <= 100 ? `≥ ${b} %` : b === 254 ? 'land' : 'unreadable / outside';
   const kv = [['Our SIC', sT], ['Book class', bT]];
   if (s <= 100 && b <= 100) kv.push(['Ours − book', `${sg(s - b, 0)} %`]);
-  hc.innerHTML = `<div class="h"><span style="color:var(--label);font-weight:600">${posTxt(q.p[1], q.p[0])}</span><span>Feb 1973 · ${MH[q.h]}</span></div>
+  hc.innerHTML = `${head}<div class="h"><span style="color:var(--label);font-weight:600">${posTxt(q.p[1], q.p[0])}</span><span style="display:flex;align-items:flex-start">Feb 1973 · ${MH[q.h]}${pinned ? '<button class="x" aria-label="Unpin">✕</button>' : ''}</span></div>
     <div class="kv">${kv.map(([x, y]) => `<span>${x}</span><b>${y}</b>`).join('')}</div>
     <div class="s">${a ? `<span class="dot" style="--c:var(${AGC[a]})"></span>` : ''}Ice edge: ${AGN[a] || '–'}</div>`;
 }
@@ -1453,7 +1484,7 @@ function monUI() {
   for (const b of $('mon-layer').children) b.setAttribute('aria-checked', b.dataset.v === MON.layer);
   $('mon-eo').checked = MON.eo; $('mon-eb').checked = MON.eb;
 }
-function monRefresh() { monUI(); monColor(); legend(); redraw(); if (!hc.hidden) hc.hidden = true; }
+function monRefresh() { monUI(); monColor(); legend(); redraw(); if (MON.on && MON.pin) monCard(MON.pin); else if (!hc.hidden) hc.hidden = true; }
 function monLoad() {
   if (MON.state !== 'idle') return;
   MON.state = 'loading';
@@ -1462,8 +1493,8 @@ function monLoad() {
   s.src = 'feb1973.js'; s.onerror = () => { MON.state = 'err'; monRefresh(); };
   document.head.appendChild(s);
 }
-function monOff() { if (MON.on) { MON.on = false; monRefresh(); } }
-$('mon-on').onchange = e => { MON.on = e.target.checked; if (MON.on) { if (MON.state === 'idle') monLoad(); unpin(); } monRefresh(); };
+function monOff() { if (MON.on) { MON.on = false; MON.pin = null; hc.classList.remove('pinned'); monRefresh(); } }
+$('mon-on').onchange = e => { MON.on = e.target.checked; unpin(); if (MON.on && MON.state === 'idle') monLoad(); monRefresh(); };
 $('mon-layer').addEventListener('click', e => {
   const b = e.target.closest('button[data-v]'); if (!b) return;
   MON.layer = b.dataset.v;
