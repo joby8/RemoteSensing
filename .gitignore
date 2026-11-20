@@ -17,3 +17,7 @@ __pycache__/
 
 # Generated results (re-creatable)
 output/
+
+# MATLAB autosave
+*.asv
+

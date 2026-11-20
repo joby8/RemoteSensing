@@ -1,4 +1,9 @@
-function [A] = PlotOnGlobeSIC(DataArc, DataAnt, Latitude, Longitude)
+function [A] = PlotOnGlobeDeltaTb(DataArc, DataAnt, Latitude, Longitude, name)
+
+% [~, ~, ~, DataArc] = averageSICByCoords(DataArc, Latitude, Longitude);
+% [~, ~, ~, DataAnt] = averageSICByCoords(DataAnt, Latitude, Longitude);
+
+
 Longitude(Longitude > 180) = Longitude(Longitude > 180) - 360;
 
 figure('Color','w','Position',[100 100 1400 650]);
@@ -39,7 +44,7 @@ load coastlines
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
 colormap(gca,cmap)
-clim([0 1])
+% clim([0 1])
 % clim([80,280])
 
 
@@ -62,7 +67,6 @@ framem on
 gridm on
 hold on
 
-% Data = DataArc;
 
 valid_N = isfinite(Latitude) & ...
           isfinite(Longitude) & ...
@@ -82,7 +86,7 @@ pcolorm(lat_N, lon_N, sic_N, 'AlphaData', ~isnan(sic_N));
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
 colormap(gca,cmap)
-clim([0 1])
+% clim([0 1])
 % clim([80,280])
 
 
@@ -98,6 +102,6 @@ cb = colorbar('Position',[0.92 0.2 0.015 0.6]);
 cb.Label.String = 'Sea Ice Concentration';
 cb.FontSize = 11;
 
-sgtitle('Satellite Sea Ice Concentration', ...
+sgtitle(name, ...
     'FontSize',16,'FontWeight','bold');
 end

@@ -1,8 +1,6 @@
 function [A] = PlotOnGlobeTP(TP, Latitude, Longitude)
 
 
-
-
 idx = isnan(TP.TbArcIce);
 Data = TP.TbArcIce;
 Data(idx) = TP.TbArcOcean(idx);
@@ -53,7 +51,7 @@ colormap(gca,cmap)
 clim([80,280])
 
 
-title('Arctic Sea Ice Concentration', ...
+title('Tb of Tie Points in Arctic', ...
     'FontSize',14,'FontWeight','bold');
 
 
@@ -99,7 +97,7 @@ colormap(gca,cmap)
 clim([80,280])
 
 
-title('Antarctic Sea Ice Concentration', ...
+title('Tb of Tie points in Antarctic', ...
     'FontSize',14,'FontWeight','bold');
 
 
@@ -108,9 +106,9 @@ title('Antarctic Sea Ice Concentration', ...
 % ============================
 
 cb = colorbar('Position',[0.92 0.2 0.015 0.6]);
-cb.Label.String = 'Sea Ice Concentration';
+cb.Label.String = 'Tb in K';
 cb.FontSize = 11;
 
-sgtitle('Satellite Sea Ice Concentration', ...
+sgtitle('Tb of Tie points', ...
     'FontSize',16,'FontWeight','bold');
 end

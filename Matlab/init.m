@@ -1,47 +1,58 @@
 load("spos2ia.mat")
 
-TPstats = [];
-TPstatsCorrected = [];
+projectdir = '..\..\ESMR_colocated_filtered';
+if ~exist(projectdir, 'dir')
+    if exist('..\ESMR_colocated_filtered', 'dir')
+        projectdir = '..\ESMR_colocated_filtered';
+    elseif exist('ESMR_colocated_filtered', 'dir')
+        projectdir = 'ESMR_colocated_filtered';
+    end
+end
 
-Uncorrected.Ant_ice_mean = [];
-Uncorrected.Ant_ice_std = [];
-Uncorrected.Ant_ocean_mean = [];
-Uncorrected.Ant_ocean_std = [];
-
-Uncorrected.Arc_ice_mean = [];
-Uncorrected.Arc_ice_std = [];
-Uncorrected.Arc_ocean_mean = [];
-Uncorrected.Arc_ocean_std = [];
-
-Corrected.Ant_ice_mean = [];
-Corrected.Ant_ice_std = [];
-Corrected.Ant_ocean_mean = [];
-Corrected.Ant_ocean_std = [];
-
-Corrected.Arc_ice_mean = [];
-Corrected.Arc_ice_std = [];
-Corrected.Arc_ocean_mean = [];
-Corrected.Arc_ocean_std = [];
-
-% 2x28 Matrix: Zeile 1 = Startindex, Zeile 2 = Endindex (Tag 1 bis 28, exakt 312 Dateien)
-day_indices = [ ...
-    1,   13,   25,   36,   50,   61,   75,   87,   99,  110,  123,  134,  144,  154,  164,  175,  185,  201,  216,  227,  239,  250,  262,  273,  285,  295,  307,  312; ...
-   12,   24,   35,   49,   60,   74,   86,   98,  109,  122,  133,  143,  153,  163,  174,  184,  200,  215,  226,  238,  249,  261,  272,  284,  294,  306,  311,  312  ...
-];
-
-structNames = [];
-
-SIC.Ant = [];
-SIC.Arc = [];
-SIC.Land = [];
-SIC.Lat = [];
-SIC.Lon = [];
-
-TPnames = ["ArcIce", "ArcOcean","AntIce","AntOcean"];
-
-readAllFiles;
-projectdir = '..\ESMR_colocated_filtered';
-dinfo = dir(fullfile(projectdir));
-dinfo([dinfo.isdir]) = [];
+dinfo = dir(fullfile(projectdir, '*.nc'));
+if isempty(dinfo)
+    dinfo = dir(fullfile(projectdir));
+    dinfo([dinfo.isdir]) = [];
+end
+[~, sortIdx] = sort({dinfo.name});
+dinfo = dinfo(sortIdx);
 nfiles = length(dinfo);
 
+% Dynamische Bestimmung der Start- und Endindizes für jeden Tag im Ordner:
+% Zeile 1: Startindex (erste Datei des Tages)
+% Zeile 2: Endindex (letzte Datei des Tages)
+if ~isempty(dinfo)
+    fileDates = regexp({dinfo.name}, '\d{4}m\d{4}', 'match', 'once');
+    first_indices = find([true, ~strcmp(fileDates(1:end-1), fileDates(2:end))]);
+    last_indices  = [first_indices(2:end) - 1, nfiles];
+    day_indices = [first_indices; last_indices];
+else
+    % Fallback: Korrigierte statische 2x28 Matrix für Februar 1973 (Tag 1 bis 28)
+    day_indices = [ ...
+        1,   13,   25,   36,   50,   61,   74,   85,   97,  109,  122,  133,  145,  154,  163,  174,  186,  197,  211,  222,  235,  245,  257,  268,  280,  290,  302,  312; ...
+       12,   24,   35,   49,   60,   73,   84,   96,  108,  121,  132,  144,  153,  162,  173,  185,  196,  210,  221,  234,  244,  256,  267,  279,  289,  301,  311,  312  ...
+    ];
+end
+
+
+DataOfDay = struct( ...
+    'Tbfilt',[], ...
+    'Latitude',[],...
+    'Longitude',[], ...
+    'lsm',[], ...
+    'u10',[],...
+    'v10',[], ...
+    't2m',[], ...
+    'siconc',[], ...
+    'sst',[], ...
+    'tcw',[], ...
+    'tcwv',[], ...
+    'incidence',[]); 
+
+TPstatsUncorrected = [];
+TPstatsCorrected = [];
+TPstatsCorrected2 = [];
+
+SICStatsUncorrected = [];
+SICStatsCorrected = [];
+SICStatsCorrected2 = [];

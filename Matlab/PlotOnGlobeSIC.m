@@ -1,12 +1,10 @@
-function [A] = PlotOnGlobeSIC(DataStruct)
-Latitude = DataStruct.variables.Latitude.data(5:end-4,:);
-Longitude = DataStruct.variables.Longitude.data(5:end-4,:);
+function [A] = PlotOnGlobeSIC(DataArc, DataAnt, Latitude, Longitude, name)
+
+% [~, ~, ~, DataArc] = averageSICByCoords(DataArc, Latitude, Longitude);
+% [~, ~, ~, DataAnt] = averageSICByCoords(DataAnt, Latitude, Longitude);
 
 
-
-Data = DataStruct.SIC.Arc;
-
-% sic_ant = Data.variables.siconc.data(5:end-4,:);
+Longitude(Longitude > 180) = Longitude(Longitude > 180) - 360;
 
 figure('Color','w','Position',[100 100 1400 650]);
 
@@ -29,20 +27,18 @@ hold on
 
 valid_N = isfinite(Latitude) & ...
           isfinite(Longitude) & ...
-          isfinite(Data) & ...
+          isfinite(DataArc) & ...
           Latitude >= 50 & Latitude <= 90;
 
-% Ungültige Werte auf NaN setzen
 lat_N = Latitude;
 lon_N = Longitude;
-sic_N = Data+0;
+sic_N = DataArc;
 
-% lat_N(~valid_N) = NaN;
-% lon_N(~valid_N) = NaN;
-% sic_N(~valid_N) = NaN;
+lat_N(~valid_N) = NaN;
+lon_N(~valid_N) = NaN;
+sic_N(~valid_N) = NaN;
 
-% Zusammenhängende Fläche
-pcolorm(lat_N, lon_N, sic_N);
+pcolorm(lat_N', lon_N', sic_N', 'AlphaData', ~isnan(sic_N));
 
 load coastlines
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
@@ -52,7 +48,7 @@ clim([0 1])
 % clim([80,280])
 
 
-title('Arctic Sea Ice Concentration', ...
+title('Arctic', ...
     'FontSize',14,'FontWeight','bold');
 
 
@@ -71,25 +67,21 @@ framem on
 gridm on
 hold on
 
-Data = DataStruct.SIC.Ant;
 
-
-
-valid_S = isfinite(Latitude) & ...
+valid_N = isfinite(Latitude) & ...
           isfinite(Longitude) & ...
-          isfinite(Data) & ...
+          isfinite(DataAnt) & ...
           Latitude <= -50 & Latitude >= -90;
 
-lat_S = Latitude;
-lon_S = Longitude;
-sic_S = Data+0;
+lat_N = Latitude;
+lon_N = Longitude;
+sic_N = DataAnt;
 
-% lat_S(~valid_S) = NaN;
-% lon_S(~valid_S) = NaN;
-% sic_S(~valid_S) = NaN;
+lat_N(~valid_N) = NaN;
+lon_N(~valid_N) = NaN;
+sic_N(~valid_N) = NaN;
 
-% Zusammenhängende Fläche
-pcolorm(lat_S, lon_S, sic_S);
+pcolorm(lat_N, lon_N, sic_N, 'AlphaData', ~isnan(sic_N));
 
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
@@ -98,7 +90,7 @@ clim([0 1])
 % clim([80,280])
 
 
-title('Antarctic Sea Ice Concentration', ...
+title('Antarctic', ...
     'FontSize',14,'FontWeight','bold');
 
 
@@ -107,9 +99,9 @@ title('Antarctic Sea Ice Concentration', ...
 % ============================
 
 cb = colorbar('Position',[0.92 0.2 0.015 0.6]);
-cb.Label.String = 'Sea Ice Concentration';
+cb.Label.String = 'Delta Tb in K';
 cb.FontSize = 11;
 
-sgtitle('Satellite Sea Ice Concentration', ...
+sgtitle(name, ...
     'FontSize',16,'FontWeight','bold');
 end
