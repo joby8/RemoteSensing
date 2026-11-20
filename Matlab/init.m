@@ -1,6 +1,6 @@
 load("spos2ia.mat")
 
-projectdir = '..\..\ESMR_colocated_filtered';
+projectdir = '..\ESMR_colocated_filtered';
 if ~exist(projectdir, 'dir')
     if exist('..\ESMR_colocated_filtered', 'dir')
         projectdir = '..\ESMR_colocated_filtered';
@@ -30,8 +30,8 @@ else
     % Fallback: Korrigierte statische 2x28 Matrix für Februar 1973 (Tag 1 bis 28)
     day_indices = [ ...
         1,   13,   25,   36,   50,   61,   74,   85,   97,  109,  122,  133,  145,  154,  163,  174,  186,  197,  211,  222,  235,  245,  257,  268,  280,  290,  302,  312; ...
-       12,   24,   35,   49,   60,   73,   84,   96,  108,  121,  132,  144,  153,  162,  173,  185,  196,  210,  221,  234,  244,  256,  267,  279,  289,  301,  311,  312  ...
-    ];
+        12,   24,   35,   49,   60,   73,   84,   96,  108,  121,  132,  144,  153,  162,  173,  185,  196,  210,  221,  234,  244,  256,  267,  279,  289,  301,  311,  312  ...
+        ];
 end
 
 
@@ -47,7 +47,7 @@ DataOfDay = struct( ...
     'sst',[], ...
     'tcw',[], ...
     'tcwv',[], ...
-    'incidence',[]); 
+    'incidence',[]);
 
 TPstatsUncorrected = [];
 TPstatsCorrected = [];
