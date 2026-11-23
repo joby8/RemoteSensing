@@ -1,6 +1,6 @@
 function [SICArc, SICAnt] = calculateSIC(Data,land,Stats)
     land(land>0.1) = NaN;
-    land(land>=0.1) = 1;
+    % land(land>=0.1) = 1;
     
     SICArc = (Data.Tbfilt - Stats.arc_ocean_mean(end))/(Stats.arc_ice_mean(end) - Stats.arc_ocean_mean(end));
     SICAnt = (Data.Tbfilt - Stats.ant_ocean_mean(end))/(Stats.ant_ice_mean(end) - Stats.ant_ocean_mean(end));

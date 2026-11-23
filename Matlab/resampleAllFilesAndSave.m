@@ -1,6 +1,6 @@
 init;
 
-days = 1:27;
+days = 7:7;
 
 inc = 1+4:78-4;
 
@@ -26,7 +26,8 @@ for day = days
         filename = fullfile(projectdir, dinfo(j).name);
         Data = readNetCDFStruct(filename);
 
-        Tbfilt = filterTb(Data);
+        % Tbfilt = filterTb(Data);
+        Tbfilt = Data.variables.brightness_temperature_filtered.data;
         DataOfDay.Tbfilt = cat(2, DataOfDay.Tbfilt, Tbfilt(inc,:),NaN(length(inc),2));
         DataOfDay.Latitude = cat(2, DataOfDay.Latitude, Data.variables.Latitude.data(inc,:),NaN(length(inc),2));
         DataOfDay.Longitude = cat(2, DataOfDay.Longitude, Data.variables.Longitude.data(inc,:),NaN(length(inc),2));
