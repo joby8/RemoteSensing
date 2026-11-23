@@ -62,3 +62,5 @@ std of SIC [%], 1–27 Feb, pooled pixels, no RTM → with RTM:
 
 Same shape as before: water noise flat to ~40°, then rises; ice almost flat.
 Rerun 2026-11-17 with the new preprocessing default (`preproc_config.m`; B2 uses it with `cfg.edge = []`, so all 78 positions are kept): only S ice changed by 0.1 point (0–20° and edge); the check against A6b is still 0.0000 %.
+
+> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).

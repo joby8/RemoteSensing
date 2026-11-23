@@ -14,8 +14,9 @@
 %
 % STEPS
 %   1. Our data: per day correct_day.m (A6b, 2 iterations), SIC per pixel with the day's corrected tie points of
-%      the pixel's hemisphere, binned on the grids; monthly mean = mean of the unclipped pixel SIC, then clipped
-%      to 0..1. Days 0201..0228 (all days in ESMR_colocated_filtered, as in C1). Land = ERA5 (sst NaN).
+%      the pixel's hemisphere, binned on the grids; daily cell mean = mean of the unclipped pixel SIC of that day,
+%      monthly mean = mean of the daily cell means (every day with data in the cell has the same weight), then
+%      clipped to 0..1. Days 0201..0228 (all days in ESMR_colocated_filtered, as in C1). Land = ERA5 (sst NaN).
 %      Cache per day: output/C2_cache/.
 %   2. Books: map scan -> affine georeference (fit on drawn parallels and meridians) -> every pixel to the
 %      nearest swatch colour (CIE Lab) -> grid cell = majority of the non-line pixels around the cell centre.
@@ -46,10 +47,11 @@ files = dir(fullfile('ESMR_colocated_filtered', '*.nc'));
 fday  = string(regexp({files.name}, '1973m(\d{4})t', 'tokens', 'once'));
 days  = unique(fday);
 cdir  = fullfile('output', 'C2_cache'); if ~exist(cdir, 'dir'), mkdir(cdir); end
-S = zeros(n, n, 2); N = S; NL = S; tpw = nan(numel(days), 2); tpi = tpw;
+ckey  = struct('tp', tp_opt(), 'cfg', preproc_config());   % cache key: masks and preprocessing used
+S = zeros(n, n, 2); N = S; ND = S; NL = S; tpw = nan(numel(days), 2); tpi = tpw;
 for i = 1:numel(days)
     cf = fullfile(cdir, days(i) + ".mat");
-    if ~exist(cf, 'file')
+    if cache_stale(cf, ckey)                       % missing, or built with other masks / preprocessing
         fi = find(fday == days(i));
         fn = arrayfun(@(k) fullfile(files(k).folder, files(k).name), fi, 'UniformOutput', false);
         [O, TP] = correct_day(fn, 2);
@@ -69,13 +71,15 @@ for i = 1:numel(days)
                 cl(:,:,h) = cl(:,:,h) + accumarray([r(ok) q(ok)], 1, [n n]);
             end
         end
-        tp = struct('N', TP.N, 'S', TP.S); save(cf, 's', 'c', 'cl', 'tp');
+        tp = struct('N', TP.N, 'S', TP.S); save(cf, 's', 'c', 'cl', 'tp', 'ckey');
         fprintf('%s: %d orbits\n', days(i), numel(O));
     end
-    D = load(cf); S = S + D.s; N = N + D.c; NL = NL + D.cl;
+    D = load(cf); hd = D.c > 0;                              % daily cell mean, each day weighted equally
+    dm = zeros(size(D.s)); dm(hd) = D.s(hd) ./ D.c(hd);
+    S = S + dm; ND = ND + hd; N = N + D.c; NL = NL + D.cl;
     for h = 1:2, tpw(i, h) = D.tp.(hn(h)).water_c; tpi(i, h) = D.tp.(hn(h)).ice_c; end
 end
-SICh = S ./ N; SICh(N < 3) = NaN; SICh = min(max(SICh, 0), 1);
+SICh = S ./ ND; SICh(N < 3) = NaN; SICh = min(max(SICh, 0), 1);
 landO = NL > N & N < 3;                                     % our land (ERA5) cells
 
 %% 2a. North: SP-489 map. Legend swatches (first-year column) and georeference

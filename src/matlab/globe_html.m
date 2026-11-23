@@ -1,7 +1,10 @@
 % Build the interactive HTML globe in output/globe/:
 %   ESMR_globe.html        page (libraries + coastlines inlined, works offline by double-click)
 %   days/MMDD.js           one data file per day, loaded when the day is selected
-% Day file (format of 2026-11-17, v3): ESMR_DAY({day, cfg, tp, orbits}); arrays are base64 typed arrays.
+% Day file (format of 2026-11-23, v5): ESMR_DAY({day, cfg, tp, tpopt, tp_old, cmpname, orbits}); arrays are base64.
+%   tpopt  = tie-point thresholds used (tp_opt.m: sst_min, wlat_min, lsm_max, lsm_box, lsm_boxmax, tb_mad);
+%   tp_old = tie points of the same day with the previous masks (CMP below, same correction otherwise), for the
+%            comparison view in step 2; cmpname = their label ('20 Nov').
 %   cfg    = the preprocessing settings used (preproc_config.m), the page builds its step captions from it.
 %   tp     = daily tie points per hemisphere (tp_masks.m clusters, uncorrected and corrected) from correct_day.m
 %            with opts.extra = true (v3): tp.N/S also has w_mean_u/c, i_mean_u/c [% SIC]; it1 (iteration 1:
@@ -17,11 +20,17 @@
 %     lat, lon   int16, 0.01 deg            tb    int16, raw TB in 0.1 K (-32768 = none)   spos uint8 1..78
 %     flag       uint8 = o.flag of esmr_preprocess.m (step that removed the pixel; table cfg.codes:
 %                0 kept, 5 analog, 1 Eq. 1, 2 Eq. 2, 3 Eq. 3, 4 Eq. 4, 6 swath edge, 7 latitude, 8 land)
-%     bits       uint8: bits 0-5 = tie-point criteria of tp_masks.m (3rd output), only set for o.valid pixels:
-%                0 water siconc <= 0.01 and 5x5 box mean < 0.01, 1 water sst > 278 K, 2 water 90 < TB < 180 K, 3 lsm == 0 (both),
-%                4 ice siconc > 0.8 and 5x5 box mean > 0.8, 5 ice 180 < TB < 274 K;  water cluster = bits 0-3, ice = bits 3-5 (= o.mw/o.mi)
+%     bits       uint16 (v4, orbit field bw = 16; before: uint8): bits 0-5 and 8 = tie-point criteria of tp_masks.m
+%                (3rd output, thresholds tpopt), only set for o.valid pixels:
+%                0 water siconc <= 0.01 and 5x5 box mean < 0.01, 1 water sst > sst_min, 2 water 90 < TB < 180 K,
+%                3 land rule (both: pixel lsm <= lsm_max and box mean lsm <= lsm_boxmax), 4 ice siconc > 0.8 and 5x5 box mean > 0.8, 5 ice 180 < TB < 274 K,
+%                8 water |lat| > wlat_min;  water cluster = bits 0-3 + 8, ice = bits 3-5 (= o.mw/o.mi)
 %                bit 6 thinned (|lat| < cfg.lat_min, stored every 4th line and position, counts x 16),
 %                bit 7 ERA5 sst missing (= land for cfg.land 'sst')
+%                bits 9/10: pixel is in the water / ice cluster of the previous masks (CMP, comparison)
+%                bits 11/12 (v5): pixel passes the water / ice TB outlier test of the day (tp_outlier.m; set for
+%                valid pixels; o.mwx / o.mix of correct_day.m = in the cluster criteria but failing it)
+%                water cluster = bits 0-3 + 8 + 11, ice = bits 3-5 + 12
 %     would      uint8 (only if any bit set): what a DISABLED step would remove (o.would): bit 0 analog, 1 Eq. 1,
 %                2 Eq. 2, 3 Eq. 3, 4 Eq. 4, 5 land
 %     dtb        int16, RTM correction (A6b method, iteration 2, via correct_day.m) in 0.1 K, -32768 = not corrected.
@@ -51,21 +60,27 @@ if ~exist(ddir, 'dir'), mkdir(ddir); end
 if ~exist('cfg', 'var') || isempty(cfg), cfg = preproc_config(); end
 
 % manifest of all days that already have a data file (so re-running for one day keeps the others)
-man = struct('day', {}, 'label', {}, 'n_orbits', {}, 'tp', {});
+CMP = 'nov20'; CMPNAME = '20 Nov';                 % masks the step-2 comparison shows (tp_opt.m preset)
+man = struct('day', {}, 'label', {}, 'n_orbits', {}, 'tp', {}, 'tp_old', {});
 for d = days(:)'
     fi = find(fday == d);
     fn = arrayfun(@(k) fullfile(files(k).folder, files(k).name), fi, 'UniformOutput', false);
     [O, tp] = correct_day(fn, 2, cfg, struct('extra', true));   % A6b method, iteration 2, valid + swath-edge pixels
-    D = struct('day', char(d), 'cfg', cfg, 'orbits', {{}});
+    [O0, tp_old] = correct_day(fn, 2, cfg, struct('tp', tp_opt(CMP)));   % previous masks, for the comparison
+    tpo = tp_opt(); tpo = rmfield(tpo, 'box');   % sst_min, wlat_min, lsm_max, lsm_box, lsm_boxmax
+    D = struct('day', char(d), 'cfg', cfg, 'tpopt', tpo, 'tp_old', tp_old, 'cmpname', CMPNAME, 'orbits', {{}});
     for j = 1:numel(fi)
         o = O(j);
         [nl, np] = size(o.tb);
         v = o.valid;
         [mw, mi, C] = tp_masks(o, v, o.tb_f, o.lsm);           % same call as correct_day.m
-        assert(isequal(mw, o.mw) && isequal(mi, o.mi), 'tp_masks criteria differ from correct_day clusters');
+        assert(isequal(mw & ~o.mwx, o.mw) && isequal(mi & ~o.mix, o.mi), 'tp_masks criteria differ from correct_day clusters');
         lowlat = abs(o.lat) < cfg.lat_min;
-        bits = uint8(C.w_sic & C.w_box & v) + 2*uint8(C.w_sst & v) + 4*uint8(C.w_tb & v) + 8*uint8(C.sea & v) ...
-             + 16*uint8(C.i_sic & C.i_box & v) + 32*uint8(C.i_tb & v) + 64*uint8(lowlat) + 128*uint8(isnan(o.sst));
+        mw0 = O0(j).mw; mi0 = O0(j).mi;                              % previous masks (comparison, incl. their outlier test)
+        u16 = @(x) uint16(x);
+        bits = u16(C.w_sic & C.w_box & v) + 2*u16(C.w_sst & v) + 4*u16(C.w_tb & v) + 8*u16(C.sea & v) ...
+             + 16*u16(C.i_sic & C.i_box & v) + 32*u16(C.i_tb & v) + 64*u16(lowlat) + 128*u16(isnan(o.sst)) ...
+             + 256*u16(C.w_lat & v) + 512*u16(mw0) + 1024*u16(mi0) + 2048*u16(v & ~o.mwx) + 4096*u16(v & ~o.mix);
         Wd = o.would;
         would = uint8(Wd.analog) + 2*uint8(Wd.eq1) + 4*uint8(Wd.eq2) + 8*uint8(Wd.eq3) + 16*uint8(Wd.eq4) + 32*uint8(Wd.land);
         [L, P] = ndgrid(1:nl, 1:np);
@@ -90,7 +105,7 @@ for d = days(:)'
             'tb',   b64(int16(round(R(tbr) * 10))), ...
             'spos', b64(uint8(R(P))), ...
             'flag', b64(uint8(R(o.flag))), ...
-            'bits', b64(uint8(R(bits))), ...
+            'bits', b64(uint16(R(bits))), 'bw', 16, 'ox', 1, ...
             'dtb',  b64(int16(round(max(min(R(dt), 3000), -3276.8) * 10))), ...
             'inp',  inp, ...
             'la', b64(q16(rs.la)), 'lao', b64(int8(rs.lao)), 'l2', b64(q16(rs.l2)), ...
@@ -106,13 +121,17 @@ for d = days(:)'
     fid = fopen(fullfile(ddir, [char(d) '.js']), 'w');
     fwrite(fid, ['ESMR_DAY(' jsonencode(D) ');'], 'char'); fclose(fid);
     meta = struct('day', char(d), 'label', sprintf('1973-%s-%s', extractBefore(d, 3), extractAfter(d, 2)), ...
-                  'n_orbits', numel(fi), 'tp', tp);
+                  'n_orbits', numel(fi), 'tp', tp, 'tp_old', tp_old);
     save(fullfile(ddir, [char(d) '.mat']), 'meta');
     fprintf('%s: %d orbits, flag counts (code 0..8): %s\n', d, numel(fi), ...
         num2str(sum(cell2mat(arrayfun(@(o) histcounts(double(o.flag(:)), -0.5:1:8.5), O(:), 'UniformOutput', false)), 1)));
 end
 dm = dir(fullfile(ddir, '*.mat'));
-for k = 1:numel(dm), S = load(fullfile(dm(k).folder, dm(k).name)); man(end+1) = S.meta; end %#ok<SAGROW>
+for k = 1:numel(dm)
+    S = load(fullfile(dm(k).folder, dm(k).name));
+    if ~isfield(S.meta, 'tp_old'), S.meta.tp_old = []; end              % day files from before v4
+    man(end+1) = S.meta; %#ok<SAGROW>
+end
 
 % page: inline libraries, coastlines, manifest and the scan-position -> angle table
 html = fileread(fullfile('src', 'web', 'globe_template.html'));

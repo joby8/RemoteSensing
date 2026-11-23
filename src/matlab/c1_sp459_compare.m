@@ -6,7 +6,8 @@
 % Steps
 %   1. Our data: per day correct_day.m (A6b, 2 iterations), SIC per pixel with the day's corrected
 %      South tie points, binned on a 30 km polar stereographic grid (like SP-459, p. 69).
-%      Monthly mean = mean of the unclipped pixel SIC, then clipped to 0..1. Cached per day.
+%      Daily cell mean = mean of the unclipped pixel SIC of that day; monthly mean = mean of the daily
+%      cell means (each day with data in the cell weighted equally), then clipped to 0..1. Cached per day.
 %   2. SP-459 map: docs/sp459/fig5-2a_feb1973.jpg (cut from the NTRS scan at 300 dpi).
 %      Georeference: polar stereographic, 0 deg up; affine fit to 129 points on the 55-70 S circles
 %      and 87 points on the 45-deg meridians, rms 1.6 px (~9 km). Each grid cell takes the median
@@ -35,10 +36,11 @@ files = dir(fullfile('ESMR_colocated_filtered', '*.nc'));
 fday  = string(regexp({files.name}, '1973m(\d{4})t', 'tokens', 'once'));
 days  = unique(fday);
 cdir  = fullfile('output', 'C1_cache'); if ~exist(cdir, 'dir'), mkdir(cdir); end
-S = zeros(n); N = zeros(n); NL = zeros(n); tpw = nan(numel(days), 1); tpi = tpw;
+ckey  = struct('tp', tp_opt(), 'cfg', preproc_config());   % cache key: masks and preprocessing used
+S = zeros(n); N = zeros(n); ND = zeros(n); NL = zeros(n); tpw = nan(numel(days), 1); tpi = tpw;
 for i = 1:numel(days)
     cf = fullfile(cdir, days(i) + ".mat");
-    if ~exist(cf, 'file')
+    if cache_stale(cf, ckey)                       % missing, or built with other masks / preprocessing
         fi = find(fday == days(i));
         fn = arrayfun(@(k) fullfile(files(k).folder, files(k).name), fi, 'UniformOutput', false);
         [O, TP] = correct_day(fn, 2);
@@ -54,13 +56,15 @@ for i = 1:numel(days)
             [r, q] = cellidx(o.lat(ml), o.lon(ml)); ok = r >= 1 & r <= n & q >= 1 & q <= n;
             cl = cl + accumarray([r(ok) q(ok)], 1, [n n]);
         end
-        tp = TP.S; save(cf, 's', 'c', 'cl', 'tp');
+        tp = TP.S; save(cf, 's', 'c', 'cl', 'tp', 'ckey');
         fprintf('%s: %d orbits, %d South pixels\n', days(i), numel(O), sum(c(:)));
     end
-    D = load(cf); S = S + D.s; N = N + D.c; NL = NL + D.cl;
+    D = load(cf); hd = D.c > 0;                              % daily cell mean, each day weighted equally
+    dm = zeros(n); dm(hd) = D.s(hd) ./ D.c(hd);
+    S = S + dm; ND = ND + hd; N = N + D.c; NL = NL + D.cl;
     tpw(i) = D.tp.water_c; tpi(i) = D.tp.ice_c;
 end
-SIC = S ./ N; SIC(N < 3) = NaN; SIC = min(max(SIC, 0), 1);
+SIC = S ./ ND; SIC(N < 3) = NaN; SIC = min(max(SIC, 0), 1);
 landO = NL > N & N < 3;                                     % our land (ERA5) cells
 
 %% 2. SP-459 map -> ice / water / land per grid cell

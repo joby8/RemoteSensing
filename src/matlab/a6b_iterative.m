@@ -7,7 +7,7 @@
 %   - reference values mixed with c_ice: Xref = (1-c)*mean_water + c*mean_ice   (paper: "c_ice is used as
 %     a ratio to mix the two tie-point values"), for V, W, L, Ts, Ti
 %   - dTB = RTM(Xref, Lref, c, theta) - RTM(X, Lref, c, theta); L not corrected (mean L in both runs)
-%   - corrected tie points -> new c_ice = SIC from corrected TB, clipped to 0..1, < 0.15 set to 0
+%   - corrected tie points -> new c_ice = SIC from corrected TB, clipped to 0..1 (no < 0.15 -> 0 since 2026-11-20)
 %     -> next iteration (paper iterates once; we run NIT iterations to show convergence)
 %   - std per day and hemisphere for the water AND the ice tie-point pixels (raw SIC, not clipped)
 % Run from the project root:  matlab -batch "run('src/matlab/a6b_iterative.m')"
@@ -156,7 +156,6 @@ dtb = ref - act;
 end
 
 function c = clipc(sic)
-% paper step 1: truncate to 0..1, open-water filter: c < 0.15 -> 0
+% truncate to 0..1 (meeting 2026-11-20: no open-water filter c < 0.15 -> 0 any more)
 c = min(max(sic, 0), 1);
-c(c < 0.15) = 0;
 end

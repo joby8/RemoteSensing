@@ -283,6 +283,7 @@ button.cell:disabled:hover { background: transparent; }
           <div class="cell plain"><span class="ttl"><span>Day</span></span>
             <span class="trail"><select id="day" aria-label="Day"></select><span class="stepper"><button id="dprev" aria-label="Previous day">‹</button><button id="dnext" aria-label="Next day">›</button></span></span></div>
           <div class="cell plain"><span class="ttl"><span>Orbit</span></span><span class="trail"><select id="orbit" aria-label="Orbit"></select></span></div>
+          <label class="cell plain"><span class="ttl"><span>Daily grid mean</span><small id="gridnote">30 km grid as the Feb 1973 map: mean of all selected orbits per cell</small></span><input type="checkbox" class="switch" id="grid-on"></label>
         </div>
         <div class="list" role="radiogroup" aria-label="Base layers" id="lay0"></div>
         <p class="gfoot">Measured swaths, all 78 scan positions, before any filter.</p>
@@ -301,7 +302,7 @@ button.cell:disabled:hover { background: transparent; }
       <section class="pstep">
         <h2 class="shead"><span class="sn">2</span>Tie-point clusters</h2>
         <div class="list" role="radiogroup" aria-label="Tie-point clusters" id="lay2"></div>
-        <p class="gfoot">Table 2 with the 17 Nov masks (water SIC ≤ 1 %, ice T<sub>B</sub> &gt; 180 K, no coastal pixels). Tap the layer to see each criterion.</p>
+        <p class="gfoot">Table 2 with the 23 Nov masks (water SIC ≤ 1 %, SST &gt; 273 K, |lat| &gt; 55°; ice T<sub>B</sub> &gt; 180 K; both: lsm = 0 and ≤ 10 % land in the 5×5 box). Tap the layer to see each criterion or compare with the 20 Nov masks.</p>
       </section>
 
       <section class="pstep">
@@ -506,7 +507,7 @@ async function loadDay(d, progress) {
     progress(`Decoding orbit ${j + 1} of ${src.length} …`, 0.1 + 0.85 * j / src.length); await nextFrame();
     orbits.push(prep(src[j]));
   }
-  const day = { tp: raw.tp, cfg: raw.cfg, orbits };
+  const day = { tp: raw.tp, cfg: raw.cfg, tpopt: raw.tpopt || null, tp_old: raw.tp_old || null, cmpname: raw.cmpname || '17 Nov', orbits };
   cache.set(d, day); if (cache.size > 4) cache.delete(cache.keys().next().value);
   return day;
 }
@@ -517,7 +518,9 @@ const ENC = { V: [0, 0.25], W: [0, 0.1], L: [0, 0.02], Ts: [260, 0.2], Ti: [230,
 const OPT = { d1: 0.25, xV: 0.25, xW: 0.25, xTs: 0.25, xTi: 0.25, xL: 0.5 };
 function prep(o) {
   const lat = dec(o.lat, Int16Array), lon = dec(o.lon, Int16Array), tb = dec(o.tb, Int16Array), spos = dec(o.spos, Uint8Array), dtb = dec(o.dtb, Int16Array);
-  const flag = dec(o.flag, Uint8Array), bits = dec(o.bits, Uint8Array), lpc = dec(o.lpc, Uint8Array);
+  const flag = dec(o.flag, Uint8Array), bits = dec(o.bits, o.bw === 16 ? Uint16Array : Uint8Array), lpc = dec(o.lpc, Uint8Array);
+  const WB = o.ox ? 2319 : o.bw === 16 ? 271 : 15;                 // water cluster bits (v4: + |lat| bit 8, v5: + outlier bit 11)
+  const IB = o.ox ? 4152 : 56;                                     // ice cluster bits (v5: + outlier bit 12)
   const would = o.would ? dec(o.would, Uint8Array) : null;          // only present if a disabled step would remove pixels
   const n = lat.length, x = new Float32Array(n), y = new Float32Array(n), z = new Float32Array(n), stage = new Uint8Array(n);
   const cls = new Uint8Array(n), line = new Uint16Array(n);
@@ -527,7 +530,7 @@ function prep(o) {
     x[i] = Math.cos(p) * Math.cos(l); y[i] = Math.cos(p) * Math.sin(l); z[i] = Math.sin(p);
     stage[i] = STAGE_OF[flag[i]];
     const b = bits[i];                                              // tie-point criteria (tp_masks.m), valid pixels only
-    cls[i] = (b & 15) === 15 ? 1 : (b & 56) === 56 ? 2 : 0;          // 1 water cluster, 2 ice cluster
+    cls[i] = (b & WB) === WB ? 1 : (b & IB) === IB ? 2 : 0;          // 1 water cluster, 2 ice cluster
   }
   // correction inputs are stored only for corrected pixels (dtb valid): ci[i] = index into them, -1 = none
   const ci = new Int32Array(n).fill(-1); let k = 0;
@@ -553,7 +556,7 @@ function prep(o) {
   if (o.p3) { p3 = dec(o.p3, Int16Array); p3i = new Int32Array(n).fill(-1); let m = 0;
     for (let i = 0; i < n; i++) if (flag[i] === 3 || (would && would[i] & 8)) p3i[i] = m++; }
   const ln = (f, T) => o[f] ? dec(o[f], T) : new T(lpc.length).fill(T === Int16Array ? -32768 : 0);
-  return { name: o.name, n, lat, lon, tb, spos, dtb, flag, bits, cls, would, line, stage, x, y, z, ci, inp, p3, p3i, nEdge,
+  return { name: o.name, n, lat, lon, tb, spos, dtb, flag, bits, cls, would, bw: o.bw || 8, line, stage, x, y, z, ci, inp, p3, p3i, nEdge,
     la: ln('la', Int16Array), lao: ln('lao', Int8Array), l2: ln('l2', Int16Array), l3: ln('l3', Int16Array), l3o: ln('l3o', Int8Array),
     col: new Uint32Array(n), top: new Uint8Array(n) };
 }
@@ -573,7 +576,9 @@ const NOVIEW = new Set(['c', 'Lr']);                 // single maps, no Value/Di
 
 // ---- colour maps ----------------------------------------------------------
 const VIRIDIS = ['#440154','#482878','#3e4989','#31688e','#26828e','#1f9e89','#35b779','#6ece58','#b5de2b','#fde725'];
-const ICE = [[-20,'#3a1c71'],[0,'#0b2e5c'],[25,'#1f5f9a'],[50,'#4f93c7'],[75,'#a6cde6'],[100,'#f5f9fc'],[120,'#f2a9bf']];
+// SIC colours: values below 0 % get the 0 % colour, above 100 % the 100 % colour (display only, the values
+// themselves are not clipped; 2026-11-23)
+const ICE = [[-20,'#0b2e5c'],[0,'#0b2e5c'],[25,'#1f5f9a'],[50,'#4f93c7'],[75,'#a6cde6'],[100,'#f5f9fc'],[120,'#f5f9fc']];
 const DTB = [[-15,'#2166ac'],[-7.5,'#67a9cf'],[0,'#f7f7f7'],[7.5,'#ef8a62'],[15,'#b2182b']];
 const THETA = [[-64,'#7a2d8f'],[-32,'#c58ad6'],[0,'#f2f2f2'],[32,'#7fc4a6'],[64,'#13705a']];
 const SEQ = ['#ffffd9','#c7e9b4','#7fcdbb','#41b6c4','#1d91c0','#225ea8','#0c2c84'];      // YlGnBu, input values
@@ -617,6 +622,8 @@ function refOf(o, i, f) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S, c = o.in
 // ---- state ------------------------------------------------------------------
 let cur = null, dayIdx = 0, sel = 'all', mode = 'tb', step = 7, showRm = false, inp = 'V', view = 'part';
 let crit = null;                                     // tie-point criterion view: null = default clusters, else {g: 'w'|'i', k}
+let cmp = false;                                     // step 2: compare with the previous masks (day.cmpname)
+const CN = () => (cur && cur.cmpname) || '17 Nov';
 let iter = 2;                                        // corrected SIC: iteration 1 or 2 (step 5)
 let xcase = 'full';                                  // exclusion case of the 'sicx' map (step 6)
 let showEdge = false;                                // draw swath-edge pixels that have a correction (step 7)
@@ -666,43 +673,90 @@ const LAST = STEPS.length - 1;
 const CRIT = {
   w: { name: 'Water', c: '--water', steps: [
     { bit: 1, t: 'siconc ≤ 0.01, 5×5 box &lt; 0.01', paper: 'paper: siconc = 0, 5×5 box SIC &lt; 1 %' },
-    { bit: 2, t: 'SST &gt; 278 K' },
+    { bit: 2, t: 'SST &gt; 275 K', paper: '17 Nov: 278 K · colder water' },
+    { bit: 256, t: '|lat| &gt; 55°', paper: 'not in paper · 20 Nov: cold water only' },
     { bit: 4, t: '90 K &lt; T<sub>B</sub> &lt; 180 K' },
-    { bit: 8, t: 'ERA5 lsm = 0', paper: 'not in paper' }] },
+    { bit: 8, t: 'ERA5 lsm = 0, 5×5 box land ≤ 10 %', paper: 'not in paper · 17 Nov: pixel only (no box)' },
+    { bit: 2048, t: 'T<sub>B</sub> outlier test', paper: '' }] },
   i: { name: 'Ice', c: '--ice', steps: [
     { bit: 16, t: 'siconc &gt; 0.8, 5×5 box &gt; 0.8', paper: 'paper: 5×5 box SIC &gt; 80 %' },
     { bit: 32, t: '180 K &lt; T<sub>B</sub> &lt; 274 K', paper: 'paper: 100 K &lt; T<sub>B</sub> &lt; 274 K' },
-    { bit: 8, t: 'ERA5 lsm = 0', paper: 'not in paper' }] },
+    { bit: 8, t: 'ERA5 lsm = 0, 5×5 box land ≤ 10 %', paper: 'not in paper · 17 Nov: pixel only (no box)' },
+    { bit: 4096, t: 'T<sub>B</sub> outlier test', paper: '' }] },
 };
-const critBits = (g, k) => CRIT[g].steps.slice(0, k + 1).reduce((m, s) => m | s.bit, 0);
+// labels from the thresholds stored in the day file (tp_opt.m); files before v4 have the 17 Nov masks without the |lat| bit
+function critLabels(d) {
+  const o = d && d.tpopt, v4 = !!o;
+  const w = CRIT.w.steps, i = CRIT.i.steps;
+  w[1].t = `SST &gt; ${v4 ? o.sst_min : 278} K`; w[1].paper = v4 && o.sst_min !== 278 ? `${o.sst_min < 275 ? '20 Nov: 275 K · ' : ''}17 Nov: 278 K · colder water` : '';
+  w[2].t = `|lat| &gt; ${v4 ? o.wlat_min : 0}°`; w[2].skip = !v4;
+  const box = v4 && o.lsm_box > 0;
+  const ls = (v4 && o.lsm_max > 0 ? `ERA5 lsm ≤ ${(+o.lsm_max).toFixed(2)}` : 'ERA5 lsm = 0') +
+             (box ? `, ${o.lsm_box}×${o.lsm_box} box land ≤ ${Math.round(100 * o.lsm_boxmax)} %` : '');
+  w[4].t = i[2].t = ls; w[4].paper = i[2].paper = box ? 'not in paper · 17 Nov: pixel only (no box)' : 'not in paper';
+  const k = v4 && o.tb_mad > 0 ? o.tb_mad : 0;
+  w[5].t = i[3].t = `corrected T<sub>B</sub> within median ± ${k}·σ<sub>robust</sub>`;
+  w[5].paper = i[3].paper = 'not in paper · 23 Nov: artefacts out · corrected T<sub>B</sub> of iteration 1, σ = 1.4826·MAD, per day and hemisphere';
+  w[5].skip = i[3].skip = !k;
+}
+const critSteps = g => CRIT[g].steps.filter(s => !s.skip);
+// comparison with the previous masks (bits 9/10): 0 not valid, 1 other, 2 in both, 3 new only, 4 17 Nov only; per group
+function cmpState(o, i, g) {
+  if (o.flag[i] !== 0) return 0;
+  const now = o.cls[i] === (g === 'w' ? 1 : 2), old = !!(o.bits[i] & (g === 'w' ? 512 : 1024));
+  return now && old ? 2 : now ? 3 : old ? 4 : 1;
+}
+const critBits = (g, k) => critSteps(g).slice(0, k + 1).reduce((m, s) => m | s.bit, 0);
 // 0 not valid after preprocessing, 1 failed an earlier criterion, 2 drops out at criterion k, 3 passes 1..k
 function critState(o, i, g, k) {
   if (o.flag[i] !== 0) return 0;
   const b = o.bits[i], prev = k > 0 ? critBits(g, k - 1) : 0;
   if ((b & prev) !== prev) return 1;
-  return b & CRIT[g].steps[k].bit ? 3 : 2;
+  return b & critSteps(g)[k].bit ? 3 : 2;
 }
+// value of pixel i in the units of the colour bar (K, %, input unit); NaN = no value. Used by recolor and the day grid.
+const GRID_MODES = new Set(['tb', 'sic', 'dtb', 'sicc', 'sicx', 'inp']);   // value layers that can be averaged per grid cell
+function pixVal(o, i) {
+  switch (mode) {
+    case 'tb': return o.tb[i] / 10;
+    case 'sic': return sicOf(o, i);
+    case 'dtb': return o.dtb[i] / 10;
+    case 'sicc': return iter === 1 ? sicIt1(o, i) : sicCorr(o, i);
+    case 'sicx': return sicX(o, i);
+    case 'inp': return inpValue(o, i);
+  }
+  return NaN;
+}
+const clampI = (x, a, b) => Math.max(a, Math.min(b, x));
+let CS = null, ND_COL = 0, RC = 0;                   // colour of a value (current layer), no-data colour, recolor counter
 function recolor() {
+  RC++;
   const C = [pack(colOf('--other')), pack(colOf('--water')), pack(colOf('--ice'))];
   RM = [0, ...STEPS.slice(1).map(s => pack(colOf(s.c)))];
   const CR = crit ? [pack(colOf('--nodata')), pack(colOf('--other')), pack(colOf('--drop')), pack(colOf(CRIT[crit.g].c))] : null;
   const ND = pack(colOf('--nodata'));                  // kept pixel without a value for this mode
+  const CM = ['--nodata', '--other', '--water', '--green', '--drop', '--ice', '--mint', '--pink'].map(v => pack(colOf(v)));
   let LUT_INP, ilo, ihi;
   if (mode === 'inp') { const [lo, hi, st] = inpScale(); LUT_INP = lutOf(st, lo, hi); ilo = lo; ihi = hi; }
+  ND_COL = ND;
+  CS = mode === 'tb' ? v => LUT_TB[clampI(Math.round(v - 100), 0, 180)]
+     : mode === 'dtb' ? v => LUT_DTB[clampI(Math.round(v * 10) + 150, 0, 300)]
+     : mode === 'inp' ? v => LUT_INP[clampI(Math.round((v - ilo) / (ihi - ilo) * 255), 0, 255)]
+     : v => LUT_SIC[clampI(Math.round(v + 20), 0, 140)];
   for (const o of cur ? cur.orbits : []) for (let i = 0; i < o.n; i++) {
     const tbv = o.tb[i];
+    if (!o.val) o.val = new Float32Array(o.n);
+    o.val[i] = NaN;
     if (mode === 'th') o.col[i] = LUT_TH[o.spos[i] - 1];
     else if (tbv === -32768) o.col[i] = ND;
     else if (NEEDS_OCEAN.has(mode) && o.dtb[i] === -32768) o.col[i] = ND;   // land or outside steps 1-3: no SIC/correction
-    else if (mode === 'inp') { const v = inpValue(o, i); o.col[i] = isNaN(v) ? ND : LUT_INP[Math.max(0, Math.min(255, Math.round((v - ilo) / (ihi - ilo) * 255)))]; }
-    else if (mode === 'tb') o.col[i] = LUT_TB[Math.max(0, Math.min(180, Math.round(tbv / 10 - 100)))];
-    else if (mode === 'sic') o.col[i] = LUT_SIC[Math.max(0, Math.min(140, Math.round(sicOf(o, i) + 20)))];
-    else if (mode === 'dtb') o.col[i] = LUT_DTB[Math.max(0, Math.min(300, o.dtb[i] + 150))];
-    else if (mode === 'sicc' || mode === 'sicx') {
-      const v = mode === 'sicx' ? sicX(o, i) : iter === 1 ? sicIt1(o, i) : sicCorr(o, i);
-      o.col[i] = isNaN(v) ? ND : LUT_SIC[Math.max(0, Math.min(140, Math.round(v + 20)))];
-    }
+    else if (GRID_MODES.has(mode)) { const v = pixVal(o, i); o.val[i] = v; o.col[i] = isNaN(v) ? ND : CS(v); }
     else if (crit) { const q = critState(o, i, crit.g, crit.k); o.col[i] = CR[q]; o.top[i] = q >= 2; continue; }
+    else if (cmp && mode === 'mask') {
+      const w = cmpState(o, i, 'w'), c = cmpState(o, i, 'i');
+      const q = w >= 2 ? w : c >= 2 ? c + 3 : w;                   // 2/3/4 water, 5/6/7 ice
+      o.col[i] = CM[q]; o.top[i] = q >= 2; continue;
+    }
     else { o.col[i] = C[o.cls[i]]; o.top[i] = o.cls[i] > 0; continue; }
     o.top[i] = 0;
   }
@@ -744,14 +798,15 @@ function draw() {
   const ps4 = Math.max(ps, Math.min(40, Math.round(4 * 30 / 6371 * k)));  // thinned low-lat pixels drawn 4x larger
   // pass 0: removed pixels, pass 1: kept "other", pass 2: kept tie-point pixels (on top)
   // pass 3: pixels a disabled step WOULD remove (selected step not applied), drawn as a checker pattern on top
-  const wb = !stepOn(step) && STEPS[step].wb || 0, eo = edgeOn();
-  for (let pass = 0; pass < (MON.on && MON.ready ? 0 : 4); pass++) for (const o of selected()) {
+  const wb = !stepOn(step) && STEPS[step].wb || 0, eo = edgeOn(), ga = gridAct();
+  // day grid: only pass 0 (removed pixels, if shown) from the swaths, the kept pixels come as grid-cell means
+  for (let pass = 0; pass < (MON.on && MON.ready ? 0 : ga ? 1 : 4); pass++) for (const o of selected()) {
     const { x, y, z, col, top, bits, stage, n, would, flag, dtb } = o;
     if (pass === 3 && (!wb || !would)) continue;
     for (let i = 0; i < n; i++) {
       const removed = stage[i] <= step && !(eo && flag[i] === 6 && dtb[i] !== -32768);
       let c;
-      if (pass === 0) { if (!removed || !showRm || crit) continue; c = RM[stage[i]]; }   // criterion view: only valid pixels
+      if (pass === 0) { if (!removed || !showRm || crit || (cmp && mode === 'mask')) continue; c = RM[stage[i]]; }   // criterion view: only valid pixels
       else if (pass === 3) { if (removed || !(would[i] & wb)) continue; c = RM[step]; }
       else { if (removed) continue; const tpix = mode === 'mask' && top[i]; if ((pass === 2) !== !!tpix) continue; c = col[i]; if (!c) continue; }
       const xr = x[i] * cl - y[i] * sl, yr = x[i] * sl + y[i] * cl;
@@ -768,10 +823,12 @@ function draw() {
     }
   }
   if (MON.on) monDraw(lr, cp, sp, cl, sl, k, X0, Y0);
+  else if (ga) { dgEnsure(); splatCells(Object.values(DG.cells), lr, cp, sp, cl, sl, k, X0, Y0); }
   octx.putImageData(img, 0, 0);
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(off, 0, 0);
   if (MON.on) monEdges();
   if (MON.on && MON.pin) monMarker();
+  if (ga && gpin) dgMarker();
   if (pin && !MON.on) {                                           // marker of the pinned pixel
     const ll = [pin.o.lon[pin.i] / 100, pin.o.lat[pin.i] / 100];
     if (d3.geoDistance(ll, [-rot[0], -rot[1]]) < Math.PI / 2) {
@@ -791,14 +848,133 @@ function draw() {
 let queued = false;
 const redraw = () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; draw(); }); } };
 
+// ---- day grid: same 30 km polar-stereographic grid as the Feb 1973 map (c2_feb1973_books.m) -----------------------
+// Per cell: mean of the value of all kept pixels of the selected orbits (sum / count), so overlapping swaths are
+// averaged instead of the last drawn orbit covering the others. Thinned pixels (|lat| < 50°) are left out.
+let gridOn = false, gpin = null;                     // gpin = {h, idx, ll}
+const gridAct = () => gridOn && !MON.on && GRID_MODES.has(mode) && !!cur;
+const DG = { Re: 6371, L: 4800, dx: 30, n: 320, key: '', acc: {}, cells: {} };
+// cell of a position: {h, idx} (idx = r*n + q, row r from the bottom, 0-based) or null outside the grid
+function dgCellOf(lat, lon) {
+  const { Re, L, dx, n } = DG, h = lat > 0 ? 'N' : 'S', lo = lon * RAD;
+  const rad = 2 * Re * Math.tan((90 - Math.abs(lat)) * RAD / 2);
+  const r = Math.floor(((h === 'N' ? -1 : 1) * rad * Math.cos(lo) + L) / dx), q = Math.floor((rad * Math.sin(lo) + L) / dx);
+  return r < 0 || q < 0 || r >= n || q >= n ? null : { h, idx: r * n + q };
+}
+function dgCentre(h, idx) {                          // [lon, lat] of the cell centre
+  const { Re, L, dx, n } = DG, r = Math.floor(idx / n), q = idx % n;
+  const u = -L + dx / 2 + q * dx, v = -L + dx / 2 + r * dx, colat = 2 * Math.atan(Math.hypot(u, v) / (2 * Re)) / RAD;
+  return [(h === 'N' ? Math.atan2(u, -v) : Math.atan2(u, v)) / RAD, h === 'N' ? 90 - colat : colat - 90];
+}
+function dgEnsure() {
+  const key = `${dayIdx}|${sel}|${step}|${edgeOn()}|${RC}`;
+  if (key === DG.key) return;
+  DG.key = key;
+  const nn = DG.n * DG.n;
+  for (const h of ['N', 'S']) {
+    const A = DG.acc[h] || (DG.acc[h] = { s: new Float64Array(nn), q: new Float64Array(nn), c: new Uint32Array(nn), nd: new Uint32Array(nn),
+      no: new Uint16Array(nn), last: new Int32Array(nn), mn: new Float32Array(nn), mx: new Float32Array(nn) });
+    A.s.fill(0); A.q.fill(0); A.c.fill(0); A.nd.fill(0); A.no.fill(0); A.last.fill(-1); A.mn.fill(Infinity); A.mx.fill(-Infinity);
+  }
+  for (const o of selected()) {
+    const oi = cur.orbits.indexOf(o);
+    for (let i = 0; i < o.n; i++) {
+      if (hiddenAt(o, i) || (o.bits[i] & 64)) continue;
+      const g = dgCellOf(o.lat[i] / 100, o.lon[i] / 100); if (!g) continue;
+      const A = DG.acc[g.h], j = g.idx, v = o.val[i];
+      if (isNaN(v)) { A.nd[j]++; continue; }
+      A.s[j] += v; A.q[j] += v * v; A.c[j]++;
+      if (v < A.mn[j]) A.mn[j] = v; if (v > A.mx[j]) A.mx[j] = v;
+      if (A.last[j] !== oi) { A.last[j] = oi; A.no[j]++; }
+    }
+  }
+  for (const h of ['N', 'S']) {
+    const A = DG.acc[h], ci = [], X = [], Y = [], Z = [], C = [];
+    for (let j = 0; j < nn; j++) {
+      if (!A.c[j] && !A.nd[j]) continue;
+      const [lon, lat] = dgCentre(h, j), cl = Math.cos(lat * RAD);
+      ci.push(j); X.push(cl * Math.cos(lon * RAD)); Y.push(cl * Math.sin(lon * RAD)); Z.push(Math.sin(lat * RAD));
+      C.push(A.c[j] ? CS(A.s[j] / A.c[j]) : ND_COL);
+    }
+    DG.cells[h] = { ci: Int32Array.from(ci), x: Float32Array.from(X), y: Float32Array.from(Y), z: Float32Array.from(Z), col: Uint32Array.from(C) };
+  }
+}
+// draw cells (x, y, z, col) as squares slightly larger than 30 km (no gaps between oblique cells); used by both grids
+function splatCells(list, lr, cp, sp, cl, sl, k, X0, Y0) {
+  const ps = Math.max(2, Math.min(40, Math.ceil(1.25 * 30 / 6371 * k))), hh = ps >> 1;
+  for (const d of list) {
+    const { x, y, z, col } = d, n = col.length;
+    for (let j = 0; j < n; j++) {
+      const c = col[j]; if (!c) continue;
+      const xr = x[j] * cl - y[j] * sl, yr = x[j] * sl + y[j] * cl;
+      const X3 = xr * cp - z[j] * sp; if (X3 <= 0) continue;
+      const Z3 = z[j] * cp + xr * sp;
+      const px = Math.round(X0 + k * yr) - hh, py = Math.round(Y0 - k * Z3) - hh;
+      for (let dy = 0; dy < ps; dy++) {
+        const yy = py + dy; if (yy < 0 || yy >= H) continue;
+        let p = yy * W + px;
+        for (let dx = 0; dx < ps; dx++, p++) if (px + dx >= 0 && px + dx < W) buf[p] = c;
+      }
+    }
+  }
+}
+function dgAt(e) {                                   // grid cell under the pointer: {p, h, idx} (idx -1: no data)
+  const r = cv.getBoundingClientRect(), p = proj.invert([e.clientX - r.left, e.clientY - r.top]);
+  if (!p || d3.geoDistance(p, [-rot[0], -rot[1]]) > Math.PI / 2) return null;
+  dgEnsure();
+  const g = dgCellOf(p[1], p[0]); if (!g) return { p, h: p[1] > 0 ? 'N' : 'S', idx: -1 };
+  const A = DG.acc[g.h];
+  return { p, h: g.h, idx: A.c[g.idx] || A.nd[g.idx] ? g.idx : -1 };
+}
+function dgHover(e) {
+  const q = dgAt(e);
+  if (!q) { hc.hidden = true; return; }
+  hc.hidden = false; hc.classList.remove('pinned');
+  if (q.idx < 0) { hc.innerHTML = `<div class="h">${posTxt(q.p[1], q.p[0])}</div><div class="s">No ESMR pixel in this grid cell</div>`; return; }
+  dgCard({ h: q.h, idx: q.idx, ll: dgCentre(q.h, q.idx) }, false);
+}
+function dgPinAt(e) {
+  const q = dgAt(e);
+  if (!q || q.idx < 0) { unpin(); return; }
+  gpin = { h: q.h, idx: q.idx, ll: dgCentre(q.h, q.idx) }; dgCard(gpin); redraw();
+}
+function dgCard(P, pinned = true) {
+  dgEnsure();
+  const A = DG.acc[P.h], j = P.idx, c = A.c[j];
+  hc.hidden = false; hc.classList.toggle('pinned', pinned);
+  const head = pinned ? `<div class="pin"><svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z" fill="currentColor"/></svg>Pinned</div>` : '';
+  const dg = mode === 'tb' ? 1 : mode === 'dtb' || mode === 'inp' ? 2 : 1, u = LG.unit === '%' ? ' %' : ' ' + LG.unit;
+  const f = v => (v < 0 ? '−' + Math.abs(v).toFixed(dg) : v.toFixed(dg)) + u;
+  const kv = [];
+  if (c) {
+    const m = A.s[j] / c, sd = Math.sqrt(Math.max(A.q[j] / c - m * m, 0));
+    kv.push(['Cell mean', f(m)]);
+    if (c > 1) kv.push(['Std of the pixels', f(sd)], ['Range', `${f(A.mn[j])} … ${f(A.mx[j])}`]);
+  }
+  kv.push(['Pixels', `${c}${A.nd[j] ? ` (+ ${A.nd[j]} without value)` : ''}`], ['Orbits', `${A.no[j]}`]);
+  hc.innerHTML = `${head}<div class="h"><span style="color:var(--label);font-weight:600">${posTxt(P.ll[1], P.ll[0])}</span><span style="display:flex;align-items:flex-start">30 km cell · ${MH[P.h]}${pinned ? '<button class="x" aria-label="Unpin">✕</button>' : ''}</span></div>
+    <div class="s">${LG.title}</div>
+    <div class="kv">${kv.map(([x, y]) => `<span>${x}</span><b>${y}</b>`).join('')}</div>
+    <div class="s">${c ? `Mean of the kept pixels of ${sel === 'all' ? 'all orbits of the day' : 'the selected orbit'} in this cell${A.no[j] > 1 ? ', averaged over the overlapping swaths' : ''}.` : 'No value: land or filtered pixels only.'}</div>`;
+}
+function dgMarker() {
+  const P = gpin; if (d3.geoDistance(P.ll, [-rot[0], -rot[1]]) >= Math.PI / 2) return;
+  const A = DG.acc[P.h], j = P.idx, c = A.c[j] ? CS(A.s[j] / A.c[j]) : A.nd[j] ? ND_COL : 0, [mx, my] = proj(P.ll);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.beginPath(); ctx.arc(mx, my, 14, 0, 2 * Math.PI);
+  if (c) { ctx.fillStyle = `rgb(${c & 255},${(c >> 8) & 255},${(c >> 16) & 255})`; ctx.fill(); }
+  ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.stroke();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+}
+
 // ---- interaction ------------------------------------------------------------
 let drag = null;
-cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, r: rot.slice(), moved: false }; cv.setPointerCapture(e.pointerId); cv.classList.add('drag'); if (!pin && !MON.pin) hc.hidden = true; });
+cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, r: rot.slice(), moved: false }; cv.setPointerCapture(e.pointerId); cv.classList.add('drag'); if (!pin && !MON.pin && !gpin) hc.hidden = true; });
 cv.addEventListener('pointermove', e => {
   if (drag) { if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 4) drag.moved = true; const s = 0.25 / zoom; rot = [drag.r[0] + (e.clientX - drag.x) * s, Math.max(-90, Math.min(90, drag.r[1] - (e.clientY - drag.y) * s))]; redraw(); }
   else hover(e);
 });
-cv.addEventListener('pointerleave', () => { if (!drag && !pin && !MON.pin) hc.hidden = true; });
+cv.addEventListener('pointerleave', () => { if (!drag && !pin && !MON.pin && !gpin) hc.hidden = true; });
 const end = () => { drag = null; cv.classList.remove('drag'); };
 cv.addEventListener('pointerup', e => { const click = drag && !drag.moved; end(); if (click) pinAt(e); }); cv.addEventListener('pointercancel', end);
 cv.addEventListener('wheel', e => { e.preventDefault(); setZoom(zoom * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
@@ -830,6 +1006,7 @@ function nearest(e) {
 const posTxt = (lat, lon) => `${Math.abs(lat).toFixed(1)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(1)}° ${lon >= 0 ? 'E' : 'W'}`;
 function doHover(e) {
   if (MON.on) { if (!MON.pin) monHover(e); return; }
+  if (gridAct()) { if (!gpin) dgHover(e); return; }
   if (!cur || pin) return;
   const h = nearest(e);
   if (!h) { hc.hidden = true; return; }
@@ -839,14 +1016,17 @@ function doHover(e) {
 }
 function pinAt(e) {
   if (MON.on) return monPinAt(e);
+  if (gridAct()) return dgPinAt(e);
   if (!cur) return;
   const h = nearest(e);
   if (!h || !h.o) { unpin(); return; }
   pin = { o: h.o, i: h.i }; refreshCard(); redraw();
 }
-function unpin() { if (MON.pin) { MON.pin = null; hc.hidden = true; hc.classList.remove('pinned'); redraw(); } if (!pin) return; pin = null; hc.hidden = true; hc.classList.remove('pinned'); redraw(); }
+function unpin() { if (gpin) { gpin = null; hc.hidden = true; hc.classList.remove('pinned'); redraw(); } if (MON.pin) { MON.pin = null; hc.hidden = true; hc.classList.remove('pinned'); redraw(); } if (!pin) return; pin = null; hc.hidden = true; hc.classList.remove('pinned'); redraw(); }
 function refreshCard() {
   if (MON.on) { if (MON.pin) monCard(MON.pin); return; }
+  if (gpin && !gridAct()) { gpin = null; hc.hidden = true; hc.classList.remove('pinned'); }
+  if (gridAct()) { if (pin) { pin = null; hc.classList.remove('pinned'); } if (gpin) dgCard(gpin); else if (lastEv && !hc.hidden) doHover(lastEv); return; }
   if (pin) { hc.hidden = false; hc.classList.add('pinned'); card(pin.o, pin.i); }
   else if (lastEv && !hc.hidden) doHover(lastEv);
 }
@@ -864,8 +1044,12 @@ function card(bo, bi) {
   if (bo.would) STEPS.forEach((S, j) => { if (S.wb && !stepOn(j) && bo.would[bi] & S.wb)
     lines.push(`<span class="dot" style="--c:transparent;box-shadow:inset 0 0 0 1.5px var(${S.c})"></span>Not applied · would remove: ${reason(bo, bi, j)}`); });
   if (mode === 'mask' && bo.flag[bi] === 0) lines.push(['w', 'i'].map(g => {
-    const k = CRIT[g].steps.findIndex(c => !(bo.bits[bi] & c.bit));
-    return `${CRIT[g].name}: ${k < 0 ? '<b>in cluster</b>' : `fails ${CRIT[g].steps[k].t}`}`; }).join(' · '));
+    const st = critSteps(g), k = st.findIndex(c => !(bo.bits[bi] & c.bit));
+    return `${CRIT[g].name}: ${k < 0 ? '<b>in cluster</b>' : `fails ${st[k].t}`}`; }).join(' · '));
+  if (mode === 'mask' && bo.flag[bi] === 0 && bo.bw === 16) {
+    const ow = bo.bits[bi] & 512, oi = bo.bits[bi] & 1024;
+    lines.push(`${CN()} masks: ${ow ? '<b>water</b> cluster' : oi ? '<b>ice</b> cluster' : 'not in a cluster'}`);
+  }
   if (bo.bits[bi] & 128) lines.push('ERA5: no SST (land)');
   const kv = [['Line · position', `${bo.line[bi]} · ${bo.spos[bi]} · θ ${SPOS[bo.spos[bi]-1].toFixed(1)}°`],
     ['T<sub>B</sub>', tbv === -32768 ? '–' : `${(tbv/10).toFixed(1)} K${hasC ? ` → ${((tbv + dv) / 10).toFixed(1)} K` : ''}`]];
@@ -974,10 +1158,13 @@ document.querySelector('aside').addEventListener('click', e => {
   const cb = e.target.closest('button[data-crit]');
   if (cb) {                                            // tie-point criterion: toggle; criteria apply after all steps
     const [g, k] = cb.dataset.crit.split(':'), same = crit && crit.g === g && crit.k === +k;
-    crit = !cb.dataset.crit || same ? null : { g, k: +k };
+    crit = !cb.dataset.crit || same ? null : { g, k: +k }; cmp = false;
     if (crit && step < LAST) { step = LAST; sl.value = step; steps(); }
     renderLayers(); recolor(); legend(); redraw(); refreshCard(); return;
   }
+  const pb = e.target.closest('button[data-cmp]');
+  if (pb) { cmp = !cmp; crit = null; if (step < LAST) { step = LAST; sl.value = step; steps(); }
+    renderLayers(); recolor(); legend(); redraw(); refreshCard(); return; }
   const ib = e.target.closest('button[data-iter]');
   if (ib) { iter = +ib.dataset.iter; setMode('sicc'); tpTable(); return; }
   const b = e.target.closest('button.cell[data-key]'); if (!b || b.disabled) return;
@@ -1008,7 +1195,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') $('dprev').click(); if (e.key === 'ArrowRight') $('dnext').click();
 });
 const os = $('orbit');
-os.onchange = () => { sel = os.value === 'all' ? 'all' : +os.value; if (pin && !selected().includes(pin.o)) unpin(); steps(); renderCorr(); renderLayers(); redraw(); };
+os.onchange = () => { sel = os.value === 'all' ? 'all' : +os.value; if (pin && !selected().includes(pin.o)) unpin(); steps(); renderCorr(); renderLayers(); legend(); redraw(); refreshCard(); };
 
 async function setDay(i) {
   if (!MON.on) unpin();                                           // a pinned month cell stays (not day dependent)
@@ -1017,7 +1204,7 @@ async function setDay(i) {
   const ov = $('loading'), cached = cache.has(DAYS[i].day);
   const progress = (txt, f) => { if (dayIdx !== i) return; $('ltext').textContent = txt; $('lbar').style.width = `${Math.round(100 * f)}%`; };
   if (!cached) { ov.classList.remove('err'); ov.hidden = false; }
-  try { const day = await loadDay(DAYS[i].day, progress); if (dayIdx !== i) return; cur = day; }
+  try { const day = await loadDay(DAYS[i].day, progress); if (dayIdx !== i) return; cur = day; critLabels(day); }
   catch (err) { ov.classList.add('err'); $('ltext').textContent = `${err.message}. Keep the days/ folder next to this page.`; return; }
   progress('Drawing …', 1); if (!cached) await nextFrame();
   if (dayIdx !== i) return;
@@ -1039,19 +1226,21 @@ async function setDay(i) {
 
 function setMode(m) {
   monOff();
-  if (m !== 'mask') crit = null;
+  if (m !== 'mask') { crit = null; cmp = false; }
   mode = m; renderLayers();
   if (NEEDS_OCEAN.has(m) && step < LAST) { step = LAST; $('step').value = LAST; steps(); }   // the state A6b works on
   syncChecks(); recolor(); legend(); redraw();
   refreshCard();
 }
+let LG = { title: '', unit: '' };                   // title and unit of the current colour bar (grid card)
 function legend() {
+  gridUI();
   const L = $('legend'), cap = $('caption');
   if (MON.on && MON.ready) return monLegend(L, cap);
   const nd = NEEDS_OCEAN.has(mode) ? `<div class="keys"><span><span class="dot" style="--c:var(--nodata)"></span>no value (land or filtered)</span></div>` : '';
   if (mode === 'mask' && crit) {
-    const G = CRIT[crit.g], c = G.steps[crit.k], k1 = crit.k + 1;
-    L.innerHTML = `<div class="t">${G.name} criterion ${k1} of ${G.steps.length}</div><div class="keys">
+    const G = CRIT[crit.g], st = critSteps(crit.g), c = st[crit.k], k1 = crit.k + 1;
+    L.innerHTML = `<div class="t">${G.name} criterion ${k1} of ${st.length}</div><div class="keys">
       <span><span class="dot" style="--c:var(${G.c})"></span>passes ${k1 > 1 ? `1–${k1}` : '1'}</span>
       <span><span class="dot" style="--c:var(--drop)"></span>drops out at ${k1}</span>
       ${k1 > 1 ? `<span><span class="dot" style="--c:var(--other)"></span>failed earlier</span>` : ''}
@@ -1059,10 +1248,21 @@ function legend() {
     cap.innerHTML = `${G.name} ${k1}: <b>${c.t}</b>${c.paper ? ` · ${c.paper}` : ''}`;
     return;
   }
+  if (mode === 'mask' && cmp) {
+    const d = c => `<span class="dot" style="--c:var(${c})"></span>`;
+    L.innerHTML = `<div class="t">Current vs ${CN()} masks</div><div class="keys">
+      <span>${d('--water')}Water · both</span><span>${d('--green')}Water · new</span><span>${d('--drop')}Water · dropped</span>
+      <span>${d('--ice')}Ice · both</span><span>${d('--mint')}Ice · new</span><span>${d('--pink')}Ice · dropped</span>
+      <span>${d('--other')}Other kept pixels</span></div>`;
+    cap.innerHTML = CN() === '20 Nov' ? 'New = only in the current masks (SST &gt; 273 K). Dropped = only in the 20 Nov masks (SST &gt; 275 K, no outlier test): mostly T<sub>B</sub> outliers of the day.'
+      : 'New = only in the 20 Nov masks (SST &gt; 275 K, |lat| &gt; 55°, no land next to the pixel: 5×5 box land ≤ 10 %). Dropped = only in the 17 Nov masks (SST &gt; 278 K, pixel lsm = 0).';
+    return;
+  }
   if (mode === 'mask') {
     L.innerHTML = `<div class="t">Tie-point clusters</div><div class="keys"><span><span class="dot" style="--c:var(--water)"></span>Water</span>
       <span><span class="dot" style="--c:var(--ice)"></span>Ice</span><span><span class="dot" style="--c:var(--other)"></span>Other kept pixels</span></div>`;
-    cap.innerHTML = 'Water: SIC ≤ 1 %, SST &gt; 278 K, 90–180 K. Ice: SIC &gt; 80 %, 180–274 K. Both: ERA5 land fraction 0 (coast out).';
+    const w = critSteps('w').map(s => s.t).slice(1).join(', ');
+    cap.innerHTML = `Water: SIC ≤ 1 %, ${w}. Ice: SIC &gt; 80 %, 180–274 K, ${critSteps('i').map(s => s.t).slice(2).join(', ')}.`;
     return;
   }
   let lo, hi, stops, title, unit, text;
@@ -1078,13 +1278,15 @@ function legend() {
     const cfg = {
       tb:  [100, 280, TB_STOPS, 'Brightness temperature', 'K', 'Measured, 19.35 GHz H-pol.'],
       th:  [-64, 64, THETA, 'Incidence angle θ', '°', 'Per scan position.'],
-      sic: [-20, 120, ICE, 'SIC raw', '%', 'Uncorrected. Below 0 % or above 100 % = noise.'],
-      sicc: [-20, 120, ICE, `SIC corrected · iteration ${iter}`, '%', iter === 1 ? 'RTM-corrected, iteration 1 (c from ERA5).' : 'RTM-corrected, iteration 2 of 2 (final).'],
+      sic: [-20, 120, ICE, 'SIC raw', '%', 'Uncorrected. Below 0 % or above 100 % = noise; colour clipped to 0–100 % (hover shows the value).'],
+      sicc: [-20, 120, ICE, `SIC corrected · iteration ${iter}`, '%', iter === 1 ? 'RTM-corrected, iteration 1 (c from ERA5). Colour clipped to 0–100 %.' : 'RTM-corrected, iteration 2 of 2 (final). Colour clipped to 0–100 %.'],
       sicx: [-20, 120, ICE, `SIC · ${sub(XBY[xcase].name)}`, '%', xcase === 'full' ? 'Full correction (= iteration 2).' : xcase === 'L' ? 'Corrected with ERA5 L per pixel in the model run.' : `Corrected with ${sub(XBY[xcase].name.slice(8))} set to the reference.`],
       dtb: [-15, 15, DTB, 'Correction ΔT<sub>B</sub>', 'K', 'Added to T<sub>B</sub>.'],
     }[mode];
     [lo, hi, stops, title, unit, text] = cfg;
   }
+  LG = { title, unit };
+  if (gridAct()) text += ` · <b>Daily grid</b>: mean of all kept pixels per 30 km cell over ${sel === 'all' ? 'all orbits of the day' : 'the selected orbit'}.`;
   const ticks = [0, 0.5, 1].map(q => +(lo + q * (hi - lo)).toFixed(2));
   L.innerHTML = `<div class="t">${title} <small>${unit}</small></div><canvas id="bar" width="300" height="8"></canvas>
     <div class="ticks">${ticks.map(v => `<span>${v < 0 ? '−' + Math.abs(v) : v}</span>`).join('')}</div>${nd}`;
@@ -1093,6 +1295,12 @@ function legend() {
   for (let i = 0; i < 300; i++) { const c = lerpStops(stops, lo + (hi - lo) * i / 299); g.fillStyle = `rgb(${c})`; g.fillRect(i, 0, 1, 8); }
 }
 
+function gridUI() {
+  const ok = GRID_MODES.has(mode), n = $('gridnote');
+  n.innerHTML = !gridOn || ok ? '30 km grid as the Feb 1973 map: mean of all selected orbits per cell'
+    : 'Only for value layers (T<sub>B</sub>, SIC, ΔT<sub>B</sub>, inputs). Masks and θ stay per pixel.';
+}
+$('grid-on').onchange = e => { gridOn = e.target.checked; unpin(); legend(); redraw(); refreshCard(); };
 const sl = $('step');
 sl.oninput = e => { monOff(); step = +e.target.value; steps(); redraw(); refreshCard(); };
 $('showrm').onchange = e => { showRm = e.target.checked; redraw(); };
@@ -1130,13 +1338,15 @@ function steps() {
 // tie-point criteria view for the selected orbits: count passing / dropping at each criterion, and the final cluster
 function critStats() {
   const R = { valid: 0, w: [], i: [] };
-  for (const g of ['w', 'i']) R[g] = CRIT[g].steps.map(() => ({ pass: 0, drop: 0 }));
+  for (const g of ['w', 'i']) R[g] = critSteps(g).map(() => ({ pass: 0, drop: 0 }));
+  const C = { w: { N: [0, 0, 0], S: [0, 0, 0] }, i: { N: [0, 0, 0], S: [0, 0, 0] } };   // both, new, dropped (17 Nov comparison)
   const fin = { w: { N: [0, 0, 0], S: [0, 0, 0] }, i: { N: [0, 0, 0], S: [0, 0, 0] } };   // n, sum, sum of squares of T_B
   for (const o of selected()) for (let i = 0; i < o.n; i++) {
     if (o.flag[i] !== 0) continue; R.valid++;
     const b = o.bits[i];
     for (const g of ['w', 'i']) {
-      const st = CRIT[g].steps; let m = 0;
+      const st = critSteps(g); let m = 0;
+      const q = o.bw === 16 ? cmpState(o, i, g) : 0; if (q >= 2) C[g][o.lat[i] > 0 ? 'N' : 'S'][q - 2]++;
       for (let k = 0; k < st.length; k++) {
         if (!(b & st[k].bit)) { R[g][k].drop++; break; }
         R[g][k].pass++;
@@ -1144,7 +1354,7 @@ function critStats() {
       }
     }
   }
-  R.fin = fin;
+  R.fin = fin; R.cmp = C;
   return R;
 }
 function critHTML() {
@@ -1152,7 +1362,7 @@ function critHTML() {
   const ms = a => { if (!a[0]) return '–'; const m = a[1] / a[0]; return `${m.toFixed(1)} ± ${Math.sqrt(Math.max(0, a[2] / a[0] - m * m)).toFixed(1)}`; };
   const grp = g => {
     const G = CRIT[g], key = g === 'w' ? 'water_u' : 'ice_u', sk = g === 'w' ? 'w_std_u' : 'i_std_u';
-    const rows = G.steps.map((c, k) => {
+    const rows = critSteps(g).map((c, k) => {
       const on = crit && crit.g === g && crit.k === k, r = R[g][k];
       return `<button data-crit="${g}:${k}" role="radio" aria-checked="${on}" style="--c:var(${G.c})"><span class="n">${k + 1}</span>
         <span class="lbl"><span>${c.t}</span>${c.paper ? `<small>${c.paper}</small>` : ''}</span>
@@ -1162,8 +1372,23 @@ function critHTML() {
     const fin = `<div class="fin">Cluster T<sub>B</sub> (K): N <b>${ms(F.N)}</b> · S <b>${ms(F.S)}</b>${t && sel === 'all' ? `<br>Day T<sub>p</sub>: N <b>${t.N[key].toFixed(1)}</b> · S <b>${t.S[key].toFixed(1)} K</b> · σ SIC N ${t.N[sk].toFixed(1)} · S ${t.S[sk].toFixed(1)} %` : ''}</div>`;
     return `<div class="gh"><span>${G.name}</span></div>${rows}${fin}`;
   };
+  const o = cur && cur.tp_old, v4 = !!(cur && cur.tpopt && cur.orbits.some(q => q.bw === 16));
+  const cn = (g, H) => { const a = R.cmp[g][H]; return `${fmt(a[0] + a[1])} <span style="color:var(--green)">+${fmt(a[1])}</span> <span class="d">−${fmt(a[2])}</span>`; };
+  const tv = (T, H, f) => T && T[H] && T[H][f] != null ? (+T[H][f]).toFixed(1) : '–';
+  const ar = (H, f, u) => `<b>${tv(o, H, f)} → ${tv(cur.tp, H, f)}${u}</b>`;
+  const cmpRow = v4 ? `<button data-cmp="1" role="radio" aria-checked="${cmp}" style="--c:var(--green)"><span class="n">⇄</span><span class="lbl"><span>Compare with ${CN()} masks</span><small>water pixels now · new · dropped</small></span><span class="ct"><b>N ${cn('w', 'N')}</b><span>S ${cn('w', 'S')}</span></span></button>
+    ${cmp && o && sel === 'all' ? `<div class="fin">Day values, ${CN()} → current masks (corrected, iteration 2):<br>
+      T<sub>p,water</sub> N ${ar('N', 'water_c', ' K')} · S ${ar('S', 'water_c', ' K')}<br>
+      T<sub>p,ice</sub> N ${ar('N', 'ice_c', ' K')} · S ${ar('S', 'ice_c', ' K')}<br>
+      σ water SIC N ${ar('N', 'w_std_c', ' %')} · S ${ar('S', 'w_std_c', ' %')}<br>
+      σ ice SIC N ${ar('N', 'i_std_c', ' %')} · S ${ar('S', 'i_std_c', ' %')}<br>
+      Pixels water N <b>${fmt(o.N.nw)} → ${fmt(cur.tp.N.nw)}</b> · S <b>${fmt(o.S.nw)} → ${fmt(cur.tp.S.nw)}</b><br>
+      Pixels ice N <b>${fmt(o.N.ni)} → ${fmt(cur.tp.N.ni)}</b> · S <b>${fmt(o.S.ni)} → ${fmt(cur.tp.S.ni)}</b><br>
+      Mean SST water cluster N <b>${o.N.Mw ? o.N.Mw.Ts.toFixed(1) : '–'} → ${cur.tp.N.Mw.Ts.toFixed(1)} K</b> · S <b>${o.S.Mw ? o.S.Mw.Ts.toFixed(1) : '–'} → ${cur.tp.S.Mw.Ts.toFixed(1)} K</b></div>` : ''}`
+    : (cur ? '<span class="note">Mask comparison: rebuild with globe_html.m.</span>' : '');
   return `<div class="method"><div class="crit" role="radiogroup" aria-label="Tie-point criteria">
-    <button data-crit="" role="radio" aria-checked="${!crit}" style="--c:var(--blue)"><span class="n">✓</span><span class="lbl"><span>Final clusters</span><small>default view</small></span><span class="ct"><b>${fmt(R.valid)}</b><span>valid pixels</span></span></button>
+    <button data-crit="" role="radio" aria-checked="${!crit && !cmp}" style="--c:var(--blue)"><span class="n">✓</span><span class="lbl"><span>Final clusters</span><small>default view</small></span><span class="ct"><b>${fmt(R.valid)}</b><span>valid pixels</span></span></button>
+    ${cmpRow}
     ${grp('w')}${grp('i')}
     <span style="color:var(--label2);font-size:12px">After preprocessing (step ${LAST}). Tap a criterion: passing pixels coloured, drop-outs red. Removed pixels hidden.</span></div></div>`;
 }

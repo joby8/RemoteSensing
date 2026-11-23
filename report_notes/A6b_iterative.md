@@ -108,3 +108,5 @@ The southern ice tie point was the weak point (contrast 59 K, ice std 40 %): wit
   - The paper (p. 1253–1254) does one RTM correction, starting from the uncorrected SIC.
   - We start from ERA5 c (iteration 1) and iterate once more (iteration 2).
   - Question for Tonboe: `questions_2026-11-17.md`.
+
+> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).

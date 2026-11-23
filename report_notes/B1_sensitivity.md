@@ -176,3 +176,5 @@ Tonboe 2026-11-17: compare (a) iteration 1 mean L, iteration 2 per-pixel L with 
 ## Next / open
 - Check Ti from Eq. 15 vs. ERA5 `istl1` on the ice side.
 - Task 3 (B2) done: noise flat to ~40°, then rises towards the edge, as expected from this figure (`B2_angle.md`).
+
+> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).

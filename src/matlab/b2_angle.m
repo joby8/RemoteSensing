@@ -181,5 +181,4 @@ end
 
 function c = clipc(sic)
 c = min(max(sic, 0), 1);
-c(c < 0.15) = 0;
 end

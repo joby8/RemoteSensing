@@ -14,12 +14,12 @@ Applied on top of the A3 filters (scan positions 5–74, |lat| ≥ 50°):
 | | Open water | Ice |
 |---|---|---|
 | ERA5 SIC | siconc ≤ 0.01 | siconc > 0.8 |
-| SST | > 278 K | – |
+| SST | **> 273 K** (23 Nov; 20 Nov: 275 K; before: 278 K) | – |
 | T_B | 90 K < T_B < 180 K | **180 K** < T_B < 274 K |
-| ERA5 land fraction | lsm = 0 | lsm = 0 |
-| Latitude | \|lat\| ≥ 50° | \|lat\| ≥ 50° |
+| ERA5 land fraction | lsm = 0 **and ≤ 10 % land in the 5 × 5 box** (box new 20 Nov) | same |
+| Latitude | **\|lat\| > 55°** (until 20 Nov: ≥ 50°) | \|lat\| ≥ 50° |
 
-History: first version (2026-11-13) used siconc = 0 (water), siconc ≥ 0.95 and 100 K < T_B (ice), no lsm cut. A6b (2026-11-13) switched the ice cluster to Table 2's siconc > 0.8. Meeting 2026-11-17: siconc ≤ 0.01 counts as ocean, ice T_B lower limit 180 K (clear-ocean pixels at ≈ 145 K had been counted as ice; 180 K = upper water limit, no overlap), coastal pixels out (lsm = 0).
+History: first version (2026-11-13) used siconc = 0 (water), siconc ≥ 0.95 and 100 K < T_B (ice), no lsm cut. A6b (2026-11-13) switched the ice cluster to Table 2's siconc > 0.8. Meeting 2026-11-17: siconc ≤ 0.01 counts as ocean, ice T_B lower limit 180 K (clear-ocean pixels at ≈ 145 K had been counted as ice; 180 K = upper water limit, no overlap), coastal pixels out (lsm = 0). Meeting 2026-11-20: water SST > 275 K and |lat| > 55° (more and colder water pixels), both lsm = 0 and ≤ 10 % land in the 5 × 5 box (no tie points next to the coast); thresholds in `tp_opt.m`, the 17 Nov masks are `tp_opt('nov17')`. Why: see `A4b_tp_sweep.md`. 2026-11-23: SST > 273 K (A4d); a tie-point outlier test was tried and rejected (`A4e_tp_outliers.md`); 20 Nov masks = `tp_opt('nov20')`.
 
 Split into North (lat > 0) and South.
 

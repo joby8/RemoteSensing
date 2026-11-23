@@ -30,7 +30,7 @@ north = o.lat > 0;
 sic_u = (o.tb_f - T2.(N).water_u) / (T2.(N).ice_u - T2.(N).water_u);
 sic1  = (o.tb_f + o1.dtb - T1.(N).water_c) / (T1.(N).ice_c - T1.(N).water_c);
 sic2  = (o.tb_f + o.dtb  - T2.(N).water_c) / (T2.(N).ice_c - T2.(N).water_c);
-c1 = min(max(sic1, 0), 1); c1(c1 < 0.15) = 0;            % c used in iteration 2
+c1 = min(max(sic1, 0), 1);                               % c used in iteration 2 (no 15 % filter since 2026-11-20)
 flags = uint8(~isnan(o.tb_f) == 0) + 2*uint8(isedge) + 4*uint8(abs(o.lat) < cfg.lat_min) + 8*uint8(isnan(o.sst)) ... % land bit = cfg.land 'sst'
       + 16*uint8(o.mw) + 32*uint8(o.mi) + 64*uint8(north);
 t = regexp(files(fi(k)).name, 't(\d{2})(\d{2})', 'tokens', 'once');

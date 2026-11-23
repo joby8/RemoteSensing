@@ -25,7 +25,11 @@ Use them as the writing plan for the report (due 6 Dec) and the seminar (4 Dec).
 | A3b Preprocessing validated against DMI's field | [A3b_filter_validation.md](A3b_filter_validation.md) | Method: preprocessing (validation) |
 | C1 Reference book NASA SP-459 (Zwally et al. 1983): map overlay + extent comparison | [C1_SP459_comparison.md](C1_SP459_comparison.md), step-by-step page [C1_sp459_steps.html](C1_sp459_steps.html) | Discussion / validation |
 | Visualisation | [globe_viewer.md](globe_viewer.md) | Figures / seminar |
+| Meeting 2026-11-20 (Tonboe): masks, clipping, uncertainty, grid | [meeting_2026-11-20.md](meeting_2026-11-20.md) | decisions, to-dos |
+| A4b–A4d Tie-point mask sweeps (SST, latitude, land box) | [A4b_tp_sweep.md](A4b_tp_sweep.md) | Method: tie points |
+| A4e Tie-point outlier test (tried, not used) | [A4e_tp_outliers.md](A4e_tp_outliers.md) | Method: tie points (rejected option) |
+| Recompute 2026-11-23 with the new masks: old → new numbers | [rerun_2026-11-23.md](rerun_2026-11-23.md) | all results |
 | Pipeline overview (all steps, paper + RTM equations, sources) | [pipeline_flowchart.html](pipeline_flowchart.html) | Method: overview figure / seminar |
-| Explainer video (learning, defence prep) | [../video/script.md](../video/script.md) → `output/video/ESMR_pipeline_explainer.mp4` | seminar / oral exam |
+| Explainer video (not updated any more since 2026-11-23) | [../video/script.md](../video/script.md) → `output/video/ESMR_pipeline_explainer.mp4` | seminar / oral exam |
 
 Still to come: B4 (Task 4 recommendation).

@@ -42,3 +42,5 @@ Meeting with Tonboe on 2026-11-17: do a study on how L enters the correction. We
   - But the ERA5 L of 1973 does not match the clouds the radiometer saw, so the per-pixel correction over-corrects cloudy pixels and adds noise.
   - Keeping L at the cluster mean (as in Kolbe et al. 2024) is the right choice.
 - Task 4 recommendation: do not correct for L with ERA5 cloud liquid; correct V, W (and Ti for ice) only.
+
+> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).

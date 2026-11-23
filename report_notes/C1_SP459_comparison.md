@@ -39,7 +39,7 @@ Goal: use SP-459 at the end to **interpret our data**. Not a strict validation (
 Possible script: `src/matlab/c1_sp459_compare.m` (monthly grid South, area, figure next to a cropped page of the book).
 
 ## What we did (c1_sp459_compare.m)
-1. **Our map:** every day `correct_day.m` (A6b, 2 iterations); SIC per pixel with that day's corrected South tie points (month mean: water 140.9 K, ice 210.9 K; old masks 201.0 K). Pixels binned on a **30 km polar stereographic grid** (as SP-459). Monthly mean = mean of the unclipped pixel SIC, then clipped to 0–100 %. Land = ERA5 (sst NaN).
+1. **Our map:** every day `correct_day.m` (A6b, 2 iterations); SIC per pixel with that day's corrected South tie points (month mean: water 140.9 K, ice 210.9 K; old masks 201.0 K). Pixels binned on a **30 km polar stereographic grid** (as SP-459). Monthly mean = mean of the daily cell means of the unclipped pixel SIC (every day the same weight, since 2026-11-20), then clipped to 0–100 %. Land = ERA5 (sst NaN).
 2. **Georeferencing the scan:** the map is polar stereographic, 0° up (checked: circle radii follow tan((90°−|φ|)/2); equal-area fits worse). Affine fit (the scan is ~1.6 % stretched vertically) to 129 points on the 55–70°S circles + 87 points on the 45° meridians → **rms 1.6 px ≈ 9 km** (< 1/3 grid cell).
 3. **Ice / no ice from the scan:** every image pixel → nearest of the 23 legend colours, land (black) or graticule line. Grid cell = majority of the non-line pixels in a 7×7 window. Ice = any class ≥ 16 %. Isolated ice cells (< 3 ice neighbours) removed (light speckles in the printed water fall into the "≥ 98 %" class). Note: the "32 %" colour is very close to the "< 14 %" water colour → nearest-class matching, not a simple threshold.
 4. **Comparison** on common cells (lat ≤ −52°, SP-459 not land, we have ocean data): our ice = mean SIC ≥ 15 %.
@@ -88,3 +88,10 @@ Numbers above (201.0 K, 3.86 × 10⁶ km², 95.7 %) are the **old** run; new:
 - Per sector (SP-459 / ours): Weddell 1.66 / 1.68, Indian 0.86 / 0.56, Pacific 0.84 / 0.73, Ross 1.12 / 1.15, Bellingshausen-Amundsen 1.41 / 1.28.
 - Ice area (all cells ≥ 15 %, lat ≤ −50°): 3.43 × 10⁶ km² (unchanged).
 - C2 reads the same map with the coast fix (dark-grey 76 % class = coastline) and gives a book extent of 5.23 → use the C2 numbers in the report.
+
+## Rerun 2026-11-20: every day has the same weight
+- Per cell first the daily mean SIC, then the mean over the days (before: all pixels of the month pooled, so days with more overpasses counted more).
+- Extent, common cells: ours **5.40 × 10⁶ km²** (was 5.39); both 4.74, only ours 0.66, only SP-459 1.16. Agreement **96.0 %** (unchanged).
+- Ice area (all cells ≥ 15 %, lat ≤ −50°): **3.45 × 10⁶ km²** (was 3.43). Per sector the extent changes by ≤ 0.02 × 10⁶ km².
+
+> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).

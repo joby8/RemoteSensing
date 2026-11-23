@@ -155,3 +155,5 @@ Rebuild the filter chain of Kolbe et al. (2024, Sect. 2.2, p. 1249) as one confi
 ## Open
 - Ask Tonboe or DMI to confirm the rule, including the Analog_15 omission and the wrap-around at the file end.
 - ~~Scripts with their own edge/latitude/land copies~~: switched to `o.valid` / `preproc_config()` on 2026-11-17 (a3_filter, a4_mask, a5_sic, a6_corrected, b2_angle (with `cfg.edge = []`), globe_plot, video_export, correct_day). Kept on purpose, display only: the land background in b7_correction_map and c1_sp459_compare; the fixed comparison region in a3b_validate_filters.
+
+> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).

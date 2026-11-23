@@ -6,17 +6,21 @@ function [O, TP] = correct_day(fnames, NIT, cfg, opts)
 %   iterate once more with c from the corrected SIC (iteration 2); see report_notes/A6b_iterative.md.
 % cfg: preprocessing settings (preproc_config.m; default preproc_config()). Pixels used = o.valid from load_orbit
 %      (outlier filters + swath edge + |lat| >= lat_min + land rule).
-% opts (optional struct): opts.extra = false (default) -> behaviour as before. opts.extra = true adds the
+% opts (optional struct): opts.tp = tie-point mask thresholds passed to tp_masks.m (sst_min, wlat_min, lsm_max;
+%      default = tp_opt.m, masks of 2026-11-23; tp_opt('nov20'), tp_opt('nov17') = the masks before).
+%      opts.extra = false (default) -> behaviour as before. opts.extra = true adds the
 %      Task 2 / Task 3 outputs for the globe (globe_html.m), WITHOUT changing any number of the default:
 %      - swath-edge pixels (removed only by the cfg.edge step) are corrected too (B2 method, b2_angle.m);
 %        clusters, reference means Mw/Mi and tie points still come from o.valid only;
 %      - dtb of iteration 1, exclusion cases (b1c_exclusion.m) and the per-pixel-L case (b1i_L_study.m (a));
 %      - SIC sums per scan position (b2_angle.m) and the matching tie points / std in TP.
 % Same steps as a6b_iterative.m:
-%   clusters per hemisphere (tp_masks.m, |lat| >= 50): water siconc <= 0.01, sst > 278, 90 < TB < 180, lsm == 0;
-%                                                      ice siconc > 0.8, 180 < TB < 274, lsm == 0
+%   clusters per hemisphere (tp_masks.m, |lat| >= 50; masks of 2026-11-20, tp_opt.m): water siconc <= 0.01,
+%     sst > 273, |lat| > 55, 90 < TB < 180;  ice siconc > 0.8, 180 < TB < 274;
+%     both lsm = 0 and 5x5 box mean lsm <= 0.10; optional (off): outlier test on the corrected TB (tp_outlier.m)
 %   iteration 1: c = ERA5 siconc; reference = (1-c)*mean_water + c*mean_ice; L mean in both runs
-%   tie points = cluster means of TB + dTB; new c = SIC clipped to 0..1, < 0.15 -> 0
+%   tie points = cluster means of TB + dTB; new c = SIC clipped to 0..1 (meeting 2026-11-20: c is clipped to 0..1
+%   before EVERY iteration, the paper's open-water filter c < 0.15 -> 0 is no longer applied)
 % Returns
 %   O(k): struct per orbit with fields valid, edge (swath-edge pixels corrected, all false without opts.extra),
 %         corr = valid | edge (corrected pixels), dtb (NaN where not corrected),
@@ -26,6 +30,8 @@ function [O, TP] = correct_day(fnames, NIT, cfg, opts)
 %         reference value in the actual run, last-iteration c, as B1c), dx.L (actual run with the pixel's own L,
 %         last-iteration c, as B1i variant a); all NaN outside corr.
 %   TP.N / TP.S: water_u, ice_u, water_c, ice_c, nw, ni, w_std_u, w_std_c, i_std_u, i_std_c (std SIC in %),
+%         nwx, nix (cluster pixels removed by the TB outlier test), lim_w, lim_i ([lo hi] corrected-TB limits),
+%         nw/ni, Mw/Mi, water_u/ice_u = final clusters (without the outliers); it1 = iteration 1 with all pixels,
 %         Mw, Mi (cluster means of V, W, L, Ts, Ti: the reference is (1-c)*Mw + c*Mi)
 %         opts.extra only (SIC in %, statistics over the cluster pixels = valid only):
 %         w_mean_u, w_mean_c, i_mean_u, i_mean_c;
@@ -39,21 +45,29 @@ if nargin < 2 || isempty(NIT), NIT = 2; end
 if nargin < 3 || isempty(cfg), cfg = preproc_config(); end
 if nargin < 4 || isempty(opts), opts = struct(); end
 if ~isfield(opts, 'extra'), opts.extra = false; end
+if ~isfield(opts, 'tp'), opts.tp = struct(); end
 ex = logical(opts.extra);
 inp = {'V','W','L','Ts','Ti'};
 for k = 1:numel(fnames)
     o = load_orbit(fnames{k}, cfg);
     o.L = double(ncread(fnames{k}, 'tcw'))' - o.V;
-    [o.mw, o.mi] = tp_masks(o, o.valid, o.tb_f, o.lsm);   % masks 2026-11-17 (o.valid from esmr_preprocess)
+    [o.mw, o.mi] = tp_masks(o, o.valid, o.tb_f, o.lsm, opts.tp);   % masks 2026-11-17 (o.valid from esmr_preprocess)
     if ex, o.edge = edge_only(o, cfg); else, o.edge = false(size(o.valid)); end
     o.corr = o.valid | o.edge;                       % pixels we correct (o.valid already excludes land, cfg.land)
     if ex
-        [o.mwc, o.mic] = tp_masks(o, o.corr, o.tb_f, o.lsm);   % cluster criteria on corr (angle statistics only)
+        [o.mwc, o.mic] = tp_masks(o, o.corr, o.tb_f, o.lsm, opts.tp);   % cluster criteria on corr (angle statistics only)
         o.sp = repmat(1:size(o.tb, 2), size(o.tb, 1), 1);
     end
     o.Tsx = o.sst; o.Tsx(isnan(o.Tsx)) = 271.35;     % SST under ice where missing (weight ~0)
     O(k) = o; %#ok<AGROW>
 end
+% tie-point outlier test (tp_outlier.m, 2026-11-23): after iteration 1, per hemisphere and cluster, pixels whose
+% CORRECTED TB (iteration 1) is more than tb_mad robust std from the cluster median are taken out of the cluster for
+% iteration 2 (reference means Mw/Mi and tie points). On the corrected TB the weather signal is mostly removed, so the
+% test catches what the correction cannot explain (artefacts), not storms (A4e). o.mwx / o.mix = removed by the test
+% (o.mw / o.mi = final clusters without them). OFF by default (tp_opt tb_mad = 0, rejected 2026-11-23, A4e).
+tpo = tp_opt(opts.tp);
+for k = 1:numel(O), O(k).mwx = false(size(O(k).mw)); O(k).mix = O(k).mwx; end
 hn = 'NS';
 for h = 1:2
     hs = arrayfun(@(o) (o.lat > 0) == (h == 1), O, 'UniformOutput', false);
@@ -64,8 +78,10 @@ for h = 1:2
     isw = g('mw', 'corr'); isi = g('mi', 'corr');    % clusters: valid pixels only (mw, mi are inside valid)
     for v = inp, Mw.(v{1}) = mean(X.(v{1})(isw)); Mi.(v{1}) = mean(X.(v{1})(isi)); end
     tpw_u = mean(X.tb(isw)); tpi_u = mean(X.tb(isi));
+    lim_w = [-Inf Inf]; lim_i = lim_w; xw = false(size(isw)); xi = false(size(isi));
     c = X.ci; c(isnan(c)) = 0;
     for it = 1:NIT
+        c = min(max(c, 0), 1);                       % clip before every iteration (ERA5 siconc is already 0..1)
         r = @(f) (1 - c) .* Mw.(f) + c .* Mi.(f);
         Lr = r('L');
         dtb = esmr_rtm_vec(r('V'), r('W'), Lr, r('Ts'), r('Ti'), c, X.th) ...
@@ -77,12 +93,28 @@ for h = 1:2
             it1 = struct('water_c', tpw_c, 'ice_c', tpi_c, 'w_std_c', 100*std(sic(isw)), ...
                 'i_std_c', 100*std(sic(isi)), 'w_mean_c', 100*mean(sic(isw)));
         end
-        if it < NIT, c = min(max(sic, 0), 1); c(c < 0.15) = 0; end
+        if it == 1 && tpo.tb_mad > 0 && NIT > 1          % outlier test on the corrected TB of iteration 1
+            [kw, lo, hi] = tp_outlier(X.tb(isw) + dtb(isw), tpo.tb_mad); lim_w = [lo hi];
+            [ki, lo, hi] = tp_outlier(X.tb(isi) + dtb(isi), tpo.tb_mad); lim_i = [lo hi];
+            xw = isw; xw(isw) = ~kw; xi = isi; xi(isi) = ~ki;
+            isw = isw & ~xw; isi = isi & ~xi;
+            for v = inp, Mw.(v{1}) = mean(X.(v{1})(isw)); Mi.(v{1}) = mean(X.(v{1})(isi)); end
+            tpw_u = mean(X.tb(isw)); tpi_u = mean(X.tb(isi));
+            off = 0;                                     % back to the orbits (same order as g)
+            for k = 1:numel(O)
+                m = O(k).corr & hs{k}; nk = nnz(m);
+                t = false(size(m)); t(m) = xw(off+1:off+nk); O(k).mwx = O(k).mwx | t; O(k).mw = O(k).mw & ~t;
+                t = false(size(m)); t(m) = xi(off+1:off+nk); O(k).mix = O(k).mix | t; O(k).mi = O(k).mi & ~t;
+                off = off + nk;
+            end
+        end
+        if it < NIT, c = sic; end                    % clipped at the top of the next iteration, no 15 % filter
     end
     su = (X.tb - tpw_u) / (tpi_u - tpw_u);
     TP.(hn(h)) = struct('water_u', tpw_u, 'ice_u', tpi_u, 'water_c', tpw_c, 'ice_c', tpi_c, ...
         'nw', nnz(isw), 'ni', nnz(isi), 'w_std_u', 100*std(su(isw)), 'w_std_c', 100*std(sic(isw)), ...
-        'i_std_u', 100*std(su(isi)), 'i_std_c', 100*std(sic(isi)), 'Mw', Mw, 'Mi', Mi);
+        'i_std_u', 100*std(su(isi)), 'i_std_c', 100*std(sic(isi)), 'Mw', Mw, 'Mi', Mi, ...
+        'nwx', nnz(xw), 'nix', nnz(xi), 'lim_w', lim_w, 'lim_i', lim_i);
     % share of each input in dtb (last iteration): swap only that input from reference to pixel value.
     % L is not corrected (both runs use Lr); its part is what a correction with ERA5 L would add.
     % The parts do not add up exactly to dtb (the model is non-linear); the rest is small.

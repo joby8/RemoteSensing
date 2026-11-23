@@ -6,7 +6,9 @@
 %     dSIC  = SIC_c - SIC_u  [% SIC]
 %     share of each input: d<X> / (Tpi_c - Tpw_c)  (V, W, Ts, Ti; L is not corrected)
 %  Gridded on a 50 km polar grid (azimuthal equidistant around the pole), mean over 1-27 Feb 1973
-%  (28 Feb has 1 orbit only). Land (ERA5 lsm > 0.5 in the swath files) drawn grey.
+%  (28 Feb has 1 orbit only). Every day has the same weight: per cell first the daily mean (and daily mean of
+%  dSIC^2 for the std), then the mean over the days with data in the cell. Regional numbers likewise: mean per
+%  day and group, then mean over the days. Land (ERA5 lsm > 0.5 in the swath files) drawn grey.
 % Run from the project root:  matlab -batch "run('src/matlab/b7_correction_map.m')"
 % Outputs: output/B7_correction_map.png, output/B7_regions.csv, output/B7_grid.mat
 cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
@@ -18,7 +20,8 @@ if ~exist('days','var') || isempty(days), days = unique(fday); days(days == "022
 RES = 50; EXT = 4500;                                  % km; grid -EXT..EXT
 edges = -EXT:RES:EXT; nb = numel(edges) - 1;
 inp = {'V','W','Ts','Ti'};
-fld = [{'n','s1','s2','land','nl'}, strcat('d', inp)];
+fld = [{'n','nd','s1','s2','land','nl'}, strcat('d', inp)];
+dfl = [{'n','s1','s2'}, strcat('d', inp)];           % per-day sums, normalised per day before adding to A
 for h = 1:2, for f = fld, A(h).(f{1}) = zeros(nb); end, end %#ok<SAGROW>
 % pixel table for the regional numbers (subsampled per day to keep memory small)
 Pt = table();
@@ -27,6 +30,7 @@ for d = days(:)'
     fi = find(fday == d);
     fn = arrayfun(@(k) fullfile(files(k).folder, files(k).name), fi, 'UniformOutput', false);
     [O, TP] = correct_day(fn, 2);
+    for h = 1:2, for f = dfl, Dg(h).(f{1}) = zeros(nb); end, end %#ok<SAGROW>
     for k = 1:numel(O)
         o = O(k);
         lsm = o.lsm;                                      % display only (land background)
@@ -48,21 +52,27 @@ for d = days(:)'
             ds = 100 * (sc - su);
             [ix, iy, ok] = cell_of(o.lat(m), o.lon(m), h, edges);
             sub = [iy(ok) ix(ok)];
-            A(h).n  = A(h).n  + accumarray(sub, 1, [nb nb]);
-            A(h).s1 = A(h).s1 + accumarray(sub, ds(ok), [nb nb]);
-            A(h).s2 = A(h).s2 + accumarray(sub, ds(ok).^2, [nb nb]);
+            Dg(h).n  = Dg(h).n  + accumarray(sub, 1, [nb nb]);
+            Dg(h).s1 = Dg(h).s1 + accumarray(sub, ds(ok), [nb nb]);
+            Dg(h).s2 = Dg(h).s2 + accumarray(sub, ds(ok).^2, [nb nb]);
             for v = inp
                 p = 100 * o.(['d' v{1}])(m) / den;
-                A(h).(['d' v{1}]) = A(h).(['d' v{1}]) + accumarray(sub, p(ok), [nb nb]);
+                Dg(h).(['d' v{1}]) = Dg(h).(['d' v{1}]) + accumarray(sub, p(ok), [nb nb]);
             end
             % subsample for regional statistics
             r = find(ok); r = r(1:5:end);
             la = o.lat(m); lo = o.lon(m); c = o.c(m);
             pp = cellfun(@(v) 100*o.(['d' v])(m)/den, inp, 'UniformOutput', false);
-            q = table(repmat(h, numel(r), 1), la(r), lo(r), c(r), ds(r), 100*su(r), 100*sc(r), ...
+            q = table(repmat(h, numel(r), 1), repmat(d, numel(r), 1), la(r), lo(r), c(r), ds(r), 100*su(r), 100*sc(r), ...
                 pp{1}(r), pp{2}(r), pp{3}(r), pp{4}(r), ...
-                'VariableNames', {'h','lat','lon','c','dsic','sic_u','sic_c','pV','pW','pTs','pTi'});
+                'VariableNames', {'h','day','lat','lon','c','dsic','sic_u','sic_c','pV','pW','pTs','pTi'});
             Pt = [Pt; q]; %#ok<AGROW>
+        end
+    end
+    for h = 1:2                                       % daily cell means -> A (each day weighted equally)
+        hd = Dg(h).n > 0; A(h).n = A(h).n + Dg(h).n; A(h).nd = A(h).nd + hd;
+        for f = dfl(2:end)
+            x = zeros(nb); x(hd) = Dg(h).(f{1})(hd) ./ Dg(h).n(hd); A(h).(f{1}) = A(h).(f{1}) + x;
         end
     end
     fprintf('%s done (%d orbits)\n', d, numel(fi));
@@ -85,10 +95,10 @@ reg(~N & (lo >= 160 | lo < -130)) = "Ross (160E-130W)";
 reg(~N & lo >= -130 & lo < -70) = "Amundsen-Bellingshausen (130W-70W)";
 hm = ["Arctic","Antarctic"]';
 vn = {'sic_u','sic_c','dsic','abs_dsic','V','W','Ts','Ti'};
-G = groupsummary(table(hm(Pt.h), reg, cls, band, Pt.sic_u, Pt.sic_c, Pt.dsic, abs(Pt.dsic), Pt.pV, Pt.pW, Pt.pTs, Pt.pTi, ...
-    'VariableNames', [{'hemi','region','class','lat_band'}, vn]), {'hemi','region','class'}, 'mean', vn);
-G2 = groupsummary(table(hm(Pt.h), cls, band, Pt.sic_u, Pt.sic_c, Pt.dsic, abs(Pt.dsic), Pt.pV, Pt.pW, Pt.pTs, Pt.pTi, ...
-    'VariableNames', [{'hemi','class','lat_band'}, vn]), {'hemi','class','lat_band'}, 'mean', vn);
+G = daymean(table(hm(Pt.h), Pt.day, reg, cls, band, Pt.sic_u, Pt.sic_c, Pt.dsic, abs(Pt.dsic), Pt.pV, Pt.pW, Pt.pTs, Pt.pTi, ...
+    'VariableNames', [{'hemi','day','region','class','lat_band'}, vn]), {'hemi','region','class'}, vn);
+G2 = daymean(table(hm(Pt.h), Pt.day, cls, band, Pt.sic_u, Pt.sic_c, Pt.dsic, abs(Pt.dsic), Pt.pV, Pt.pW, Pt.pTs, Pt.pTi, ...
+    'VariableNames', [{'hemi','day','class','lat_band'}, vn]), {'hemi','class','lat_band'}, vn);
 G.lat_band = repmat("all", height(G), 1); G2.region = repmat("all", height(G2), 1);
 R = [G2(:, [1 end 2 3 4:end-1]); G(:, [1 2 3 end 4:end-1])];
 R.Properties.VariableNames = regexprep(R.Properties.VariableNames, '^mean_', 'mean_');
@@ -104,9 +114,9 @@ bwr = diverging(256);
 catc = [0.12 0.47 0.71; 0.85 0.37 0.01; 0.46 0.44 0.70; 0.75 0.10 0.30];
 names = ["Arctic","Antarctic"];
 for h = 1:2
-    n = A(h).n; mn = A(h).s1 ./ n; sd = sqrt(max(A(h).s2 ./ n - mn.^2, 0));
+    n = A(h).n; nd = A(h).nd; mn = A(h).s1 ./ nd; sd = sqrt(max(A(h).s2 ./ nd - mn.^2, 0));   % day-weighted
     few = n < 20; mn(few) = NaN; sd(few) = NaN;
-    P = cat3(A(h), inp) ./ n;                            % mean share per input
+    P = cat3(A(h), inp) ./ nd;                           % mean share per input
     [~, dom] = max(abs(P), [], 3); dom = double(dom); dom(few) = NaN;
     land = A(h).land ./ A(h).nl > 0.5;
     panels = {mn, sd, dom};
@@ -134,6 +144,15 @@ exportgraphics(fig, fullfile('output','B7_correction_map.png'), 'Resolution', 15
 fprintf('saved output/B7_correction_map.png, output/B7_regions.csv\n');
 
 %% helpers
+function G = daymean(T, grp, vn)
+% mean per (group, day), then mean over the days: every day has the same weight. GroupCount = number of pixels.
+G1 = groupsummary(T, [grp, {'day'}], 'mean', vn);
+G1.Properties.VariableNames(end-numel(vn)+1:end) = vn;
+G  = groupsummary(G1, grp, 'mean', vn);
+Gc = groupsummary(T, grp);
+G.GroupCount = Gc.GroupCount;
+end
+
 function [ix, iy, ok] = cell_of(lat, lon, h, edges)
 % azimuthal equidistant around the pole; Arctic: 0 deg lon points down, Antarctic: 0 deg lon points up
 rho = (90 - abs(lat)) * 111.2;

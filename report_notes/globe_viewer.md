@@ -10,7 +10,7 @@ Apple-style layout (system font, iOS colours, light/dark): globe with floating c
 
 ## What it shows
 - All orbits of each day in Feb 1973 on a rotatable 3D globe (drag, scroll to zoom, ←/→ for the day).
-- Colour modes: T_B, incidence angle θ, tie-point masks (`tp_masks.m`, 17 Nov: water siconc ≤ 0.01, SST > 278 K, 90–180 K; ice siconc > 0.8, 180–274 K; both ERA5 lsm = 0), **SIC raw**, **ΔT_B** (RTM correction per pixel) and **SIC corrected**.
+- Colour modes: T_B, incidence angle θ, tie-point masks (`tp_masks.m`, 23 Nov: water siconc ≤ 0.01, SST > 273 K, |lat| > 55°, 90–180 K; ice siconc > 0.8, 180–274 K; both ERA5 lsm = 0 and ≤ 10 % land in the 5 × 5 box), **SIC raw**, **ΔT_B** (RTM correction per pixel) and **SIC corrected**.
 - Correction = A6b method (c_ice from ERA5, one iteration, L not corrected) applied to **all** valid ocean pixels via `src/matlab/correct_day.m`. Same tie points and std as `a6b_iterative.m` (checked for 5 Feb: identical).
 - Tie-point table per day: T_p,water, T_p,ice, std SIC water and ice, raw → corrected.
 - **Preprocessing slider** (steps 0–8, one per calculation in the paper's order: raw swath → analog filter → Eq. 1 → Eq. 2 → Eq. 3 → Eq. 4 → swath edges → |lat| ≥ 50° → ERA5 land; see the 2026-11-17 v2 section below), removed pixels coloured by step, with pixel counts per step.
@@ -87,3 +87,36 @@ The slider step "Eq. 1" showed whole red scan lines: the DMI field `brightness_t
 
 ## Step 8: cells that are not compared are not drawn (2026-11-18)
 - The "Our SIC" and "Book" layers used to draw cells that are ocean in only one map (outside the book map, swath edges, land-mask differences) in light grey (`--nodata`). That looked like real white ice pixels. These cells are now transparent, so the globe's own ocean or land shows. Only cells that are ocean in both maps get a colour, as in the numbers (extent, area, edge agreement). The hover card still says "Not compared" for them.
+
+## 2026-11-20: new tie-point masks + comparison (day file v4)
+- Masks of 20 Nov (`tp_opt.m`): water SST > 275 K and |lat| > 55°, both ERA5 lsm = 0 and ≤ 10 % land in the 5 × 5 box. All numbers on the globe (tie points, SIC, ΔT_B) use them. The criteria list gets the new step |lat| > 55°; labels come from `tpopt` in the day file.
+- Clipping (meeting 2026-11-20): c clipped to 0..1 before each iteration, no 15 % filter any more.
+- Step 2, **Compare with 17 Nov masks**: water pixels in both masks (blue), only in the new (green), only in the old (red, dropped); ice in both (orange), new (mint), dropped (pink). The row shows the water pixel count N/S with + new / − dropped. With "All" orbits: the day's T_p,water, T_p,ice, σ water/ice SIC, pixel counts and mean SST of the water cluster, 17 Nov → 20 Nov. Hover card: "17 Nov masks: water / ice / not in a cluster".
+- Day file v4: `bits` is uint16 (`bw = 16`): bit 8 = water |lat| criterion, bits 9/10 = in the 17 Nov water / ice cluster; `tpopt`, `tp_old` (tie points with the 17 Nov masks). Older day files still load (no comparison).
+
+## 2026-11-23: SST 273 K + tie-point outlier test (day file v5)
+- Masks of 23 Nov (`tp_opt.m`): water SST > 273 K. The tie-point outlier test (`A4e_tp_outliers.md`) is off
+  (rejected); its criterion only shows when a day file was built with `tb_mad > 0`.
+- Day file v5: bits 11/12 = pixel passes the water / ice outlier test; orbit field `ox` = 1; `cmpname` = label of
+  the comparison masks. Criteria list: new last step for water and ice.
+- Step 2 comparison now against the **20 Nov** masks (`tp_opt('nov20')`): green = new water (SST 273–275 K),
+  red = dropped (none with the outlier test off). 7 Feb: the offset scan-line block over the Norwegian Sea stays in
+  the water cluster (known artefact).
+
+## 2026-11-23: daily grid mean (step 0)
+- Problem: the day view draws every pixel as a small square, orbit after orbit. Where swaths overlap (most of the
+  polar ocean: on 1 Feb, 81 % of the 30 km cells get pixels from 2 or more orbits, up to 8), the orbit drawn last
+  covers the others. The map then shows the last swath, not the day.
+- New switch **Daily grid mean** in step 0. It uses the same 30 km polar-stereographic grid as the Feb 1973 map
+  (C2, `c2_feb1973_books.m`). Per cell it shows the mean of all kept pixels of the selected orbits (sum / count),
+  so the order of the orbits does not matter. Computed in the page from the day file; no new data files.
+- Works for the value layers (T_B, raw SIC, ΔT_B, corrected SIC, exclusion cases, inputs). Masks, criteria and θ
+  stay per pixel, because a mean of classes has no meaning there. Follows the step slider, the orbit choice and
+  "Show swath edges". Thinned pixels (|lat| < 50°) are left out (outside the grid). SIC is the mean of the
+  unclipped pixel SIC, as in C1/C2.
+- Hover / click on a cell: mean, std and range of the pixels, number of pixels and orbits.
+- Check (1 Feb, raw SIC): all 305 980 kept pixels land in a cell; the cell mean equals the mean of its pixels
+  recomputed directly.
+
+## 2026-11-23: SIC colour clipped to 0–100 %
+- SIC layers (raw, corrected, exclusion cases, month view): values above 100 % get the 100 % colour (white, was pink), values below 0 % the 0 % colour (dark blue, was purple). Display only; the hover card and all statistics use the unclipped value.

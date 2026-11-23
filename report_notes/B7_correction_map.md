@@ -10,7 +10,7 @@
   - SIC_c is computed with the corrected T_B and the corrected tie points.
   - ΔSIC = SIC_c − SIC_u.
   - The share of each input (V, W, Ts, Ti) is that input's part of ΔT_B divided by the tie-point contrast. L is not corrected.
-- Pixels go onto a 50 km polar grid (azimuthal equidistant), averaged over the month. Cells with fewer than 20 pixels are left blank. Land comes from ERA5 `lsm` (> 0.5, shown grey; MATLAB has no `coastlines` without the Mapping Toolbox).
+- Pixels go onto a 50 km polar grid (azimuthal equidistant), averaged over the month with every day weighted the same (per cell daily mean first, then mean over the days; since 2026-11-20). The std map is the day-weighted std of the pixel ΔSIC. The regional numbers are also first averaged per day and group, then over the days. Cells with fewer than 20 pixels are left blank. Land comes from ERA5 `lsm` (> 0.5, shown grey; MATLAB has no `coastlines` without the Mapping Toolbox).
 - Figure `output/B7_correction_map.png`: Arctic top, Antarctic bottom. Columns: mean ΔSIC, std of ΔSIC over the month, input with the largest mean share.
 - Numbers: `output/B7_regions.csv`, grouped by class (open water c = 0, ice edge 0 < c < 0.8, ice c ≥ 0.8) × latitude band and × sector. Grid: `output/B7_grid.mat`.
 
@@ -56,3 +56,10 @@
   - The overshoot at ≥ 70° S fits the Antarctic summer problem (meeting note 7): melt and humid air near the coast.
   - Wind matters regionally (storm tracks) even though V dominates on average.
 - Figure: `output/B7_correction_map.png`, as is or with only the first and third columns for a narrower version.
+
+## Rerun 2026-11-20: every day has the same weight
+Before, all pixels of the month were pooled (days with more overpasses counted more). With equal day weights the regional mean ΔSIC changes by at most
+0.2 points (e.g. Arctic ice-edge band ≥ 70°: +1.73 → +1.85; Arctic Pacific open water +3.24 → +3.08). The tables above are from the pooled run and are
+unchanged at this precision except for these small shifts; `output/B7_regions.csv` has the new values. The maps look the same.
+
+> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).

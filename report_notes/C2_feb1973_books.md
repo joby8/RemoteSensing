@@ -6,7 +6,7 @@
 
 ## Method
 - **Our map:** as C1 for both hemispheres. Per day `correct_day.m` (A6b, iteration 2), SIC per pixel with the day's corrected tie points of its hemisphere,
-  mean of the unclipped pixel SIC per cell, then clip to 0-100 %. Days 0201-0228 (all files; 28 Feb has one orbit only, as in C1). Land = ERA5 (sst NaN).
+  per cell first the daily mean of the unclipped pixel SIC, then the mean over the days (every day has the same weight; since 2026-11-20, before: all pixels of the month pooled), then clip to 0-100 %. Days 0201-0228 (all files; 28 Feb has one orbit only, as in C1). Land = ERA5 (sst NaN).
 - **Grids** (sphere, Re = 6371 km, 30 km, L = 4800 km, n = 320). South: u = 2Re tan((90+lat)/2) sin(lon), v = +2Re tan((90+lat)/2) cos(lon).
   North: u = 2Re tan((90-lat)/2) sin(lon), v = -2Re tan((90-lat)/2) cos(lon) (0 deg down, 90E right). Row 1 = bottom.
 - **Georeference SP-489:** affine fit (image = t + A [tan(colat/2) sin(lon); tan(colat/2) cos(lon)]) to 696 points found automatically on the parallels
@@ -29,13 +29,13 @@
 |---|---|---|
 | common area | 28.14 | 44.78 |
 | extent ours / book | 16.03 / 15.60 | 5.33 / 5.23 |
-| both ice / only ours / only book | 15.06 / 0.98 / 0.54 | 4.67 / 0.66 / 0.57 |
+| both ice / only ours / only book | 15.06 / 0.98 / 0.55 | 4.67 / 0.66 / 0.56 |
 | agreement (ice and water) | 94.6 % | 97.2 % |
-| ice area ours (SIC x A, ice cells) | 14.66 | 3.36 |
+| ice area ours (SIC x A, ice cells) | 14.67 | 3.38 |
 | ice area book (class midpoints) | 13.03 | 2.61 |
 | ice area book, Table 3-2 | - (none for Feb 1973) | 2.71 |
-| ice area ours, all cells in the hemisphere | 16.42 | 3.43 |
-| mean (ours - book midpoint), cells with ice in one of them | +10.0 | +12.9 |
+| ice area ours, all cells in the hemisphere | 16.42 | 3.45 |
+| mean (ours - book midpoint), cells with ice in one of them | +10.0 | +13.1 |
 | tie points water / ice (month mean) | 144.4 K / 226.6 K | 140.9 K / 212.1 K |
 
 Classes (`C2_feb1973_classes.csv`, `C2_conc_compare.png`): in both books our SIC rises with the class and lies above the 1:1 line from 30 % up.
@@ -81,3 +81,10 @@ Cells left out (10^6 km2, in brackets the part with ice):
 - North: mostly Canadian Archipelago channels and narrow bays printed as land; ERA5 also has sst on large lakes (Canada), which we would count as ocean.
 - South: ice shelf fronts (book ocean, ERA5 land).
 - We do not adjust one mask to the other: there is no reference for which coastline is right; comparing common cells is the fair choice.
+
+## Equal day weights (2026-11-20)
+The monthly mean per cell is now the mean of the daily cell means, so every day counts the same (before: all pixels of the month pooled, days with
+more overpasses over a cell counted more). The results table above has the new numbers. Change against the pooled mean: at most 0.02 x 10^6 km2 in extent
+and area, agreement 94.6 / 97.3 % (was 94.6 / 97.2 %), mean difference to the book +10.0 / +13.1 (was +10.0 / +12.9). Cells with < 3 pixels in the month stay blank.
+
+> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).
