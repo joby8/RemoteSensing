@@ -6,13 +6,13 @@ function [SICArc, SICAnt] = calculateSIC(Data,land,Stats)
     SICAnt = (Data.Tbfilt - Stats.ant_ocean_mean(end))/(Stats.ant_ice_mean(end) - Stats.ant_ocean_mean(end));
 
     SICArc(isnan(land)) = NaN;
-    SICArc(SICArc < 0.15) = 0;
+    SICArc(SICArc < 0.05) = 0;
     SICArc(Data.Latitude < 50) = NaN;
     SICArc(Data.Latitude > 90) = NaN;
     SICArc(SICArc > 0.95) = 1;
 
     SICAnt(isnan(land)) = NaN;
-    SICAnt(SICAnt < 0.15) = 0;
+    SICAnt(SICAnt < 0.05) = 0;
     SICAnt(SICAnt > 0.95) = 1;
     SICAnt(Data.Latitude> -50) = NaN;
     SICAnt(Data.Latitude< -90) = NaN;

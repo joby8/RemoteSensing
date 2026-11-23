@@ -1,5 +1,7 @@
 function [A] = PlotOnGlobeSIC(DataArc, DataAnt, Latitude, Longitude, name)
 
+% [DataArc,DataAnt,Latitude,Longitude] = resampleNearestSIC(DataArc, DataAnt,Latitude, Longitude,0.3,0.45);
+
 % [~, ~, ~, DataArc] = averageSICByCoords(DataArc, Latitude, Longitude);
 % [~, ~, ~, DataAnt] = averageSICByCoords(DataAnt, Latitude, Longitude);
 

@@ -1,8 +1,8 @@
 load("spos2ia.mat")
 
-projectdir = '..\ESMR_colocated_filtered';
+projectdir = '..\..\ESMR_colocated_filtered';
 if ~exist(projectdir, 'dir')
-    if exist('..\ESMR_colocated_filtered', 'dir')
+    if exist('..\..\ESMR_colocated_filtered', 'dir')
         projectdir = '..\ESMR_colocated_filtered';
     elseif exist('ESMR_colocated_filtered', 'dir')
         projectdir = 'ESMR_colocated_filtered';
