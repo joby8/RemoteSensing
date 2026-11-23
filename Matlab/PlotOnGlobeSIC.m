@@ -1,12 +1,13 @@
 function [A] = PlotOnGlobeSIC(DataArc, DataAnt, Latitude, Longitude, name)
 
-% [DataArc,DataAnt,Latitude,Longitude] = resampleNearestSIC(DataArc, DataAnt,Latitude, Longitude,0.3,0.45);
+DataArc(DataArc < 0.15) = 0;
+DataArc(DataArc > 0.95) = 1;
+DataAnt(DataAnt < 0.15) = 0;
+DataAnt(DataAnt > 0.95) = 1;
 
-% [~, ~, ~, DataArc] = averageSICByCoords(DataArc, Latitude, Longitude);
-% [~, ~, ~, DataAnt] = averageSICByCoords(DataAnt, Latitude, Longitude);
-
-
-Longitude(Longitude > 180) = Longitude(Longitude > 180) - 360;
+d_grid = 0.25;
+[sic_N, lat_N, lon_N] = resampleGridSIC(DataArc, Latitude, Longitude, d_grid, [50, 90]);
+[sic_S, lat_S, lon_S] = resampleGridSIC(DataAnt, Latitude, Longitude, d_grid, [-90, -50]);
 
 figure('Color','w','Position',[100 100 1400 650]);
 
@@ -27,28 +28,13 @@ framem on
 gridm on
 hold on
 
-valid_N = isfinite(Latitude) & ...
-          isfinite(Longitude) & ...
-          isfinite(DataArc) & ...
-          Latitude >= 50 & Latitude <= 90;
-
-lat_N = Latitude;
-lon_N = Longitude;
-sic_N = DataArc;
-
-lat_N(~valid_N) = NaN;
-lon_N(~valid_N) = NaN;
-sic_N(~valid_N) = NaN;
-
-pcolorm(lat_N', lon_N', sic_N', 'AlphaData', ~isnan(sic_N));
+pcolorm(lat_N, lon_N, sic_N, 'AlphaData', ~isnan(sic_N));
 
 load coastlines
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
 colormap(gca,cmap)
 clim([0 1])
-% clim([80,280])
-
 
 title('Arctic', ...
     'FontSize',14,'FontWeight','bold');
@@ -69,28 +55,12 @@ framem on
 gridm on
 hold on
 
-
-valid_N = isfinite(Latitude) & ...
-          isfinite(Longitude) & ...
-          isfinite(DataAnt) & ...
-          Latitude <= -50 & Latitude >= -90;
-
-lat_N = Latitude;
-lon_N = Longitude;
-sic_N = DataAnt;
-
-lat_N(~valid_N) = NaN;
-lon_N(~valid_N) = NaN;
-sic_N(~valid_N) = NaN;
-
-pcolorm(lat_N, lon_N, sic_N, 'AlphaData', ~isnan(sic_N));
+pcolorm(lat_S, lon_S, sic_S, 'AlphaData', ~isnan(sic_S));
 
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
 colormap(gca,cmap)
 clim([0 1])
-% clim([80,280])
-
 
 title('Antarctic', ...
     'FontSize',14,'FontWeight','bold');
@@ -101,7 +71,7 @@ title('Antarctic', ...
 % ============================
 
 cb = colorbar('Position',[0.92 0.2 0.015 0.6]);
-cb.Label.String = 'Delta Tb in K';
+cb.Label.String = 'Sea Ice Concentration';
 cb.FontSize = 11;
 
 sgtitle(name, ...

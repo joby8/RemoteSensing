@@ -1,7 +1,8 @@
 function [A] = PlotOnGlobeDeltaTb(DataArc, DataAnt, Latitude, Longitude, name)
 
-% [~, ~, ~, DataArc] = averageSICByCoords(DataArc, Latitude, Longitude);
-% [~, ~, ~, DataAnt] = averageSICByCoords(DataAnt, Latitude, Longitude);
+d_grid = 0.35;
+[sic_N, lat_N, lon_N] = resampleGridSIC(DataArc, Latitude, Longitude, d_grid, [50, 90]);
+[sic_S, lat_S, lon_S] = resampleGridSIC(DataAnt, Latitude, Longitude, d_grid, [-90, -50]);
 
 
 Longitude(Longitude > 180) = Longitude(Longitude > 180) - 360;
@@ -25,18 +26,18 @@ framem on
 gridm on
 hold on
 
-valid_N = isfinite(Latitude) & ...
-          isfinite(Longitude) & ...
-          isfinite(DataArc) & ...
-          Latitude >= 50 & Latitude <= 90;
-
-lat_N = Latitude;
-lon_N = Longitude;
-sic_N = DataArc;
-
-lat_N(~valid_N) = NaN;
-lon_N(~valid_N) = NaN;
-sic_N(~valid_N) = NaN;
+% valid_N = isfinite(Latitude) & ...
+%           isfinite(Longitude) & ...
+%           isfinite(DataArc) & ...
+%           Latitude >= 50 & Latitude <= 90;
+% 
+% lat_N = Latitude;
+% lon_N = Longitude;
+% sic_N = DataArc;
+% 
+% lat_N(~valid_N) = NaN;
+% lon_N(~valid_N) = NaN;
+% sic_N(~valid_N) = NaN;
 
 pcolorm(lat_N', lon_N', sic_N', 'AlphaData', ~isnan(sic_N));
 
@@ -68,20 +69,20 @@ gridm on
 hold on
 
 
-valid_N = isfinite(Latitude) & ...
-          isfinite(Longitude) & ...
-          isfinite(DataAnt) & ...
-          Latitude <= -50 & Latitude >= -90;
+% valid_N = isfinite(Latitude) & ...
+%           isfinite(Longitude) & ...
+%           isfinite(DataAnt) & ...
+%           Latitude <= -50 & Latitude >= -90;
+% 
+% lat_N = Latitude;
+% lon_N = Longitude;
+% sic_N = DataAnt;
+% 
+% lat_N(~valid_N) = NaN;
+% lon_N(~valid_N) = NaN;
+% sic_N(~valid_N) = NaN;
 
-lat_N = Latitude;
-lon_N = Longitude;
-sic_N = DataAnt;
-
-lat_N(~valid_N) = NaN;
-lon_N(~valid_N) = NaN;
-sic_N(~valid_N) = NaN;
-
-pcolorm(lat_N, lon_N, sic_N, 'AlphaData', ~isnan(sic_N));
+pcolorm(lat_S, lon_S, sic_S, 'AlphaData', ~isnan(sic_N));
 
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
@@ -99,7 +100,7 @@ title('Antarctic Sea Ice Concentration', ...
 % ============================
 
 cb = colorbar('Position',[0.92 0.2 0.015 0.6]);
-cb.Label.String = 'Sea Ice Concentration';
+cb.Label.String = 'Delta Tb in K';
 cb.FontSize = 11;
 
 sgtitle(name, ...

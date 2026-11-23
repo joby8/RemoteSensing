@@ -16,8 +16,8 @@ function [T1_grid, T2_grid, lon_grid, lat_grid] = resampleNearestSIC(T1, T2, lat
     end
 
     if nargin < 6 || isempty(max_dist_deg)
-        max_lon = 1.5 * d_lon;
-        max_lat = 1.5 * d_lat;
+        max_lon = 2 * d_lon;
+        max_lat = 2 * d_lat;
     elseif isscalar(max_dist_deg)
         max_lon = double(max_dist_deg);
         max_lat = double(max_dist_deg);
