@@ -18,6 +18,7 @@ Use them as the writing plan for the report (due 6 Dec) and the seminar (4 Dec).
 | Reference: how Tonboe et al. (2022) plot sensitivity / geophysical noise | [ref_Tonboe2022_plots.md](ref_Tonboe2022_plots.md) | Task 2 figures, citations |
 | B1i L study: mean L vs. per-pixel L in the 2nd iteration (Task 2) | [B1i_L_study.md](B1i_L_study.md) | Results: Task 2 |
 | B7 Where the correction changes the SIC (map) | [B7_correction_map.md](B7_correction_map.md) | Results: Task 1 / Task 4 |
+| B8 SIC uncertainty: algorithm, resampling, total (Kolbe Eq. 18–19) | [B8_uncertainty.md](B8_uncertainty.md) | Results: Task 1 / Methods |
 | B2 Std vs. incidence angle, whole swath (Task 3) | [B2_angle.md](B2_angle.md) | Results: Task 3 |
 | Meeting 2026-11-17 | [meeting_2026-11-17.md](meeting_2026-11-17.md) | decisions, to-dos |
 | Session 2026-11-13 | [questions_2026-11-13.md](questions_2026-11-13.md) | decisions |

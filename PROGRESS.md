@@ -54,6 +54,10 @@
 
 - [x] Globe v3 (2026-11-17): panel = pipeline steps 0–7 (data → preprocessing → clusters → raw SIC → ΔT_B → corrected SIC it. 1/2 (Task 1) → exclusion test incl. L per pixel (Task 2) → σ vs θ incl. swath edges (Task 3)); numbers identical to A6b, B1c, B1i, B2 CSVs. `correct_day(..., struct('extra', true))`. Notes: `report_notes/globe_viewer.md` (v3).
 
+- [x] B8 SIC uncertainty as in Kolbe et al. (2024) Eq. 18–19 (`b8_uncertainty.m` → `output/B8_uncertainty_map.png`, CSVs): algorithm uncertainty per swath pixel (Eq. 18), resampling uncertainty = 3×3 max−min on the daily 30 km grid (same grid as C2 / globe daily grid mean), total (Eq. 19). Open water, total: N 14.0 → 11.1 %, S 12.3 → 10.1 %; algorithm part = Task 1 std (N 8.7 → 6.4, S 9.0 → 7.3 %); ice edge dominated by resampling (40–50 %). Notes: `report_notes/B8_uncertainty.md`
+
+- [x] C3 Low-pressure example (meeting 2026-11-20, point 8): `c3_low_case.m` → `output/C3_low_map.png`, `C3_low_transect.png`; 12 Feb 08:19 UTC, 942 hPa low in the Norwegian Sea. W part +5 % in the calm core, −3 % under the wind ring; V part −5 % in the cloud band; open-water std 6.5 → 5.5 % within 600 km of the core. Notes: `report_notes/C3_low_pressure.md`
+
 - [ ] B4 Task 4: recommendation (angle cut-off, which variables, ice side, clouds).
 
 - [ ] B5 Seminar slides (length tbc) · B6 Report.
