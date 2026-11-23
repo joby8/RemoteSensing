@@ -120,3 +120,24 @@ The slider step "Eq. 1" showed whole red scan lines: the DMI field `brightness_t
 
 ## 2026-11-23: SIC colour clipped to 0–100 %
 - SIC layers (raw, corrected, exclusion cases, month view): values above 100 % get the 100 % colour (white, was pink), values below 0 % the 0 % colour (dark blue, was purple). Display only; the hover card and all statistics use the unclipped value.
+
+## 2026-11-23: side panel as one list (Apple style), raw ↔ corrected on the map
+
+- **One list, no collapsing groups.** Group titles *Data*, *Method · Task 1*, *Analysis · Task 2–3*, *Validation*
+  (22 pt bold), step headers 17 pt. Only **Preprocessing** is a disclosure row (closed by default, remembered per
+  browser); when closed it shows "Step 7 of 8 · 37 % of the pixels kept".
+- **Steps renumbered:** preprocessing has no number; 1 tie-point clusters, 2 raw SIC, 3 RTM correction ΔT_B,
+  4 corrected SIC, 5 exclusion test, 6 noise vs. angle, 7 Feb 1973.
+- **No separate ice fraction c.** c is the SIC of the previous iteration (iteration 1: ERA5 siconc), so it is not a
+  step or a layer of its own any more; the footnote of step 3 explains the reference weather, the hover card shows
+  "ref. SIC".
+- **Iteration switch inside the corrected SIC row** (only visible when that layer is selected), with σ water N · S of
+  both iterations. ΔT_B and the single-input effects are always the final iteration 2.
+- **New layer "Corrected T_B"** (T_B + ΔT_B, step 3).
+- **Map bar Raw | Corrected ▶** (bottom right): switches T_B ↔ T_B + ΔT_B or raw SIC ↔ final corrected SIC
+  (iteration 2), depending on the current layer; ▶ alternates every second. Both maps use the pixels after all
+  preprocessing steps, so only the correction changes.
+- **Tie-point cluster panel:** comparison with the previous masks and the per-cluster numbers are tables
+  (Arctic | Antarctic, "now" with "± vs. before" below; green = better).
+- **No jumping:** after a click in the side panel the clicked row stays at the same place on the screen, even when
+  a panel above it closes.

@@ -63,7 +63,7 @@ canvas#globe.drag { cursor: grabbing; }
 .zoom button { width: 40px; height: 40px; border: 0; background: transparent; transition: background .15s; font-size: 22px; font-weight: 300; line-height: 1; display: grid; place-items: center; }
 .zoom button + button { border-top: .5px solid var(--sep); }
 .zoom button:active { background: var(--fill); }
-.legend { position: absolute; left: 12px; bottom: 12px; border-radius: 14px; padding: 10px 12px 8px; width: min(250px, calc(50% - 18px)); display: grid; gap: 5px; }
+.legend { position: absolute; left: 12px; bottom: 12px; border-radius: 14px; padding: 10px 12px 8px; width: min(250px, calc(100% - 290px)); display: grid; gap: 5px; }
 .legend .t { font-size: 12px; font-weight: 600; }
 .legend .t small { font-weight: 400; color: var(--label2); font-size: 12px; }
 .legend canvas { width: 100%; height: 8px; border-radius: 4px; display: block; }
@@ -132,7 +132,7 @@ button.cell:active { background: var(--fill); }
 .cell[aria-checked="true"], .cell[aria-current="true"] { background: var(--tint) !important; }
 .cell[aria-current="true"] .ttl > span:first-child { color: var(--blue); font-weight: 600; }
 .cell .ttl { min-width: 0; display: grid; }
-.method { padding: 4px 12px 12px 52px; display: grid; gap: 8px; font-size: 13px; }
+.method { padding: 4px 10px 12px 10px; display: grid; gap: 8px; font-size: 13px; }
 .method ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; counter-reset: m; }
 .method li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; counter-increment: m; }
 .method li::before { content: counter(m); width: 20px; height: 20px; border-radius: 50%; background: var(--tint); color: var(--blue); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
@@ -213,9 +213,36 @@ td + td, th + th { white-space: nowrap; padding-left: 8px; }
 /* ---- pipeline steps ---- */
 aside { gap: 34px; }
 .pstep { display: grid; gap: 8px; min-width: 0; }
+/* group titles (Apple: title 2) and step headers (headline) */
+.gtitle { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin: 14px 4px -18px; }
+.gtitle:first-child { margin-top: 0; }
+.gtitle .task { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--tint); color: var(--blue); letter-spacing: 0; }
+/* disclosure row (preprocessing) */
+.cell.disc .chev { width: 14px; height: 14px; fill: none; stroke: var(--label3); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.cell.disc[aria-expanded="true"] .chev { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .cell.disc .chev { transition: none; } }
+/* comparison table inside the cluster panel */
+.method table.ct2 { font-size: 12.5px; }
+.method table.ct2 td, .method table.ct2 th { padding: 5px 0; }
+.method table.ct2 td + td, .method table.ct2 th + th { padding-left: 10px; }
+.method table.ct2 td small { display: block; font-size: 11px; color: var(--label2); }
+.method table.ct2 .up { color: var(--green); } .method table.ct2 .dn { color: var(--drop); }
+.method .cap2 { font-size: 12px; color: var(--label2); }
+/* map: raw / corrected */
+.rcbar { position: absolute; right: 12px; bottom: 12px; height: 40px; border-radius: 20px; display: flex; align-items: center; gap: 6px; padding: 0 4px 0 12px; }
+.rcbar .q { font-size: 12px; font-weight: 600; color: var(--label2); }
+.rcbar .seg { display: flex; background: var(--fill); border-radius: 16px; padding: 2px; }
+.rcbar .seg button { border: 0; background: transparent; height: 28px; padding: 0 11px; border-radius: 14px; font-size: 13px; font-weight: 500; color: var(--label2); transition: background .15s, color .15s; }
+.rcbar .seg button[aria-pressed="true"] { background: var(--thumb); color: var(--seg-on); font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+.rcbar .play { width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--blue); display: grid; place-items: center; }
+.rcbar .play:hover { background: var(--hover); }
+.rcbar .play svg { width: 16px; height: 16px; fill: currentColor; }
+.rcbar .play .pa, .rcbar .play[aria-pressed="true"] .pl { display: none; }
+.rcbar .play[aria-pressed="true"] .pa { display: inline; }
+.rcbar .play[aria-pressed="true"] { background: var(--tint); }
 .pstep > .ghead { margin-top: 8px; }
-.shead { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; margin: 0 4px 2px; }
-.shead .sn { width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 14px; font-weight: 700; display: grid; place-items: center; flex: none; letter-spacing: 0; }
+.shead { display: flex; align-items: center; gap: 9px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; margin: 0 4px 0; }
+.shead .sn { width: 22px; height: 22px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center; flex: none; letter-spacing: 0; }
 .shead .task { margin-left: auto; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--tint); color: var(--blue); letter-spacing: 0; }
 button.cell:disabled { cursor: default; }
 button.cell:disabled .ttl, button.cell:disabled .trail, button.cell:disabled .tile { opacity: .45; }
@@ -267,6 +294,11 @@ button.cell:disabled:hover { background: transparent; }
           <button class="gbtn glass" id="v-n" title="Turn the globe to the North Pole"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M5 9h14" opacity=".5"/><circle cx="12" cy="5.5" r="2.2" fill="currentColor" stroke="none"/></svg>Arctic</button>
           <button class="gbtn glass" id="v-s" title="Turn the globe to the South Pole"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M5 15h14" opacity=".5"/><circle cx="12" cy="18.5" r="2.2" fill="currentColor" stroke="none"/></svg>Antarctic</button>
         </div>
+        <div class="rcbar glass" id="rcbar" role="group" aria-label="Raw or corrected">
+          <span class="q" id="rc-q">SIC</span>
+          <div class="seg"><button data-rc="0" aria-pressed="false">Raw</button><button data-rc="1" aria-pressed="false">Corrected</button></div>
+          <button class="play" id="rc-play" aria-label="Alternate raw and corrected every second" title="Alternate every second"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="pl" d="M8 5.5v13l10.5-6.5z"/><path class="pa" d="M7.5 5.5h3v13h-3zM13.5 5.5h3v13h-3z"/></svg></button>
+        </div>
         <div class="zoom glass"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div>
         <div class="legend glass" id="legend"></div>
         <div class="hcard glass" id="hcard" hidden></div>
@@ -277,8 +309,8 @@ button.cell:disabled:hover { background: transparent; }
     </div>
 
     <aside>
+      <h2 class="gtitle">Data</h2>
       <section class="pstep">
-        <h2 class="shead"><span class="sn">0</span>Data</h2>
         <div class="list">
           <div class="cell plain"><span class="ttl"><span>Day</span></span>
             <span class="trail"><select id="day" aria-label="Day"></select><span class="stepper"><button id="dprev" aria-label="Previous day">‹</button><button id="dnext" aria-label="Next day">›</button></span></span></div>
@@ -290,29 +322,35 @@ button.cell:disabled:hover { background: transparent; }
       </section>
 
       <section class="pstep">
-        <h2 class="shead"><span class="sn">1</span>Preprocessing</h2>
         <div class="list">
+          <button class="cell disc" id="pp-tog" aria-expanded="false" aria-controls="pp-body">
+            <span class="tile" style="--t:var(--gray)"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6 7.5V19l-4 1.5v-8z"/></svg></span>
+            <span class="ttl"><span>Preprocessing</span><small id="ppsum">filters of Kolbe et al. (2024), Sect. 2.2</small></span>
+            <span class="trail"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
+          <div id="pp-body" style="display:contents" hidden>
           <div class="inner"><input type="range" id="step" min="0" max="8" step="1" value="7" aria-label="Preprocessing step"><div class="ticks5"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div></div>
           <div id="steps" style="display:contents"></div>
           <label class="cell plain"><span class="ttl"><span>Show removed pixels</span><small>coloured by the step that removed them</small></span><input type="checkbox" class="switch" id="showrm"></label>
+          </div>
         </div>
-        <p class="gfoot"><span>Paper order (Kolbe et al. 2024, Sect. 2.2). Counts for the selected orbits (|lat| &lt; 50° thinned, × 16).</span><span id="stepnote"></span></p>
+        <p class="gfoot" id="pp-foot" hidden><span>Paper order (Kolbe et al. 2024, Sect. 2.2). Counts for the selected orbits (|lat| &lt; 50° thinned, × 16).</span><span id="stepnote"></span></p>
       </section>
 
+      <h2 class="gtitle">Method<span class="task">Task 1</span></h2>
       <section class="pstep">
-        <h2 class="shead"><span class="sn">2</span>Tie-point clusters</h2>
+        <h2 class="shead"><span class="sn">1</span>Tie-point clusters</h2>
         <div class="list" role="radiogroup" aria-label="Tie-point clusters" id="lay2"></div>
         <p class="gfoot">Table 2 with the 23 Nov masks (water SIC ≤ 1 %, SST &gt; 273 K, |lat| &gt; 55°; ice T<sub>B</sub> &gt; 180 K; both: lsm = 0 and ≤ 10 % land in the 5×5 box). Tap the layer to see each criterion or compare with the 20 Nov masks.</p>
       </section>
 
       <section class="pstep">
-        <h2 class="shead"><span class="sn">3</span>Raw SIC</h2>
+        <h2 class="shead"><span class="sn">2</span>Raw SIC</h2>
         <div class="list" role="radiogroup" aria-label="Raw SIC" id="lay3"></div>
-        <p class="gfoot">Eq. 16: SIC = (T<sub>B</sub> − T<sub>p,water</sub>) / (T<sub>p,ice</sub> − T<sub>p,water</sub>), tie points = cluster means of step 2, no correction.</p>
+        <p class="gfoot">Eq. 16: SIC = (T<sub>B</sub> − T<sub>p,water</sub>) / (T<sub>p,ice</sub> − T<sub>p,water</sub>), tie points = cluster means of step 1, no correction.</p>
       </section>
 
       <section class="pstep">
-        <h2 class="shead"><span class="sn">4</span><span>RTM correction ΔT<sub>B</sub></span></h2>
+        <h2 class="shead"><span class="sn">3</span><span>RTM correction ΔT<sub>B</sub></span></h2>
         <div class="segc" role="radiogroup" aria-label="Show for the selected input" id="views">
           <button role="radio" data-view="val" aria-checked="false">Value</button>
           <button role="radio" data-view="anom" aria-checked="false">Difference</button>
@@ -326,14 +364,11 @@ button.cell:disabled:hover { background: transparent; }
         <p class="gfoot">Eq. 13–14. Bar = typical size of the effect on this day.</p>
         <h3 class="ghead">Cloud water L · not corrected</h3>
         <div class="list" role="radiogroup" aria-label="Not corrected" id="notcorr"></div>
-        <p class="gfoot">L goes into both model runs with the same value, so it cancels in ΔT<sub>B</sub>.</p>
-        <h3 class="ghead">Reference</h3>
-        <div class="list" role="radiogroup" aria-label="Reference" id="ref"></div>
-        <p class="gfoot">Reference = (1 − c) · water mean + c · ice mean.</p>
+        <p class="gfoot">L goes into both model runs with the same value, so it cancels in ΔT<sub>B</sub>.<br>Reference weather = (1 − SIC) · water-cluster mean + SIC · ice-cluster mean, with the SIC of the previous iteration (iteration 1: ERA5 siconc), clipped to 0–100 %.</p>
       </section>
 
       <section class="pstep">
-        <h2 class="shead"><span class="sn">5</span>Corrected SIC<span class="task">Task 1</span></h2>
+        <h2 class="shead"><span class="sn">4</span>Corrected SIC</h2>
         <div class="list" role="radiogroup" aria-label="Corrected SIC" id="lay5"></div>
         <p class="gfoot">Eq. 13 + 16: SIC from T<sub>B</sub> + ΔT<sub>B</sub> with tie points from the corrected clusters.</p>
         <h3 class="ghead">Daily tie points</h3>
@@ -345,8 +380,9 @@ button.cell:disabled:hover { background: transparent; }
         <p class="gfoot" id="tpfoot"></p>
       </section>
 
+      <h2 class="gtitle">Analysis<span class="task">Task 2–3</span></h2>
       <section class="pstep">
-        <h2 class="shead"><span class="sn">6</span>Exclusion test<span class="task">Task 2</span></h2>
+        <h2 class="shead"><span class="sn">5</span>Exclusion test<span class="task">Task 2</span></h2>
         <p class="gfoot">σ SIC water (%) of this day, North · South. Tap a row for its corrected SIC map.</p>
         <div class="list" role="radiogroup" aria-label="Exclusion cases" id="xlist"></div>
         <div class="list"><div class="inner" id="xbars"></div></div>
@@ -354,7 +390,7 @@ button.cell:disabled:hover { background: transparent; }
       </section>
 
       <section class="pstep">
-        <h2 class="shead"><span class="sn">7</span>Noise vs. incidence angle<span class="task">Task 3</span></h2>
+        <h2 class="shead"><span class="sn">6</span>Noise vs. incidence angle<span class="task">Task 3</span></h2>
         <div class="segc" role="radiogroup" aria-label="Hemisphere" id="ang-h">
           <button role="radio" data-v="N" aria-checked="true">Arctic</button>
           <button role="radio" data-v="S" aria-checked="false">Antarctic</button>
@@ -370,11 +406,12 @@ button.cell:disabled:hover { background: transparent; }
         <div class="list"><div class="inner" id="angle"></div>
           <label class="cell plain" id="edgecell"><span class="ttl"><span>Show swath edges on the map</span><small id="edgenote">in the SIC and ΔT<sub>B</sub> maps</small></span><input type="checkbox" class="switch" id="showedge"></label>
         </div>
-        <p class="gfoot">σ of SIC per scan position over the cluster pixels. Shaded: |θ| &gt; 55.7°, removed in the analysis (step 1).</p>
+        <p class="gfoot">σ of SIC per scan position over the cluster pixels. Shaded: |θ| &gt; 55.7°, removed in the analysis (preprocessing).</p>
       </section>
 
+      <h2 class="gtitle">Validation</h2>
       <section class="pstep" id="s8">
-        <h2 class="shead"><span class="sn">8</span>February 1973 vs. book</h2>
+        <h2 class="shead"><span class="sn">7</span>February 1973 vs. book</h2>
         <div class="list">
           <label class="cell plain"><span class="ttl"><span>Show Feb 1973 overlay</span><small>monthly map on the globe instead of the swath</small></span><input type="checkbox" class="switch" id="mon-on"></label>
         </div>
@@ -569,7 +606,7 @@ const INP = {
   Ts: { name: 'Sea surface temperature', sym: 'T_s', icon: 'wave', unit: 'K', d: 1, val: [270, 285], anom: 5, src: 'ERA5 sst', note: 'matters only over water' },
   L:  { name: 'ERA5 cloud water', sym: 'L', icon: 'cloud', unit: 'kg/m²', d: 2, val: [0, 1.5], anom: 1, src: 'ERA5 tcw − tcwv', off: true },
   Lr: { name: 'L in the model', sym: 'L', icon: 'cloud', unit: 'kg/m²', d: 2, val: [0, 0.5], src: 'cluster mean' },
-  c:  { name: 'Ice fraction', sym: 'c', icon: 'half', unit: '%', d: 0, val: [0, 100], src: 'iteration 1 SIC' },
+  c:  { name: 'Ice fraction', sym: 'c', icon: 'half', unit: '%', d: 0, val: [0, 100], src: 'SIC of iteration 1, clipped' },
 };
 const CORR = ['V', 'W', 'Ti', 'Ts'];
 const NOVIEW = new Set(['c', 'Lr']);                 // single maps, no Value/Difference/Effect
@@ -622,11 +659,11 @@ function refOf(o, i, f) { const t = o.lat[i] > 0 ? cur.tp.N : cur.tp.S, c = o.in
 // ---- state ------------------------------------------------------------------
 let cur = null, dayIdx = 0, sel = 'all', mode = 'tb', step = 7, showRm = false, inp = 'V', view = 'part';
 let crit = null;                                     // tie-point criterion view: null = default clusters, else {g: 'w'|'i', k}
-let cmp = false;                                     // step 2: compare with the previous masks (day.cmpname)
+let cmp = false;                                     // step 1: compare with the previous masks (day.cmpname)
 const CN = () => (cur && cur.cmpname) || '17 Nov';
-let iter = 2;                                        // corrected SIC: iteration 1 or 2 (step 5)
-let xcase = 'full';                                  // exclusion case of the 'sicx' map (step 6)
-let showEdge = false;                                // draw swath-edge pixels that have a correction (step 7)
+let iter = 2;                                        // corrected SIC: iteration 1 or 2 (switch in the SIC row of step 4)
+let xcase = 'full';                                  // exclusion case of the 'sicx' map (step 5)
+let showEdge = false;                                // draw swath-edge pixels that have a correction (step 6)
 let tpPer = 'day';                                   // tie-point table: this day or Feb mean
 const ang = { h: 'N', src: 'day', g: 'w' };          // angle chart: hemisphere, period, surface
 let rot = [50, -62], zoom = 1;
@@ -640,7 +677,7 @@ function sicIt1(o, i) {
   const j = o.ci[i], t = hemiT(o, i);
   return j < 0 || !o.inp || !o.inp.d1 || !t.it1 ? NaN : sicT(o, i, t.it1, o.inp.d1[j]);
 }
-// exclusion cases (step 6): key in tp.X, per-pixel ΔT_B difference in o.inp
+// exclusion cases (step 5): key in tp.X, per-pixel ΔT_B difference in o.inp
 const XC = [
   { k: 'full', name: 'Full correction', sym: 'V, W, T_s, T_i', tile: '--c-dtb', icon: 'delta' },
   { k: 'V', key: 'without_V', f: 'xV', name: 'Without V', tile: '--c-V', icon: 'drop' },
@@ -663,8 +700,8 @@ const HAS = {
   edge: () => !!(cur && cur.orbits.some(o => o.nEdge > 0)),
 };
 let RM = [];
-const NEEDS_OCEAN = new Set(['sic', 'dtb', 'sicc', 'sicx', 'inp']);   // modes that only make sense for ocean pixels after all steps
-const EDGE_MODES = new Set(['sic', 'dtb', 'sicc', 'sicx']);          // modes that can show the swath edges (step 7)
+const NEEDS_OCEAN = new Set(['sic', 'dtb', 'tbc', 'sicc', 'sicx', 'inp']);   // modes that only make sense for ocean pixels after all steps
+const EDGE_MODES = new Set(['sic', 'dtb', 'tbc', 'sicc', 'sicx']);          // modes that can show the swath edges (step 6)
 const edgeOn = () => showEdge && EDGE_MODES.has(mode);
 // pixel removed by the slider, unless it is a corrected swath-edge pixel and the edge switch is on
 const hiddenAt = (o, i) => o.stage[i] <= step && !(edgeOn() && o.flag[i] === 6 && o.dtb[i] !== -32768);
@@ -715,12 +752,13 @@ function critState(o, i, g, k) {
   return b & critSteps(g)[k].bit ? 3 : 2;
 }
 // value of pixel i in the units of the colour bar (K, %, input unit); NaN = no value. Used by recolor and the day grid.
-const GRID_MODES = new Set(['tb', 'sic', 'dtb', 'sicc', 'sicx', 'inp']);   // value layers that can be averaged per grid cell
+const GRID_MODES = new Set(['tb', 'tbc', 'sic', 'dtb', 'sicc', 'sicx', 'inp']);   // value layers that can be averaged per grid cell
 function pixVal(o, i) {
   switch (mode) {
     case 'tb': return o.tb[i] / 10;
     case 'sic': return sicOf(o, i);
     case 'dtb': return o.dtb[i] / 10;
+    case 'tbc': return (o.tb[i] + o.dtb[i]) / 10;
     case 'sicc': return iter === 1 ? sicIt1(o, i) : sicCorr(o, i);
     case 'sicx': return sicX(o, i);
     case 'inp': return inpValue(o, i);
@@ -739,7 +777,7 @@ function recolor() {
   let LUT_INP, ilo, ihi;
   if (mode === 'inp') { const [lo, hi, st] = inpScale(); LUT_INP = lutOf(st, lo, hi); ilo = lo; ihi = hi; }
   ND_COL = ND;
-  CS = mode === 'tb' ? v => LUT_TB[clampI(Math.round(v - 100), 0, 180)]
+  CS = mode === 'tb' || mode === 'tbc' ? v => LUT_TB[clampI(Math.round(v - 100), 0, 180)]
      : mode === 'dtb' ? v => LUT_DTB[clampI(Math.round(v * 10) + 150, 0, 300)]
      : mode === 'inp' ? v => LUT_INP[clampI(Math.round((v - ilo) / (ihi - ilo) * 255), 0, 255)]
      : v => LUT_SIC[clampI(Math.round(v + 20), 0, 140)];
@@ -943,7 +981,7 @@ function dgCard(P, pinned = true) {
   const A = DG.acc[P.h], j = P.idx, c = A.c[j];
   hc.hidden = false; hc.classList.toggle('pinned', pinned);
   const head = pinned ? `<div class="pin"><svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z" fill="currentColor"/></svg>Pinned</div>` : '';
-  const dg = mode === 'tb' ? 1 : mode === 'dtb' || mode === 'inp' ? 2 : 1, u = LG.unit === '%' ? ' %' : ' ' + LG.unit;
+  const dg = mode === 'tb' || mode === 'tbc' ? 1 : mode === 'dtb' || mode === 'inp' ? 2 : 1, u = LG.unit === '%' ? ' %' : ' ' + LG.unit;
   const f = v => (v < 0 ? '−' + Math.abs(v).toFixed(dg) : v.toFixed(dg)) + u;
   const kv = [];
   if (c) {
@@ -1077,7 +1115,8 @@ function partsHTML(o, i) {
     return `<span class="dot" style="--c:var(--c-${f})"></span><span class="v">${sub(I.sym)} ${inpValue(o, i, f, 'val').toFixed(I.d)} <span style="opacity:.7">${I.off ? '→ used' : 'vs'} ${refOf(o, i, f).toFixed(I.d)} ${I.unit}</span></span>
       <span class="mini"><i style="--c:var(--c-${f});left:${left}%;width:${w}%;${I.off ? 'opacity:.4' : ''}"></i></span><span class="p${I.off ? ' off' : ''}">${I.off ? '0 K' : sg(p) + ' K'}</span>`;
   }).join('');
-  return `<div class="parts">${rows}</div><div class="sum"><span>Sum <b>${sg(sum)} K</b> · ΔT<sub>B</sub> <b>${sg(o.dtb[i] / 10)} K</b></span><span>c = ${inpValue(o, i, 'c').toFixed(0)} %</span></div>`;
+  const c2 = 100 * o.inp.c[o.ci[i]];
+  return `<div class="parts">${rows}</div><div class="sum"><span>Sum <b>${sg(sum)} K</b> · ΔT<sub>B</sub> <b>${sg(o.dtb[i] / 10)} K</b></span><span title="SIC of iteration 1, mixes the water and ice reference">ref. SIC ${c2.toFixed(0)} %</span></div>`;
 }
 
 // ---- side panel: lists ----------------------------------------------------------
@@ -1100,7 +1139,7 @@ function renderLayers() {
   for (const [id, keys] of Object.entries(LAYER_GROUPS)) $(id).innerHTML = keys.map(k => {
     const L = LAYERS.find(q => q.key === k);
     const small = k === 'sicc' ? `corrected · iteration ${iter} of 2` : (L.sub || '');
-    return row(L.key, L.tile, L.icon, `${L.name}${L.sym ? `<span class="sym">${sub(L.sym)}</span>` : ''}`, small) + (mode === L.key || k === 'sicc' ? methodHTML(L.key) : '');
+    return row(L.key, L.tile, L.icon, `${L.name}${L.sym ? `<span class="sym">${sub(L.sym)}</span>` : ''}`, small) + (mode === L.key ? methodHTML(L.key) : '');
   }).join('');
   renderX();
 }
@@ -1110,16 +1149,11 @@ function methodHTML(k) {
   const t = cur && cur.tp, f = v => v == null || isNaN(v) ? '–' : v.toFixed(1);
   if (k === 'sic') return `<div class="method"><div class="badge"><i>No correction</i></div>${t ? `<span class="note">Tie points N ${f(t.N.water_u)} / ${f(t.N.ice_u)} K · S ${f(t.S.water_u)} / ${f(t.S.ice_u)} K · σ water N ${f(t.N.w_std_u)} · S ${f(t.S.w_std_u)} %</span>` : ''}</div>`;
   if (k !== 'sicc') return '';
-  // the two iterations of the A6b method; tap one to map it
-  const it1 = HAS.it1(), on = mode === 'sicc';
-  const it = (n, title, small, a) => `<button data-iter="${n}" role="radio" aria-checked="${on && iter === n}" style="--c:var(--blue)"${n === 1 && !it1 ? ' disabled' : ''}>
-    <span class="n">${n}</span><span class="lbl"><span>${title}</span><small>${small}</small></span>
-    <span class="ct">${a ? `<b>${f(a.N)} · ${f(a.S)}</b><span>σ water %</span>` : ''}</span></button>`;
-  const s1 = t && t.N.it1 ? { N: t.N.it1.w_std_c, S: t.S.it1.w_std_c } : null, s2 = t ? { N: t.N.w_std_c, S: t.S.w_std_c } : null;
-  return `<div class="method"><div class="crit" role="radiogroup" aria-label="Iteration">
-    ${it(1, 'Iteration 1', 'c from ERA5 siconc', s1)}
-    ${it(2, 'Iteration 2', 'c from the SIC of iteration 1 · final', s2)}</div>
-    ${!it1 && cur ? '<span class="note">Iteration 1 map: rebuild with globe_html.m.</span>' : ''}</div>`;
+  const it1 = HAS.it1(), s1 = t && t.N.it1 ? `${f(t.N.it1.w_std_c)} · ${f(t.S.it1.w_std_c)}` : '–', s2 = t ? `${f(t.N.w_std_c)} · ${f(t.S.w_std_c)}` : '–';
+  return `<div class="method"><div class="segc" role="radiogroup" aria-label="Iteration">
+      <button role="radio" data-iter="1" aria-checked="${iter === 1}"${it1 ? '' : ' disabled'}>Iteration 1</button>
+      <button role="radio" data-iter="2" aria-checked="${iter === 2}">Iteration 2 · final</button></div>
+    <span class="cap2">${iter === 1 ? 'Reference with ERA5 siconc.' : 'Reference with the SIC of iteration 1 (final result).'} σ water N · S: ${iter === 1 ? s1 : s2} % (iteration ${iter === 1 ? 2 : 1}: ${iter === 1 ? s2 : s1} %).${!it1 && cur ? ' Iteration 1: rebuild with globe_html.m.' : ''}</span></div>`;
 }
 // typical size (mean |effect|) of each input's part for the selected orbits
 function stats() {
@@ -1144,7 +1178,8 @@ function renderCorr() {
   const bar = f => `<span class="hbar"><i style="--c:var(--c-${f});width:${100 * S[f] / max}%"></i></span>`;
   const val = f => has ? `${S[f].toFixed(1)} K` : '–';
   const inputRow = f => { const I = INP[f]; return row('inp:' + f, `--c-${f}`, I.icon, `${I.name}<span class="sym">${sub(I.sym)}</span>`, I.note || '', bar(f) + val(f)); };
-  $('corr').innerHTML = row('dtb', '--c-dtb', 'delta', 'Correction <span class="sym">ΔT<sub>B</sub></span>', 'sum of the effects below', has ? `${S.dtb.toFixed(1)} K` : '–') +
+  $('corr').innerHTML = row('tbc', '--blue', 'wave2', 'Corrected T<sub>B</sub><span class="sym">T<sub>B</sub> + ΔT<sub>B</sub></span>', 'final, iteration 2', '') +
+    row('dtb', '--c-dtb', 'delta', 'Correction <span class="sym">ΔT<sub>B</sub></span>', 'sum of the effects below', has ? `${S.dtb.toFixed(1)} K` : '–') +
     (has ? `<div class="inner"><div class="stack">${order.map(f => `<i style="--c:var(--c-${f});width:${100 * S[f] / tot}%"></i>`).join('')}</div>
       <div class="keys2">${order.map(f => `<span><span class="dot" style="--c:var(--c-${f})"></span>${sub(INP[f].sym)} ${Math.round(100 * S[f] / tot)} %</span>`).join('')}</div></div>` : '') +
     order.map(inputRow).join('') +
@@ -1152,9 +1187,14 @@ function renderCorr() {
   const t = cur && cur.tp;
   $('notcorr').innerHTML = row('inp:L', '--c-L', 'cloud', 'ERA5 cloud water<span class="sym">L</span>', 'not used · effect if it were', bar('L') + val('L')) +
     row('inp:Lr', '--c-L', 'cloud', 'L in the model<span class="sym">L<sub>ref</sub></span>', t && t.N.Mw ? `day mean N ${t.N.Mw.L.toFixed(2)} · S ${t.S.Mw.L.toFixed(2)} kg/m²` : 'day mean', '<span class="hbar"></span>0 K');
-  $('ref').innerHTML = row('inp:c', '--c-c', 'half', 'Ice fraction <span class="sym">c</span>', 'sets the reference weather', has ? `mean ${(100 * S.c).toFixed(0)} %` : '–');
 }
 document.querySelector('aside').addEventListener('click', e => {
+  const el = e.target.closest('button[data-key], button[data-crit], button[data-cmp], button[data-iter]');
+  if (!el) return;
+  rcStop();
+  keepPlace(el, () => asideClick(e));
+});
+function asideClick(e) {
   const cb = e.target.closest('button[data-crit]');
   if (cb) {                                            // tie-point criterion: toggle; criteria apply after all steps
     const [g, k] = cb.dataset.crit.split(':'), same = crit && crit.g === g && crit.k === +k;
@@ -1166,13 +1206,13 @@ document.querySelector('aside').addEventListener('click', e => {
   if (pb) { cmp = !cmp; crit = null; if (step < LAST) { step = LAST; sl.value = step; steps(); }
     renderLayers(); recolor(); legend(); redraw(); refreshCard(); return; }
   const ib = e.target.closest('button[data-iter]');
-  if (ib) { iter = +ib.dataset.iter; setMode('sicc'); tpTable(); return; }
+  if (ib) { if (!ib.disabled) { iter = +ib.dataset.iter; setMode('sicc'); tpTable(); } return; }
   const b = e.target.closest('button.cell[data-key]'); if (!b || b.disabled) return;
   const k = b.dataset.key;
   if (k.startsWith('inp:')) { inp = k.slice(4); setMode('inp'); }
   else if (k.startsWith('sicx:')) { xcase = k.slice(5); setMode('sicx'); }
   else setMode(k);
-});
+}
 for (const b of $('views').children) b.onclick = () => { view = b.dataset.view; if (mode === 'inp') setMode('inp'); else syncChecks(); };
 function syncChecks() {
   const k = keyOf();
@@ -1180,6 +1220,25 @@ function syncChecks() {
   const viewsOn = mode === 'inp' && !NOVIEW.has(inp);
   $('views').classList.toggle('dim', !viewsOn);
   for (const b of $('views').children) { b.setAttribute('aria-checked', b.dataset.view === view); b.disabled = mode === 'inp' && NOVIEW.has(inp); }
+}
+
+// ---- preprocessing: disclosure row, closed by default (remembered per browser, optional) ----
+function ppOpen(on, save) {
+  $('pp-tog').setAttribute('aria-expanded', on); $('pp-body').hidden = !on; $('pp-foot').hidden = !on;
+  if (save) try { localStorage.setItem('esmr-pp-open', on ? '1' : '0'); } catch (e) {}
+}
+try { ppOpen(localStorage.getItem('esmr-pp-open') === '1', false); } catch (e) { ppOpen(false, false); }
+$('pp-tog').onclick = () => ppOpen($('pp-tog').getAttribute('aria-expanded') !== 'true', true);
+
+// ---- keep the clicked row in place when panels above it open or close (no jumping) ----
+function keepPlace(el, fn) {
+  const sec = el.closest('section'), at = ['data-key', 'data-crit', 'data-cmp', 'data-iter', 'data-step'].find(a => el.hasAttribute(a));
+  const sel = at ? `aside [${at}="${CSS.escape(el.getAttribute(at))}"]` : null;
+  const y0 = el.getBoundingClientRect().top, ys = sec ? sec.getBoundingClientRect().top : 0;
+  fn();
+  const now = sel && document.querySelector(sel);
+  if (now) window.scrollBy(0, now.getBoundingClientRect().top - y0);
+  else if (sec) window.scrollBy(0, sec.getBoundingClientRect().top - ys);
 }
 
 // ---- controls ---------------------------------------------------------------
@@ -1220,18 +1279,48 @@ async function setDay(i) {
   if (iter === 1 && !HAS.it1()) iter = 2;
   if (!HAS.xmap(xcase)) { xcase = 'full'; }
   edgeUI();
-  renderLayers(); renderCorr(); syncChecks(); renderAngle();
+  renderLayers(); renderCorr(); syncChecks(); renderAngle(); rcUI();
   recolor(); legend(); tpTable(); steps(); redraw();
 }
 
 function setMode(m) {
   monOff();
   if (m !== 'mask') { crit = null; cmp = false; }
-  mode = m; renderLayers();
+  mode = m; renderLayers(); rcUI();
   if (NEEDS_OCEAN.has(m) && step < LAST) { step = LAST; $('step').value = LAST; steps(); }   // the state A6b works on
   syncChecks(); recolor(); legend(); redraw();
   refreshCard();
 }
+// ---- map: raw / corrected (T_B ↔ T_B + ΔT_B, SIC raw ↔ final corrected SIC), optionally alternating every second ----
+const RCP = { tb: ['tb', 'tbc'], sic: ['sic', 'sicc'] };
+let rcTimer = null;
+const rcFam = () => mode === 'tb' || mode === 'tbc' ? 'tb' : 'sic';
+function rcUI() {
+  const f = rcFam(), m = RCP[f], on = m.indexOf(mode);
+  $('rc-q').innerHTML = f === 'tb' ? 'T<sub>B</sub>' : 'SIC';
+  for (const b of $('rcbar').querySelectorAll('[data-rc]')) b.setAttribute('aria-pressed', on === +b.dataset.rc);
+  $('rc-play').setAttribute('aria-pressed', !!rcTimer);
+  $('rcbar').hidden = MON.on;
+}
+// light mode switch for the bar: no re-render of the side panel lists (they would change height every second)
+function rcShow(corr) {
+  const m = RCP[rcFam()][corr];
+  if (m === 'sicc') iter = 2;                          // corrected = final SIC
+  monOff(); crit = null; cmp = false; mode = m;
+  if (step < LAST) { step = LAST; $('step').value = LAST; steps(); }   // same pixels in both maps
+  syncChecks(); recolor(); legend(); redraw(); refreshCard(); rcUI();
+}
+function rcStop() { if (rcTimer) { clearInterval(rcTimer); rcTimer = null; rcUI(); } }
+for (const b of $('rcbar').querySelectorAll('[data-rc]')) b.onclick = () => {
+  rcStop(); if (!RCP.tb.includes(mode) && !RCP.sic.includes(mode)) mode = 'sic';
+  rcShow(+b.dataset.rc); renderLayers(); tpTable();
+};
+$('rc-play').onclick = () => {
+  if (rcTimer) { rcStop(); renderLayers(); return; }
+  if (!RCP.tb.includes(mode) && !RCP.sic.includes(mode)) mode = 'sic';
+  let k = RCP[rcFam()].indexOf(mode); if (k < 0) k = 0;
+  rcShow(k); rcTimer = setInterval(() => { k = 1 - k; rcShow(k); }, 1000); rcUI();
+};
 let LG = { title: '', unit: '' };                   // title and unit of the current colour bar (grid card)
 function legend() {
   gridUI();
@@ -1281,7 +1370,8 @@ function legend() {
       sic: [-20, 120, ICE, 'SIC raw', '%', 'Uncorrected. Below 0 % or above 100 % = noise; colour clipped to 0–100 % (hover shows the value).'],
       sicc: [-20, 120, ICE, `SIC corrected · iteration ${iter}`, '%', iter === 1 ? 'RTM-corrected, iteration 1 (c from ERA5). Colour clipped to 0–100 %.' : 'RTM-corrected, iteration 2 of 2 (final). Colour clipped to 0–100 %.'],
       sicx: [-20, 120, ICE, `SIC · ${sub(XBY[xcase].name)}`, '%', xcase === 'full' ? 'Full correction (= iteration 2).' : xcase === 'L' ? 'Corrected with ERA5 L per pixel in the model run.' : `Corrected with ${sub(XBY[xcase].name.slice(8))} set to the reference.`],
-      dtb: [-15, 15, DTB, 'Correction ΔT<sub>B</sub>', 'K', 'Added to T<sub>B</sub>.'],
+      dtb: [-15, 15, DTB, 'Correction ΔT<sub>B</sub>', 'K', 'Added to T<sub>B</sub> (final, iteration 2).'],
+      tbc: [100, 280, TB_STOPS, 'Corrected brightness temperature', 'K', 'T<sub>B</sub> + ΔT<sub>B</sub> (final, iteration 2): the measurement as if every pixel had the reference weather.'],
     }[mode];
     [lo, hi, stops, title, unit, text] = cfg;
   }
@@ -1332,6 +1422,8 @@ function steps() {
       <span class="ttl"><span${j === step ? ' style="font-weight:600"' : ''}>${s.name}</span><small>${sub(s.desc(c))}</small></span>
       <span class="trail">${trail}</span></button>`;
   }).join('');
+  let kept = K.total; for (let j = 1; j <= step; j++) if (stepOn(j)) kept -= K.rm[j];
+  $('ppsum').innerHTML = `Step ${step} of ${LAST} · ${Math.round(100 * kept / Math.max(1, K.total))} % of the pixels kept`;
   const S = STEPS[step];
   $('stepnote').innerHTML = !stepOn(step) ? (K.hasW && S.wb ? `<b>${S.name} is off.</b> Checkered: pixels it would remove (${fmt(K.wo[step])}).` : `<b>${S.name} is off.</b>`) : '';
 }
@@ -1357,6 +1449,24 @@ function critStats() {
   R.fin = fin; R.cmp = C;
   return R;
 }
+// day values with the previous masks → current masks, as a table (Arctic | Antarctic)
+function cmpTable(o) {
+  const T = cur.tp, v = (X, H, f) => X && X[H] && X[H][f] != null ? +X[H][f] : NaN;
+  const cell = (H, get, d, u, good) => {
+    const a = get(o, H), b = get(T, H), df = b - a;
+    const cls = isNaN(df) || Math.abs(df) < Math.pow(10, -d) / 2 ? '' : (good ? good(df) : null) === true ? 'up' : good && good(df) === false ? 'dn' : '';
+    const nf = x => isNaN(x) ? '–' : d === 0 ? fmt(x) : x.toFixed(d);
+    return `<td>${nf(b)}${u}<small class="${cls}">${isNaN(df) ? '' : cls === '' && Math.abs(df) < Math.pow(10, -d) / 2 ? '±0' : (df >= 0 ? '+' : '−') + nf(Math.abs(df))} vs. ${nf(a)}</small></td>`;
+  };
+  const row = (lbl, get, d, u, good) => `<tr><td>${lbl}</td>${cell('N', get, d, u, good)}${cell('S', get, d, u, good)}</tr>`;
+  const f = k => (X, H) => v(X, H, k), sst = (X, H) => X && X[H] && X[H].Mw ? X[H].Mw.Ts : NaN;
+  return `<table class="ct2"><tr><th>${CN()} → now</th><th>Arctic</th><th>Antarctic</th></tr>
+    ${row('Water pixels', f('nw'), 0, '', x => x > 0)}${row('Ice pixels', f('ni'), 0, '', x => x > 0)}
+    ${row('T<sub>p,water</sub>', f('water_c'), 1, ' K')}${row('T<sub>p,ice</sub>', f('ice_c'), 1, ' K')}
+    ${row('σ SIC water', f('w_std_c'), 1, ' %', x => x < 0)}${row('σ SIC ice', f('i_std_c'), 1, ' %', x => x < 0)}
+    ${row('SST water cluster', sst, 1, ' K', x => x < 0)}</table>
+    <span class="cap2">Day values, corrected, iteration 2. Green = better (more pixels, lower σ, colder water).</span>`;
+}
 function critHTML() {
   const R = critStats(), t = cur && cur.tp;
   const ms = a => { if (!a[0]) return '–'; const m = a[1] / a[0]; return `${m.toFixed(1)} ± ${Math.sqrt(Math.max(0, a[2] / a[0] - m * m)).toFixed(1)}`; };
@@ -1369,22 +1479,18 @@ function critHTML() {
         <span class="ct"><b>${fmt(r.pass)}</b><span class="d">−${fmt(r.drop)}</span></span></button>`;
     }).join('');
     const F = R.fin[g];
-    const fin = `<div class="fin">Cluster T<sub>B</sub> (K): N <b>${ms(F.N)}</b> · S <b>${ms(F.S)}</b>${t && sel === 'all' ? `<br>Day T<sub>p</sub>: N <b>${t.N[key].toFixed(1)}</b> · S <b>${t.S[key].toFixed(1)} K</b> · σ SIC N ${t.N[sk].toFixed(1)} · S ${t.S[sk].toFixed(1)} %` : ''}</div>`;
+    const fin = `<table class="ct2"><tr><th>${G.name} cluster</th><th>Arctic</th><th>Antarctic</th></tr>
+      <tr><td>T<sub>B</sub> (K)</td><td>${ms(F.N)}</td><td>${ms(F.S)}</td></tr>
+      ${t && sel === 'all' ? `<tr><td>Day T<sub>p</sub> raw (K)</td><td>${t.N[key].toFixed(1)}</td><td>${t.S[key].toFixed(1)}</td></tr>
+      <tr><td>σ SIC raw (%)</td><td>${t.N[sk].toFixed(1)}</td><td>${t.S[sk].toFixed(1)}</td></tr>` : ''}</table>`;
     return `<div class="gh"><span>${G.name}</span></div>${rows}${fin}`;
   };
   const o = cur && cur.tp_old, v4 = !!(cur && cur.tpopt && cur.orbits.some(q => q.bw === 16));
   const cn = (g, H) => { const a = R.cmp[g][H]; return `${fmt(a[0] + a[1])} <span style="color:var(--green)">+${fmt(a[1])}</span> <span class="d">−${fmt(a[2])}</span>`; };
   const tv = (T, H, f) => T && T[H] && T[H][f] != null ? (+T[H][f]).toFixed(1) : '–';
   const ar = (H, f, u) => `<b>${tv(o, H, f)} → ${tv(cur.tp, H, f)}${u}</b>`;
-  const cmpRow = v4 ? `<button data-cmp="1" role="radio" aria-checked="${cmp}" style="--c:var(--green)"><span class="n">⇄</span><span class="lbl"><span>Compare with ${CN()} masks</span><small>water pixels now · new · dropped</small></span><span class="ct"><b>N ${cn('w', 'N')}</b><span>S ${cn('w', 'S')}</span></span></button>
-    ${cmp && o && sel === 'all' ? `<div class="fin">Day values, ${CN()} → current masks (corrected, iteration 2):<br>
-      T<sub>p,water</sub> N ${ar('N', 'water_c', ' K')} · S ${ar('S', 'water_c', ' K')}<br>
-      T<sub>p,ice</sub> N ${ar('N', 'ice_c', ' K')} · S ${ar('S', 'ice_c', ' K')}<br>
-      σ water SIC N ${ar('N', 'w_std_c', ' %')} · S ${ar('S', 'w_std_c', ' %')}<br>
-      σ ice SIC N ${ar('N', 'i_std_c', ' %')} · S ${ar('S', 'i_std_c', ' %')}<br>
-      Pixels water N <b>${fmt(o.N.nw)} → ${fmt(cur.tp.N.nw)}</b> · S <b>${fmt(o.S.nw)} → ${fmt(cur.tp.S.nw)}</b><br>
-      Pixels ice N <b>${fmt(o.N.ni)} → ${fmt(cur.tp.N.ni)}</b> · S <b>${fmt(o.S.ni)} → ${fmt(cur.tp.S.ni)}</b><br>
-      Mean SST water cluster N <b>${o.N.Mw ? o.N.Mw.Ts.toFixed(1) : '–'} → ${cur.tp.N.Mw.Ts.toFixed(1)} K</b> · S <b>${o.S.Mw ? o.S.Mw.Ts.toFixed(1) : '–'} → ${cur.tp.S.Mw.Ts.toFixed(1)} K</b></div>` : ''}`
+  const cmpRow = v4 ? `<button data-cmp="1" role="radio" aria-checked="${cmp}" style="--c:var(--green)"><span class="n">⇄</span><span class="lbl"><span>vs. ${CN()} masks</span><small>water pixels · new · dropped</small></span><span class="ct"><b>N ${cn('w', 'N')}</b><span>S ${cn('w', 'S')}</span></span></button>
+    ${cmp && o && sel === 'all' ? cmpTable(o) : ''}`
     : (cur ? '<span class="note">Mask comparison: rebuild with globe_html.m.</span>' : '');
   return `<div class="method"><div class="crit" role="radiogroup" aria-label="Tie-point criteria">
     <button data-crit="" role="radio" aria-checked="${!crit && !cmp}" style="--c:var(--blue)"><span class="n">✓</span><span class="lbl"><span>Final clusters</span><small>default view</small></span><span class="ct"><b>${fmt(R.valid)}</b><span>valid pixels</span></span></button>
@@ -1392,7 +1498,7 @@ function critHTML() {
     ${grp('w')}${grp('i')}
     <span style="color:var(--label2);font-size:12px">After preprocessing (step ${LAST}). Tap a criterion: passing pixels coloured, drop-outs red. Removed pixels hidden.</span></div></div>`;
 }
-// ---- step 5: tie points (Task 1) -----------------------------------------------
+// ---- step 4: tie points (Task 1) -----------------------------------------------
 // Feb 1973 mean = mean of the daily values; 28 Feb has only 1 orbit and is left out
 const FEB = () => DAYS.filter(d => d.day !== '0228' && d.tp);
 function febMean(H, fn) {
@@ -1422,7 +1528,7 @@ function tpTable() {
 }
 $('tpper').addEventListener('click', e => { const b = e.target.closest('[data-per]'); if (b) { tpPer = b.dataset.per; tpTable(); } });
 
-// ---- step 6: exclusion test (Task 2) --------------------------------------------
+// ---- step 5: exclusion test (Task 2) --------------------------------------------
 function xVal(t, c, fld) {                           // fld: 'w_std' | 'w_mean' | …
   if (!t) return NaN;
   if (c.k === 'full') { const v = t[fld + '_c']; return v == null ? NaN : +v; }
@@ -1456,7 +1562,7 @@ function renderX() {
       <span class="v"><span>${f(b.N)}</span><span>${f(b.S)}</span></span>`).join('')}</div>`;
 }
 
-// ---- step 7: noise vs. incidence angle (Task 3) ---------------------------------
+// ---- step 6: noise vs. incidence angle (Task 3) ---------------------------------
 const pstd = (n, s1, s2) => n > 1 ? Math.sqrt(Math.max(0, (s2 - s1 * s1 / n) / (n - 1))) : NaN;
 // pooled per scan position: sums of count, SIC and SIC² over the day or over Feb (tp[H].spos)
 function sposAcc(H, g, src) {
@@ -1550,7 +1656,7 @@ $('showedge').onchange = e => {
   if (showEdge && !EDGE_MODES.has(mode)) setMode('sicc'); else { redraw(); refreshCard(); }
 };
 
-// ---- step 8: February 1973 monthly map vs. the NASA atlas ------------------------------------------------------
+// ---- step 7: February 1973 monthly map vs. the NASA atlas ------------------------------------------------------
 // feb1973.js (src/matlab/c2_feb1973_books.m) = ESMR_MONTH({N: H, S: H}); loaded the first time the overlay is switched on.
 // Per hemisphere H: polar-stereographic 30 km grid cropped to bbox, uint8 arrays row-major (row r0 first, column c0 first).
 const MON = { on: false, ready: false, state: 'idle', layer: 'sic', eo: false, eb: false, D: null, pin: null };   // pin = {h, i, j, ll}
@@ -1709,7 +1815,7 @@ function monUI() {
   for (const b of $('mon-layer').children) b.setAttribute('aria-checked', b.dataset.v === MON.layer);
   $('mon-eo').checked = MON.eo; $('mon-eb').checked = MON.eb;
 }
-function monRefresh() { monUI(); monColor(); legend(); redraw(); if (MON.on && MON.pin) monCard(MON.pin); else if (!hc.hidden) hc.hidden = true; }
+function monRefresh() { monUI(); rcUI(); monColor(); legend(); redraw(); if (MON.on && MON.pin) monCard(MON.pin); else if (!hc.hidden) hc.hidden = true; }
 function monLoad() {
   if (MON.state !== 'idle') return;
   MON.state = 'loading';
