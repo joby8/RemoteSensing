@@ -79,7 +79,7 @@ for i = 1:numel(days)
     S = S + dm; ND = ND + hd; N = N + D.c; NL = NL + D.cl;
     for h = 1:2, tpw(i, h) = D.tp.(hn(h)).water_c; tpi(i, h) = D.tp.(hn(h)).ice_c; end
 end
-SICh = S ./ ND; SICh(N < 3) = NaN; SICh = min(max(SICh, 0), 1);
+SICh = S ./ ND; SICh(N < 3) = NaN; SICh = min(max(SICh, 0, 'includenan'), 1, 'includenan');   % keep NaN (max(NaN,0) = 0)
 landO = NL > N & N < 3;                                     % our land (ERA5) cells
 
 %% 2a. North: SP-489 map. Legend swatches (first-year column) and georeference
@@ -127,6 +127,10 @@ for h = 1:2
     if h == 1   % near-black ice classes: only blobs >= 5 px count (thin black coast / graticule lines -> line)
         dk = ismember(pc, [8 14 15 16 21]); op = conv2(double(conv2(double(dk), ones(5), 'same') == 25), ones(5), 'same') > 0;
         pc(dk & ~op) = nc + 3;
+        % the dark outline of the ice edge, coasts and graticule is blurred to blue-grey (~[34 45 52]) and matches the land
+        % swatches better than black; land counts only in blobs >= 5x5 px (~30 km), thinner land -> line
+        lk = pc == nc + 2; op = conv2(double(conv2(double(lk), ones(5), 'same') == 25), ones(5), 'same') > 0;
+        pc(lk & ~op) = nc + 3;
     end
     PC{h} = pc;                    % 1..22 ice class, 23 water, 24 land, 25 line
     if h == 1, use = LATh{1} >= latlim(1) & PX >= 30 & PY >= 30 & PX <= 1497 & PY <= 1538;
@@ -135,14 +139,29 @@ for h = 1:2
     w = pc(sub2ind(size(pc), round(PY(iu)) + oy(:)', round(PX(iu)) + ox(:)'));
     cnt = zeros(numel(iu), nc + 3); for j = 1:nc + 2, cnt(:, j) = sum(w == j, 2); end
     nIce = sum(cnt(:, 1:nc), 2); nWat = cnt(:, nc + 1); nLand = cnt(:, nc + 2);
-    [~, mx] = max([nIce nWat nLand], [], 2); mx(nIce + nWat + nLand == 0) = 2;
+    % where our data is ocean, book land is not used (both hemispheres): the printed coast is thick and dark, the book land
+    % mask is coarser (about 1 cell wider than ERA5), and thick parts of the ice-edge outline are still matched to land.
+    % Such a cell takes ice/water from its ice and water pixels; with < 3 of them the window is doubled (coast cells),
+    % with still < 3 the cell is unreadable (no book value)
+    ourOc = ~landO(:,:,h) & ~isnan(SICh(:,:,h)); oc = ourOc(iu); nLand(oc) = 0;
+    few = oc & nIce + nWat < 3;
+    if any(few)
+        [ox2, oy2] = meshgrid(-2*win(h):2*win(h)); jf = iu(few);
+        xx = min(max(round(PX(jf)) + ox2(:)', 1), W); yy = min(max(round(PY(jf)) + oy2(:)', 1), H);
+        w2 = pc(sub2ind(size(pc), yy, xx)); c2 = zeros(numel(jf), nc + 3); for j = 1:nc + 2, c2(:, j) = sum(w2 == j, 2); end
+        cnt(few, :) = c2; nIce(few) = sum(c2(:, 1:nc), 2); nWat(few) = c2(:, nc + 1);
+    end
+    unread = oc & nIce + nWat < 3;
+    [~, mx] = max([nIce nWat nLand], [], 2); mx(nIce + nWat + nLand == 0) = 2; mx(unread) = 0;
     [~, jm] = max(cnt(:, 1:nc), [], 2);
     c0 = zeros(n); c0(iu) = mx; CLS0(:,:,h) = c0;
     bc = zeros(n); bc(iu(mx == 1)) = jm(mx == 1);
-    if h == 2   % South: the dark-grey swatch of class 76 is also the printed coastline; keep such a cell as ice only
-                % if >= 2 of its 8 neighbours are ice cells of another class (else it is coast -> land)
+    if h == 2   % South: the dark-grey swatch of class 76 is also the printed coastline; within 2 cells of our land / no data
+                % keep such a cell as ice only if >= 2 of its 8 neighbours are ice cells of another class, else it is coast:
+                % land, or unreadable where our data is ocean. Away from our coast it stays ice (76 % band in the Weddell Sea pack)
         o = ones(3); o(2, 2) = 0; nb = conv2(double(bc > 0 & bc ~= 16), o, 'same');
-        cst = bc == 16 & nb < 2; bc(cst) = 0; c0(cst) = 3; CLS0(:,:,h) = c0;
+        nearC = conv2(double(~ourOc), ones(5), 'same') > 0;
+        cst = bc == 16 & nb < 2 & nearC; bc(cst) = 0; c0(cst & ~ourOc) = 3; c0(cst & ourOc) = 0; CLS0(:,:,h) = c0;
     end
     BCL(:,:,h) = bc;
 end

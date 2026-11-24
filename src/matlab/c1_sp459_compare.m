@@ -64,7 +64,7 @@ for i = 1:numel(days)
     S = S + dm; ND = ND + hd; N = N + D.c; NL = NL + D.cl;
     tpw(i) = D.tp.water_c; tpi(i) = D.tp.ice_c;
 end
-SIC = S ./ ND; SIC(N < 3) = NaN; SIC = min(max(SIC, 0), 1);
+SIC = S ./ ND; SIC(N < 3) = NaN; SIC = min(max(SIC, 0, 'includenan'), 1, 'includenan');   % keep NaN (max(NaN,0) = 0)
 landO = NL > N & N < 3;                                     % our land (ERA5) cells
 
 %% 2. SP-459 map -> ice / water / land per grid cell

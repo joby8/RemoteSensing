@@ -22,35 +22,47 @@
   2. Thin black coast and graticule lines match the near-black classes (42, 66-78, 94 %). Dark blobs < 5 px are treated as line. Isolated land cells (graticule dots) -> water.
   3. South: the dark-grey swatch of class 76 % is also the printed coastline. Such a cell counts as ice only if >= 2 neighbours are ice of another class.
      This lowers the South book extent from 5.90 (C1) to 5.23 x 10^6 km2 (both lat <= -50).
+  4. Land at the ice edge and the coasts (2026-11-24). (a) North: the printed outline of the ice edge, coasts and graticule is blurred to
+     dark blue-grey (median RGB [34 45 52]) and matched the land swatches; 1080 ocean cells along the ice edge were book "land" (dark gaps on
+     the globe). Land pixels now count only in blobs >= 5x5 px. (b) Both hemispheres: where our data is ocean, book land is not used at all
+     (the book land mask is coarser, about 1 cell wider than ERA5, and thick parts of the outline still look like land). Such a cell takes
+     ice/water from its ice and water pixels; with < 3 of them the window is doubled; with still < 3 it is unreadable (no book value).
+     (c) South: the class-76 coast rule (fix 3) now acts only within 2 cells of our land / no data. Before, it turned a 76 % band inside the
+     Weddell Sea pack into land. Our ocean cells that the book calls land: N 1368 -> 0, S 99 -> 0. Left as gaps: our no-data coast cells
+     (< 3 pixels in the month, N 669) and unreadable book cells (book land > 2 cells wider than ERA5, mostly fjords and the archipelago, N 1304).
+  5. Bug (2026-11-24): `min(max(SICh, 0), 1)` turned NaN (cells with < 3 pixels, e.g. ice sheet interior, coast) into 0 % SIC, so these cells
+     counted as our open water. Now NaN is kept ('includenan') and such cells are not common. Most of the old "only book" area was this:
+     North 0.67 -> 0.05, South 0.57 -> 0.15 x 10^6 km2.
 - Common cells: book ocean + our ocean data, lat >= 50 N / <= -50 S (same limit in both hemispheres, = preprocessing |lat| >= 50; C1 used -52 before 2026-11-18). Our ice = mean SIC >= 15 %.
 
 ## Results (common cells, 10^6 km2)
 | | Arctic (SP-489) | Antarctic (SP-459) |
 |---|---|---|
-| common area | 28.14 | 44.78 |
-| extent ours / book | 16.03 / 15.60 | 5.33 / 5.23 |
-| both ice / only ours / only book | 15.06 / 0.98 / 0.55 | 4.67 / 0.66 / 0.56 |
-| agreement (ice and water) | 94.6 % | 97.2 % |
-| ice area ours (SIC x A, ice cells) | 14.67 | 3.38 |
-| ice area book (class midpoints) | 13.03 | 2.61 |
+| common area | 28.89 | 44.36 |
+| extent ours / book | 17.36 / 16.58 | 5.31 / 4.83 |
+| both ice / only ours / only book | 16.52 / 0.83 / 0.05 | 4.68 / 0.63 / 0.15 |
+| agreement (ice and water) | 96.9 % | 98.2 % |
+| ice area ours (SIC x A, ice cells) | 15.54 | 3.37 |
+| ice area book (class midpoints) | 13.75 | 2.35 |
 | ice area book, Table 3-2 | - (none for Feb 1973) | 2.71 |
-| ice area ours, all cells in the hemisphere | 16.42 | 3.45 |
-| mean (ours - book midpoint), cells with ice in one of them | +10.0 | +13.1 |
-| tie points water / ice (month mean) | 144.4 K / 226.6 K | 140.9 K / 212.1 K |
+| ice area ours, all cells in the hemisphere | 16.49 | 3.42 |
+| mean (ours - book midpoint), cells with ice in one of them | +10.3 | +18.9 |
+| tie points water / ice (month mean) | 142.5 K / 226.1 K | 136.6 K / 211.9 K |
 
 Classes (`C2_feb1973_classes.csv`, `C2_conc_compare.png`): in both books our SIC rises with the class and lies above the 1:1 line from 30 % up.
 South: mean SIC 31 % in the 14 % class, 56 % in 30-34 %, 80 % in 50 %, 88 % in 58 %, about 97 % above 80 %. North: 38 % in the 30 % class, 49 % at 46 %,
 90 % at 58 % and above, 92-97 % for 82-90 %.
 
 ## Interpretation
-- **Edge:** both hemispheres agree at the 95-97 % level. North: our edge is 0.4 x 10^6 km2 larger in total, but the pattern differs: "only ours" is
+- **Edge:** agreement 97 % (North) and 98 % (South). The disagreement is now almost only "only ours" (0.8 resp. 0.6 x 10^6 km2): our 15 % edge lies
+  outside the book edge; cells with book ice and our water are rare. North: our edge is 0.8 x 10^6 km2 larger in total, but the pattern differs: "only ours" is
   along the Siberian and Alaskan coasts and the Labrador/E-Greenland ice edge, "only book" is mostly in the Barents/Kara coasts and inside the archipelago (coast mask and 1-cell shifts).
 - **South, summer ice tie point:** the ice edge is fine, but concentrations are higher than the book (+13 points, area 3.36 vs 2.61 (classes) and 2.71 (Table 3-2)).
   Our ice tie point (212 K) comes from the ERA5 siconc > 0.8 cluster in summer (wet snow, melt) and is about 30 K below e_i T_i of the book (about 240 K).
   Same T_B gives higher SIC. The book total area is read from classes here; it is about 5 % below Table 3-2 (class midpoints and the dark-grey ambiguity).
 - **North, multiyear ice:** SP-489 uses e = 0.92 (first-year) everywhere. In the central Arctic multiyear ice (e about 0.84) gives a pseudo concentration
   that is too LOW, so the book values there (mostly the 82-90 % classes) are lower than a true concentration. Our SIC is about 90-97 % there. The area gap
-  (14.7 vs 13.0) is smaller than in the South because our North ice tie point (226.6 K) is closer to the book value than the summer South one,
+  (15.5 vs 13.7) is smaller than in the South because our North ice tie point (226.6 K) is closer to the book value than the summer South one,
   but the central-pack difference is the same sign. We do not model multiyear ice either (single ice tie point).
 - **Limits of the book classes:** near-black swatches (42, 66-78, 94 %) are not separable from each other or from the coast lines. The classes 70, 74 and 94 % (North) and 74 % (South)
   have a large std in the class table and should not be interpreted. Violet = 98 % and above (WET) is separated from land and water.

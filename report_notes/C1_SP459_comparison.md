@@ -95,3 +95,13 @@ Numbers above (201.0 K, 3.86 × 10⁶ km², 95.7 %) are the **old** run; new:
 - Ice area (all cells ≥ 15 %, lat ≤ −50°): **3.45 × 10⁶ km²** (was 3.43). Per sector the extent changes by ≤ 0.02 × 10⁶ km².
 
 > **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).
+
+## Fix 2026-11-24: no-data cells counted as open water
+- Bug: `min(max(SIC, 0), 1)` turned NaN (cells with < 3 pixels in the month, mostly at the coast) into 0 % SIC, so these cells were
+  "our open water" in the common cells. NaN is now kept ('includenan'); such cells are no longer common. Same fix in C2.
+- Most of the old "only SP-459" area was this, not land-mask differences (the 0.83 "at the coast" above).
+- Extent, common cells: SP-459 **5.90 → 5.00**, ours 5.35 (unchanged); both 4.73, only ours 0.62, only SP-459 **1.17 → 0.27 × 10⁶ km²**.
+  Agreement **97.3 → 98.0 %**; common area 44.41 × 10⁶ km².
+- Per sector (SP-459 / ours): Weddell 1.54 / 1.66, Indian 0.69 / 0.55, Pacific 0.70 / 0.72, Ross 0.99 / 1.15, Bellingshausen-Amundsen 1.07 / 1.27.
+  The large Indian and Bellingshausen-Amundsen gaps were mostly the bug.
+- Ice area (all cells, lat ≤ −50°) unchanged: 3.43 × 10⁶ km².
