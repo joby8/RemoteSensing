@@ -4,6 +4,10 @@ function report_style(fig, varargin)
 %   report_style(fig)                    LaTeX + font size 24 + no main title + panel labels (a), (b), ...
 %   report_style(fig, 'labels', false)   same, without panel labels (single panel)
 %   report_style(fig, 'fontsize', 24)    font size (default 24, rule 7)
+%   report_style(fig, 'width', 'full', 'aspect', 0.6)
+%                                        figure size for the final width in the one-column LaTeX report (rule 11):
+%                                        'full' = 1250 px (\textwidth, 24 pt -> ~9 pt in the PDF), 'half' = 620 px,
+%                                        or a number in px; aspect = height / width (default: keep the current one)
 %
 % What it does
 %   rule 6:  all text objects, tick labels, legends and colorbars use the LaTeX interpreter.
@@ -18,8 +22,19 @@ function report_style(fig, varargin)
 p = inputParser;
 p.addParameter('labels', true);
 p.addParameter('fontsize', 24);
+p.addParameter('width', []);
+p.addParameter('aspect', []);
 p.parse(varargin{:});
 fs = p.Results.fontsize;
+
+% ---- rule 11: final size ----
+w = p.Results.width;
+if ~isempty(w)
+    if ischar(w) || isstring(w), w = struct('full', 1250, 'half', 620).(char(w)); end
+    fig.Units = 'pixels'; ps = fig.Position;
+    asp = p.Results.aspect; if isempty(asp), asp = ps(4) / ps(3); end
+    fig.Position = [ps(1) ps(2) w round(w * asp)];
+end
 
 % ---- rule 10: no main title ----
 delete(findall(fig, 'Type', 'subplottext'));
