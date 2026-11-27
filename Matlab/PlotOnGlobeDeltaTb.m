@@ -9,7 +9,9 @@ Longitude(Longitude > 180) = Longitude(Longitude > 180) - 360;
 
 figure('Color','w','Position',[100 100 1400 650]);
 
-cmap = parula(256);
+cmap = jet(256);
+
+lim = max(max(max(abs(DataArc))), max(max(abs(DataArc))));
 
 % ============================
 % 1. NORTHERN HEMISPHERE
@@ -45,7 +47,7 @@ load coastlines
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
 colormap(gca,cmap)
-% clim([0 1])
+clim([-lim,+lim])
 % clim([80,280])
 
 
@@ -87,7 +89,7 @@ pcolorm(lat_S, lon_S, sic_S, 'AlphaData', ~isnan(sic_N));
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
 colormap(gca,cmap)
-% clim([0 1])
+clim([-lim,+lim])
 % clim([80,280])
 
 

@@ -3,7 +3,7 @@ clear
 
 init;
 
-days = 1:1;
+days = 2:2;
 
 inc = 1:78;
 
@@ -78,8 +78,7 @@ for day = days
         land(~isnan(land)) = 1;
         PlotOnGlobeDeltaTb(Corrected.ArcDelta.*land, Corrected.AntDelta.*land,Corrected.Latitude, Corrected.Longitude, 'Delta Tb')
         
-        
-        PlotOnGlobeDeltaTb(DataOfDay.pres/100.*land, DataOfDay.pres/100.*land, DataOfDay.Latitude,DataOfDay.Longitude,'Mean Sea surface pressure in hPa')
+        % PlotOnGlobeDeltaTb(DataOfDay.pres/100.*land, DataOfDay.pres/100.*land, DataOfDay.Latitude,DataOfDay.Longitude,'Mean Sea surface pressure in hPa')
         end
     end
 end

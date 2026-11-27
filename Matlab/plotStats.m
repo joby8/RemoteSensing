@@ -71,7 +71,6 @@ xlim([1,27])
 legend("NumColumns",2,'FontSize',18)
 grid
 
-
 figure('Position',[25,50, 1200,600])
 hold on
 plot(SICStatsCorrected.arc_std, 'LineStyle','-',"DisplayName","Arctic Corrected", 'LineWidth',2,'Color','b')
