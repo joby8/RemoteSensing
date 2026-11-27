@@ -34,8 +34,8 @@ iteration with the mean L (blue) or with the pixel's own ERA5 L (orange). (a, c)
 legend: monthly mean; (b, d) mean SIC per L bin (ideal: 0). (a, b) Arctic, (c, d) Antarctic.
 
 **B2_std_vs_angle**: Std of the open-water SIC against the incidence angle, 1-27 Feb 1973 (as Kolbe et al., 2024,
-Fig. 5, in % SIC), (a) Arctic, (b) Antarctic. Blue area: noise removed by the RTM correction. Negative angle: left side
-of the swath. Grey bands and dashed lines: swath edge |θ| > 55.7°, cut by Kolbe et al. (2024), kept here.
+Fig. 5, in % SIC), all 78 scan positions (full swath), (a) Arctic, (b) Antarctic. Blue area: noise removed by the RTM
+correction. Negative angle: left side of the swath.
 
 **B7_correction_map**: Where the RTM correction changes the SIC, 1-27 Feb 1973, all ocean pixels |lat| ≥ 50°.
 Columns: mean ΔSIC = corrected - uncorrected, its std over the month, and the input with the largest mean share of the
