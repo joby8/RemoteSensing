@@ -1,9 +1,9 @@
 function [A] = PlotOnGlobeSIC(DataArc, DataAnt, Latitude, Longitude, name)
 
-DataArc(DataArc < 0.15) = 0;
-DataArc(DataArc > 0.95) = 1;
-DataAnt(DataAnt < 0.15) = 0;
-DataAnt(DataAnt > 0.95) = 1;
+% DataArc(DataArc < 0.15) = 0;
+% DataArc(DataArc > 0.95) = 1;
+% DataAnt(DataAnt < 0.15) = 0;
+% DataAnt(DataAnt > 0.95) = 1;
 
 d_grid = 0.25;
 [sic_N, lat_N, lon_N] = resampleGridSIC(DataArc, Latitude, Longitude, d_grid, [50, 90]);
@@ -12,6 +12,7 @@ d_grid = 0.25;
 figure('Color','w','Position',[100 100 1400 650]);
 
 cmap = parula(256);
+cmap = jet(256);
 
 % ============================
 % 1. NORTHERN HEMISPHERE
@@ -34,7 +35,7 @@ load coastlines
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
 colormap(gca,cmap)
-clim([0 1])
+clim([-0.25 1.25])
 
 title('Arctic', ...
     'FontSize',14,'FontWeight','bold');
@@ -60,7 +61,7 @@ pcolorm(lat_S, lon_S, sic_S, 'AlphaData', ~isnan(sic_S));
 plotm(coastlat, coastlon, 'k', 'LineWidth', 0.8);
 
 colormap(gca,cmap)
-clim([0 1])
+clim([-0.25 1.25])
 
 title('Antarctic', ...
     'FontSize',14,'FontWeight','bold');

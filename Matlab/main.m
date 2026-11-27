@@ -5,14 +5,14 @@ init;
 
 days = 1:1;
 
-inc = 1+4:78-4;
+inc = 1:78;
 
 for day = days
     clear DataOfDay Corrected Corrected2
 
     % Read all data from one day
     % name = join(["..\..\ESMR_Resampled_Grid025_Sigma025\DataOfDay",day,'.mat'],'');
-    name = join(["..\..\ESMR_Matfile\DataOfDay",day,'.mat'],'');
+    name = join(["..\..\ESMR_Matfile_fullSwath\DataOfDay",day,'.mat'],'');
     load(name)
     
     % Extract inital tie points from Data
@@ -67,16 +67,19 @@ for day = days
         % Plot tie points and SIC for the day on the globe
         PlotOnGlobeTP(DataOfDay,DataOfDay.Latitude, DataOfDay.Longitude)
         PlotOnGlobeTP(Corrected,Corrected.Latitude, Corrected.Longitude)
-        PlotOnGlobeTP(Corrected2,Corrected2.Latitude, Corrected2.Longitude)
+        % PlotOnGlobeTP(Corrected2,Corrected2.Latitude, Corrected2.Longitude)
     
         PlotOnGlobeSIC(UncSICArc, UncSICAnt,Corrected.Latitude, Corrected.Longitude, 'Uncorrected Sea Ice Concentration')
         PlotOnGlobeSIC(CorSICArc, CorSICAnt,Corrected.Latitude, Corrected.Longitude, 'Corrected Sea Ice Concentration')
-        PlotOnGlobeSIC(CorSICArc2, CorSICAnt2,Corrected2.Latitude, Corrected2.Longitude, 'Corrected Sea Ice Concentration')    
+        % PlotOnGlobeSIC(CorSICArc2, CorSICAnt2,Corrected2.Latitude, Corrected2.Longitude, 'Corrected Sea Ice Concentration')    
     
         land = DataOfDay.lsm;
         land(land >0.8) = NaN;
         land(~isnan(land)) = 1;
-        PlotOnGlobeDeltaTb(Corrected.ArcDelta.*land, Corrected.AntDelta.*land,Corrected.Latitude, Corrected.Longitude, 'Delta Tb') 
+        PlotOnGlobeDeltaTb(Corrected.ArcDelta.*land, Corrected.AntDelta.*land,Corrected.Latitude, Corrected.Longitude, 'Delta Tb')
+        
+        
+        PlotOnGlobeDeltaTb(DataOfDay.pres/100.*land, DataOfDay.pres/100.*land, DataOfDay.Latitude,DataOfDay.Longitude,'Mean Sea surface pressure in hPa')
         end
     end
 end

@@ -49,7 +49,7 @@ colormap(gca,cmap)
 % clim([80,280])
 
 
-title('Arctic Sea Ice Concentration', ...
+title('Arctic Sea Ice Correction', ...
     'FontSize',14,'FontWeight','bold');
 
 

@@ -1,10 +1,10 @@
 % close all
 % clear
 
-load("Data\TPCorrected.mat")
-% load("Data\TPCorrected2.mat")
+load("Results_FullSwath\TPCorrected.mat")
+% load("Results_FullSwath\TPCorrected2.mat")
 % TPstatsCorrected = TPstatsCorrected2;
-load("Data\TPUncorrected.mat")
+load("Results_FullSwath\TPUncorrected.mat")
 
 % load("TPCorrected2_L.mat")
 % TPstatsUncorrected = TPstatsCorrected2;
@@ -47,10 +47,10 @@ xlim([1,27])
 legend("NumColumns",2,'FontSize',18)
 grid
 
-load("Data\SICCorrected.mat")
-% load("Data\SICCorrected2.mat")
+load("Results_FullSwath\SICCorrected.mat")
+% load("Results_FullSwath\SICCorrected2.mat")
 % SICStatsCorrected = SICStatsCorrected2;
-load("Data\SICUncorrected.mat")
+load("Results_FullSwath\SICUncorrected.mat")
 
 % load("SICCorrected2_L.mat")
 % SICStatsUncorrected = SICStatsCorrected2;

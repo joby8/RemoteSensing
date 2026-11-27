@@ -2,7 +2,7 @@ init;
 
 days = 1:27;
 
-inc = 1+4:78-4;
+inc = 1:78;
 
 for day = days
     % Init struct that contains all data of a day
@@ -19,7 +19,8 @@ for day = days
     'sst',[], ...
     'tcw',[], ...
     'tcwv',[], ...
-    'incidence',[]); 
+    'incidence',[], ...
+    'pres',[]); 
 
     % Read all data from one day
     for j = cdffiles
@@ -39,6 +40,7 @@ for day = days
         DataOfDay.tcw = cat(2, DataOfDay.tcw, Data.variables.tcw.data(inc,:),NaN(length(inc),2));
         DataOfDay.tcwv = cat(2, DataOfDay.tcwv, Data.variables.tcwv.data(inc,:),NaN(length(inc),2));
         DataOfDay.incidence = cat(2, DataOfDay.incidence, repmat(spos2ia(inc)', [1,Data.dimensions.Time]),NaN(length(inc),2));
+        DataOfDay.pres = cat(2,DataOfDay.pres, Data.variables.msl.data(inc,:), NaN(length(inc),2));
     end
     
     % Resample Data

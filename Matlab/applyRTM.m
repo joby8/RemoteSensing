@@ -13,7 +13,7 @@ mask(4).mask = Data.AntOcean;
 
 c(4) = struct();
 sic_init = Data.siconc;
-sic_init(Data.siconc >= 0.95) = 1;
+sic_init(Data.siconc >= 0.99) = 1;
 sic_init(Data.siconc < 0.01) = 0;
 
 c(1).c = sic_init;
