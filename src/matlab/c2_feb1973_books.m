@@ -270,14 +270,14 @@ for h = 1:2
     Z = SIC; Z(SIC < 0.15) = 0.14; rgb = ind2rgb_(Z, cm, [0.14 1]);
     rgb = paint(rgb, isnan(SIC) | ~s.common, nodat); rgb = paint(rgb, landO(:,:,h), landc);   % only common ocean cells coloured
     image(ax, g, g, rgb); set(ax, 'YDir', 'normal'); graticule_xy(ax, Re, h, lim);
-    axis(ax, 'image'); axis(ax, [-lim lim -lim lim]); axis(ax, 'off');
+    axis(ax, 'image'); axis(ax, 1.12*[-lim lim -lim lim]); axis(ax, 'off');   % margin: lon labels sit outside the map, not on the title
     title(ax, sprintf('%s: this work, mean SIC February 1973', hname{h}), 'FontWeight', 'normal');
     % (b) book classified
     ax = nexttile; hold(ax, 'on');
     Zb = zeros(n); Zb(s.midB > 0) = s.midB(s.midB > 0)/100; Zb(Zb == 0) = 0.14; rgb = ind2rgb_(Zb, cm, [0.14 1]);
     rgb = paint(rgb, cl == 0 | ~s.common, nodat); rgb = paint(rgb, cl == 3, landc);
     image(ax, g, g, rgb); set(ax, 'YDir', 'normal'); graticule_xy(ax, Re, h, lim);
-    axis(ax, 'image'); axis(ax, [-lim lim -lim lim]); axis(ax, 'off');
+    axis(ax, 'image'); axis(ax, 1.12*[-lim lim -lim lim]); axis(ax, 'off');   % margin: lon labels sit outside the map, not on the title
     title(ax, sprintf('%s: %s, classified (class midpoints)', hname{h}, bookname_(h)), 'FontWeight', 'normal');
     % (c) agreement
     ax = nexttile; hold(ax, 'on');
@@ -293,7 +293,7 @@ for h = 1:2
     for k = 1:numel(R(h).edge_ours), pl = ll2uv_(R(h).edge_ours{k}, h, Re); plot(ax, pl(:,1), pl(:,2), '-', 'Color', ink, 'LineWidth', 0.9); end
     hh(4) = plot(ax, nan, nan, '-', 'Color', '#eb6834', 'LineWidth', 1.6); hh(5) = plot(ax, nan, nan, '-', 'Color', ink, 'LineWidth', 0.9);
     nm = [nm, {['edge ' bookname_(h)], 'edge this work (15 %)'}];
-    axis(ax, 'image'); axis(ax, [-lim lim -lim lim]); axis(ax, 'off');
+    axis(ax, 'image'); axis(ax, 1.12*[-lim lim -lim lim]); axis(ax, 'off');   % margin: lon labels sit outside the map, not on the title
     legend(ax, hh, nm, 'Location', 'southoutside', 'Box', 'off', 'NumColumns', 2, 'FontSize', 8);
     title(ax, sprintf('%s: agreement %.1f %%, extent this work %.2f, %s %.2f (10^6 km^2)', hname{h}, s.agree_pct, ...
         s.extent_ours, bookname_(h), s.extent_book), 'FontWeight', 'normal', 'FontSize', 10);

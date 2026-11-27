@@ -36,7 +36,7 @@ All step notes below were updated to it on 2026-11-27, except the ones marked *h
 | per-pixel L instead of mean L (σ water) | 10.44 % | 12.22 % | B1i |
 | σ water corrected, 0–20° → outer positions | 6.6 → 8.2 % | 6.5 → 11.5 % | B2, Task 3 |
 | total uncertainty open water u → c | 14.4 → 11.3 % | 13.1 → 10.7 % | B8 |
-| extent ours / book, edge agreement | 17.36 / 16.58 Mkm², 96.9 % | 5.31 / 4.83 Mkm², 98.2 % | C2 |
+| extent ours / book, edge agreement | 17.36 / 16.58 Mkm², 96.9 % | 5.31 / 4.73 Mkm², 98.2 % | C2 |
 
 ## All notes
 
@@ -74,5 +74,7 @@ All step notes below were updated to it on 2026-11-27, except the ones marked *h
 ## Still open (meeting 2026-11-24)
 - B4: Task 4 recommendation.
 - Multiyear ice: our B8 map shows MYI as low SIC, not as higher δc (see `B8_uncertainty.md`); decide how to show it.
-- Check all report figures for clipped SIC (Tonboe: no clipping in the plots).
+- Clipping check done 2026-11-27 for the figures in `../PlotsReport/` (copies of `output/`, current state): no SIC is clipped.
+  B8 panel 1 now shows the unclipped mean SIC (colour range −10…110 %; the uncertainty itself still uses c clipped to 0…1,
+  as in Kolbe Eq. 18). Colour scales saturate (not clipped data) in B7 (±8 %) and C3 (±8 %): say so in the caption.
 - ERA5 text: reanalysis = all observations that existed in 1973 (argument and limit).

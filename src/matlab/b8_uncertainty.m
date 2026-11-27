@@ -29,7 +29,7 @@ fday  = string(regexp({files.name}, '1973m(\d{4})t', 'tokens', 'once'));
 if ~exist('days','var') || isempty(days), days = unique(fday); days(days == "0228") = []; end
 
 Re = 6371; dx = 30; L = 4800; g = (-L + dx/2):dx:(L - dx/2); n = numel(g);   % grid of C2 (row 1 = bottom)
-vu = {'sic_u','sic_c','alg_u','alg_c','res_u','res_c','tot_u','tot_c'};
+vu = {'sic_r','sic_u','sic_c','alg_u','alg_c','res_u','res_c','tot_u','tot_c'};
 for h = 1:2, for f = [vu, {'nd','np','nl'}], A(h).(f{1}) = zeros(n); end, end %#ok<SAGROW>
 pcl = ["open water (c<0.15)", "ice edge (0.15<=c<0.8)", "ice (c>=0.8)", "all"];
 RP = table(); RC = table();
@@ -82,7 +82,8 @@ for d = days(:)'
         au = nan0; au(hd) = G.au(hd) ./ G.n(hd);
         ac = nan0; ac(hd) = G.ac(hd) ./ G.n(hd);
         ru = range3(cu); rc = range3(cc);
-        D = struct('sic_u', cu, 'sic_c', cc, 'alg_u', au, 'alg_c', ac, 'res_u', ru, 'res_c', rc, ...
+        cr = nan0; cr(hd) = G.sc(hd) ./ G.n(hd);                         % unclipped cell SIC [%], only for the map
+        D = struct('sic_r', cr, 'sic_u', cu, 'sic_c', cc, 'alg_u', au, 'alg_c', ac, 'res_u', ru, 'res_c', rc, ...
                    'tot_u', sqrt(au.^2 + ru.^2), 'tot_c', sqrt(ac.^2 + rc.^2));
         for f = vu, x = D.(f{1}); x(~hd) = 0; A(h).(f{1}) = A(h).(f{1}) + x; end
         A(h).nd = A(h).nd + hd; A(h).np = A(h).np + G.n; A(h).nl = A(h).nl + G.nl;
@@ -111,9 +112,9 @@ disp(MC);
 fig = figure('Visible','off','Color','w','Position',[50 50 2300 1000]);
 tl = tiledlayout(fig, 2, 5, 'TileSpacing','compact','Padding','compact');
 gk = g / 1000; names = ["Arctic","Antarctic"];
-ttl = {'mean SIC, corrected', 'algorithm uncertainty (Eq. 18)', 'resampling uncertainty (3x3 max-min)', ...
+ttl = {'mean SIC, corrected (not clipped)', 'algorithm uncertainty (Eq. 18)', 'resampling uncertainty (3x3 max-min)', ...
        'total uncertainty (Eq. 19)', 'total: corrected - uncorrected'};
-fl = {'sic_c','alg_c','res_c','tot_c'};
+fl = {'sic_r','alg_c','res_c','tot_c'};
 for h = 1:2
     few = A(h).nd < 3; land = A(h).nl > A(h).np & few;
     for p = 1:5
@@ -125,7 +126,7 @@ for h = 1:2
         set(ax, 'YDir', 'normal'); axis(ax, 'equal'); xlim(ax, [-4.7 4.7]); ylim(ax, [-4.7 4.7]);
         rings(ax, Re);
         if p == 5, colormap(ax, diverging(256)); clim(ax, [-5 5]);
-        elseif p == 1, colormap(ax, parula(256)); clim(ax, [0 100]);
+        elseif p == 1, colormap(ax, parula(256)); clim(ax, [-10 110]);   % SIC not clipped (Tonboe 2026-11-24)
         else, colormap(ax, parula(256)); clim(ax, [0 30]); end
         cb = colorbar(ax); cb.Label.String = '% SIC';
         title(ax, sprintf('%s: %s', names(h), ttl{p}), 'FontWeight', 'normal', 'FontSize', 11);
