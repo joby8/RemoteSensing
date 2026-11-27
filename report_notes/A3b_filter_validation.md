@@ -126,16 +126,19 @@ Rebuild the filter chain of Kolbe et al. (2024, Sect. 2.2, p. 1249) as one confi
 
 | preset | water N | water S | ice N | ice S |
 | --- | --- | --- | --- | --- |
-| **default (since 2026-11-17)** | **9.68 → 7.18** | **11.81 → 9.52** | **12.36 → 10.66** | **25.07 → 24.15** |
-| eq3pixel (old default) | 9.82 → 7.38 | 11.92 → 9.59 | 12.37 → 10.67 | 25.09 → 24.17 |
-| paper | 9.82 → 7.37 | 11.91 → 9.58 | 12.36 → 10.67 | 25.09 → 24.16 |
-| dmilike | 9.68 → 7.18 | 11.79 → 9.49 | 12.35 → 10.65 | 25.07 → 24.15 |
-| DMI field | 9.68 → 7.17 | 11.79 → 9.49 | 12.35 → 10.65 | 25.07 → 24.15 |
-| eq3pixel + DMI analog rule | 9.81 → 7.37 | 11.87 → 9.53 | 12.36 → 10.66 | 25.10 → 24.15 |
-| eq3pixel + DMI line Eq. 3 (with wrap) | 9.69 → 7.18 | 11.81 → 9.52 | 12.36 → 10.66 | 25.07 → 24.15 |
+| **default (since 2026-11-17, edges kept since 2026-11-24)** | **9.47 → 6.97** | **9.69 → 8.05** | **12.21 → 10.55** | **23.24 → 22.94** |
+| eq3pixel (old default) | 9.58 → 7.11 | 9.74 → 8.08 | 12.22 → 10.56 | 23.24 → 22.93 |
+| paper (cuts positions 1–4, 75–78) | 9.28 → 6.93 | 8.93 → 7.39 | 12.02 → 10.40 | 23.25 → 22.97 |
+| dmilike | 9.47 → 6.97 | 9.68 → 8.04 | 12.21 → 10.54 | 23.24 → 22.92 |
+| DMI field | 9.47 → 6.97 | 9.68 → 8.04 | 12.21 → 10.54 | 23.24 → 22.92 |
+| eq3pixel + DMI analog rule | 9.57 → 7.11 | 9.72 → 8.06 | 12.22 → 10.55 | 23.24 → 22.91 |
+| eq3pixel + DMI line Eq. 3 (with wrap) | 9.48 → 6.97 | 9.69 → 8.05 | 12.21 → 10.55 | 23.24 → 22.94 |
 
-- The filter choice changes the water std by ≤ 0.2 points on average. The relative correction gain (−25 % N, −20 % S) is the same for all presets.
-- The difference comes almost entirely from DMI's **± 1-line buffer around raw-T_B spikes**, not from the analog filter. It is concentrated on a few days (N: 10 Feb −1.0, 7 Feb −0.4; S: 22 Feb −0.6 points).
+(State 2026-11-24: 272 K masks; all presets except `paper` keep all 78 scan positions. Table of 17 Nov in the git history.)
+
+- The filter choice changes the water std by ≤ 0.15 points on average. The relative correction gain (−26 % N, −17 % S) is about the same for all presets.
+- `paper` is now lower in the Antarctic (water 8.93 → 7.39 vs. 9.69 → 8.05 %) because it is the only preset that still cuts the outer scan positions; that is the angle effect of B2, not a filter effect.
+- The difference comes almost entirely from DMI's **± 1-line buffer around raw-T_B spikes**, not from the analog filter. It is concentrated on a few days (17 Nov run: N 10 Feb −1.0, 7 Feb −0.4; S 22 Feb −0.6 points).
 - On 10 Feb the buffer removes 406 water tie-point pixels with T_B 101–154 K (median 117 K; day mean 143.5 K). Lines next to a spike therefore carry degraded, too-cold values that per-pixel Eq. 3 does not catch.
 - Ice std: differences ≤ 0.03 points.
 
@@ -156,4 +159,4 @@ Rebuild the filter chain of Kolbe et al. (2024, Sect. 2.2, p. 1249) as one confi
 - Ask Tonboe or DMI to confirm the rule, including the Analog_15 omission and the wrap-around at the file end.
 - ~~Scripts with their own edge/latitude/land copies~~: switched to `o.valid` / `preproc_config()` on 2026-11-17 (a3_filter, a4_mask, a5_sic, a6_corrected, b2_angle (with `cfg.edge = []`), globe_plot, video_export, correct_day). Kept on purpose, display only: the land background in b7_correction_map and c1_sp459_compare; the fixed comparison region in a3b_validate_filters.
 
-> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).
+> **Table (d) updated 2026-11-27** to the recompute of 2026-11-24 (`rerun_2026-11-24.md`). Parts (a)–(c) do not depend on the tie-point masks; their figures were regenerated with the same result.

@@ -1,8 +1,8 @@
 % B2: Task 3 - std of the SIC vs. incidence angle, uncorrected and RTM-corrected, over the WHOLE swath.
 %  Same method as A6b (Table 2 clusters, |lat| >= 50 deg, c_ice from ERA5, reference values mixed
-%  by c_ice, L not corrected, iteration 2). Tie points and reference weather come ONLY from scan
-%  positions 5-74 (as in A6b), so Task 1 is unchanged. SIC and correction are then applied to all
-%  78 positions; positions 1-4 and 75-78 (|theta| > 55.7 deg) are shown dashed (not used in the analysis).
+%  by c_ice, L not corrected, iteration 2). Since 2026-11-24 (Tonboe) all 78 scan positions are used
+%  everywhere (cfg.edge = [] in preproc_config.m), so tie points come from the whole swath, as in A6b.
+%  The positions the paper cuts (1-4, 75-78, |theta| > 55.7 deg) are only marked (grey band, dashed).
 %  Note: the RTM ice-emissivity table ends at 60 deg; for |theta| = 61.7 and 63.9 deg it is extrapolated.
 %  std per scan position = std of all pixels of 1-27 Feb at that position (SIC relative to the daily tie points).
 % Run from the project root:  matlab -batch "run('src/matlab/b2_angle.m')"
@@ -14,7 +14,8 @@ files = dir(fullfile('ESMR_colocated_filtered','*.nc'));
 fday  = string(regexp({files.name}, '1973m(\d{4})t', 'tokens', 'once'));
 days  = unique(fday); days = days(days ~= "0228");       % 28 Feb: only 1 orbit
 NIT   = 2;                                                % final iteration (A6b)
-cfg   = preproc_config(); edge = cfg.edge;           % analysis cut (positions 1-4, 75-78)
+cfg   = preproc_config(); edge = cfg.edge;           % analysis cut (none since 2026-11-24)
+pedge = [1:4, 75:78];                                 % positions the paper cuts (only marked in the plots)
 cfg.edge = [];                                        % B2 preprocesses WITHOUT the edge cut (all 78 positions)
 vars  = {'tb','th','sp','V','W','L','Ts','Ti','ci'};
 hemi  = ["N","S"];
@@ -35,7 +36,7 @@ for d = days(:)'
     for k = fi
         fn = fullfile(files(k).folder, files(k).name);
         q = load_orbit(fn, cfg);
-        q.L  = double(ncread(fn, 'tcw'))' - q.V;
+        q.L  = double(ncfast(fn, 'tcw'))' - q.V;
         q.th = q.theta; q.tb = q.tb_f; q.ci = q.siconc;
         q.sp = repmat(1:78, size(q.tb, 1), 1);
         valid = q.valid;                                     % preprocessing with cfg.edge = [] (NO edge cut here)
@@ -49,7 +50,7 @@ for d = days(:)'
     for h = 1:2
         w = G{h, 1}; c = G{h, 2};
         c.Ts(isnan(c.Ts)) = 271.35;
-        iw = ~ismember(w.sp, edge); ic = ~ismember(c.sp, edge);   % analysis pixels (5-74)
+        iw = ~ismember(w.sp, edge); ic = ~ismember(c.sp, edge);   % analysis pixels (all since 2026-11-24)
         Mw = means(w, iw); Mi = means(c, ic);
         tpw = mean(w.tb(iw)); tpi = mean(c.tb(ic));
         su_w = (w.tb - tpw) / (tpi - tpw); su_i = (c.tb - tpw) / (tpi - tpw);
@@ -72,7 +73,7 @@ for d = days(:)'
     end
     fprintf('%s done (%d orbits)\n', d, numel(fi));
 end
-fprintf('check vs. A6b (scan positions 5-74): max |diff| of the daily std = %.4f %% SIC\n', maxdiff);
+fprintf('check vs. A6b (analysis scan positions): max |diff| of the daily std = %.4f %% SIC\n', maxdiff);
 
 % ---- statistics per scan position ----
 cn = ["water","ice"];
@@ -82,7 +83,7 @@ for h = 1:2
         for p = 1:78
             s = R(h,t).sp == p;
             th = R(h,t).th(find(s, 1)); if isempty(th), th = NaN; end
-            rows(end+1,:) = {hemi(h), cn(t), p, th, ismember(p, edge), nnz(s), ...
+            rows(end+1,:) = {hemi(h), cn(t), p, th, ismember(p, pedge), nnz(s), ...
                 100*mean(R(h,t).su(s)), 100*std(R(h,t).su(s)), 100*mean(R(h,t).sc(s)), 100*std(R(h,t).sc(s))}; %#ok<SAGROW>
         end
     end
@@ -146,7 +147,7 @@ for what = ["std","mean"]
                 plot(x(g), yc(g), '--o', 'Color', cC, 'LineWidth', 2.2, 'MarkerSize', 3, 'HandleVisibility','off');
             end
             plot(nan, nan, '--', 'Color', [.3 .3 .3], 'LineWidth', 1.4, ...
-                'DisplayName', 'swath edge, cut in the analysis (pos. 1-4, 75-78)');
+                'DisplayName', 'swath edge cut by Kolbe et al. 2024 (pos. 1-4, 75-78), kept here');
             xlim([-64.5 64.5]); ylim(yl);
             xlabel('incidence angle \theta [°]  (negative = left side of the swath)');
             if what == "std", ylabel('std of SIC [%]'); else, ylabel('mean SIC [%]'); end
@@ -156,10 +157,10 @@ for what = ["std","mean"]
     end
     if what == "std"
         title(tl, {'Task 3: std of the open-water SIC vs. incidence angle, 1-27 Feb 1973 (as Kolbe et al. Fig. 5, but in % SIC)', ...
-            'blue area = noise removed by the RTM correction; grey bands / dashed = swath edge (|\theta| > 55.7°), cut in the analysis'}, 'FontWeight','bold');
+            'blue area = noise removed by the RTM correction; grey bands / dashed = swath edge (|\theta| > 55.7°), cut by Kolbe et al. 2024, kept here'}, 'FontWeight','bold');
     else
         title(tl, {'Task 3 (extra): mean open-water SIC vs. incidence angle, 1-27 Feb 1973', ...
-            'tie point = mean over the whole inner swath, so a per-angle offset shows an angle dependence of T_B that the correction does not remove'}, 'FontWeight','bold');
+            'tie point = mean over the whole swath, so a per-angle offset shows an angle dependence of T_B that the correction does not remove'}, 'FontWeight','bold');
     end
     exportgraphics(fig, fullfile('output', "B2_" + what + "_vs_angle.png"), 'Resolution', 140);
 end

@@ -35,26 +35,38 @@ month, only one example that shows what the correction does in a storm over open
   - Under the strong-wind ring the W part is negative (−3 %).
   - So one low gives a correction of both signs within a few hundred km (transect panel c).
 - **Water-vapour correction is largest in the cloud band.**
-  - Inside the band the V part is −4.9 % SIC on average.
-  - Uncorrected mean SIC +3.7 % → corrected −2.3 %. Std 7.1 → 6.5 %.
+  - Inside the band the V part is −4.7 % SIC on average.
+  - Uncorrected mean SIC +4.3 % → corrected −1.7 %. Std 7.1 → 6.5 %.
 - **Cloud liquid L is not corrected (B1i).** We expected a positive rest in the cloud band. In this case the mean is slightly negative instead. Possible reasons:
   - V and L are correlated, and the V correction already takes out part of the cloud signal.
   - ERA5 puts the band slightly in the wrong place.
-  - The std in the band stays the highest of the groups (6.45 %).
-- **Noise over open water** (water tie-point mask, this orbit):
+  - The std in the band stays the highest of the groups after correction (6.47 %, rest of the orbit 6.38 %).
+- **Noise over open water** (water tie-point mask, this orbit; state 2026-11-24: 272 K, all scan positions):
 
 | open water | n | msl | W | V | L | SIC_u mean / std | SIC_c mean / std |
 |---|---|---|---|---|---|---|---|
-| within 600 km of the core | 1306 | 955 | 13.3 | 5.8 | 0.13 | −0.9 / 6.5 | −1.3 / 5.5 |
-| rest of the orbit (Arctic) | 1603 | 972 | 14.1 | 7.1 | 0.25 | +1.4 / 7.3 | −0.5 / 6.3 |
-| cloud band L > 0.3 | 488 | 966 | 15.8 | 10.0 | 0.72 | +3.7 / 7.1 | −2.3 / 6.5 |
-| clear L < 0.1 | 1535 | 963 | 12.8 | 5.5 | 0.05 | −0.8 / 6.5 | −0.5 / 5.7 |
+| within 600 km of the core | 1353 | 955 | 13.6 | 5.8 | 0.14 | −0.2 / 6.9 | −0.8 / 5.6 |
+| rest of the orbit (Arctic) | 1976 | 976 | 14.3 | 6.5 | 0.22 | +1.2 / 7.9 | −0.2 / 6.4 |
+| cloud band L > 0.3 | 514 | 966 | 16.0 | 9.9 | 0.71 | +4.3 / 7.1 | −1.7 / 6.5 |
+| clear L < 0.1 | 1729 | 966 | 12.8 | 5.4 | 0.05 | −1.1 / 6.8 | −0.4 / 5.7 |
 
-  The correction lowers the std in every group by 0.6–1.1 points (−9 to −16 %). That is about the same gain as in Task 1. The low is not a special failure case for the correction, but it is also not removed completely.
+  The correction lowers the std in every group by 0.7–1.5 points (−9 to −19 %; least in the cloud band, where L is not corrected). That is about the same gain as in Task 1. The low is not a special failure case for the correction, but it is also not removed completely.
 - **Near the ice edge:**
   - The Ti part (−5 to −8 %) dominates in the first 300 km of ice behind the edge (transect c).
   - The strong wind plus the cloud band right at the edge are where false ice is most likely.
   - ESMR and ERA5 put the edge 50–100 km apart (transect b).
+
+## Wind correction scales linearly with SIC (meeting 2026-11-24, point 11)
+- Tonboe: explain in the text that the **wind correction is linear in the SIC**.
+- Why: the RTM mixes the surface as T_B = (1 − c)·T_B,water + c·T_B,ice. W only acts on the water part (sea-surface
+  roughness and foam), so ∂T_B/∂W ∝ (1 − c): full effect at c = 0, zero at c = 1. With c = SIC, the wind correction
+  is largest over open water and goes linearly to 0 over closed ice. **Wind is corrected mainly over water.**
+- The same holds for Ts (water part, (1 − c)). Ti works the other way, ∝ c (ice part: 0 over water, full over ice).
+  V and L act through the atmosphere on both parts, but their effect is much larger over the cold, reflective water
+  than over the warm, emissive ice (B1: V 5.1 K vs. 0.4 K per σ at 50°), so in practice they also shrink towards c = 1.
+- In this case: the W part is up to ±3–5 % over the open water around the low and fades to 0 across the ice edge
+  (map panel "wind part of ΔSIC", transect c); behind the edge the Ti part takes over.
+- Possible small figure (B1): ΔT_B per 1σ of W, V, Ts, Ti vs. c = 0…1 (straight lines). Not made yet.
 
 ## For the report / seminar
 - One figure (the map) plus 1–2 sentences per point above.

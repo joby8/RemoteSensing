@@ -1,0 +1,132 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{30350 Remote Sensing Group Project - Regional noise reduction in NIMBUS 5 ESMR microwave radiometer sea ice concentration data}
+\author{Mingming Li s252735 \\ Johannes Ruckdeschel s263265 \\ Axel Sieber s262006}
+\date{November 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+% 5-8 sentences: problem, data, method, main numbers, recommendation
+\end{abstract}
+
+\tableofcontents
+
+% ======================================================================
+\section{Introduction}
+% Structure agreed with Tonboe, meeting 2026-11-24:
+% Intro -> Theory -> Data -> Methodology -> Results -> Discussion -> Conclusion
+
+\subsection{Passive microwave radiometry of sea ice}
+% why microwaves, why sea ice concentration (SIC), long climate record
+
+\subsection{Framework}
+% ESMR SIC record (Kolbe et al. 2024), ESA CCI / OSI SAF, RTM noise correction (Tonboe et al.)
+
+\subsection{Where this project fits}
+% earliest satellite SIC record (1972-77), one channel only -> noise from the atmosphere and the surface
+
+\subsection{Objectives}
+% Task 1: open-water SIC noise, uncorrected vs. corrected
+% Task 2: which ERA5 parameters matter (sensitivity)
+% Task 3: dependence on incidence angle
+% Task 4: recommendation for an ESMR correction strategy
+
+% ======================================================================
+\section{Theory}
+% Tonboe: "Siri" chapter, assumed to mean theory (Danish "teori")
+
+\subsection{Nimbus 5 ESMR}
+% 19.35 GHz, H-pol, cross-track scan, 78 positions, incidence angle 0-64 deg, footprint
+
+\subsection{Sea ice concentration from one channel}
+% tie points, SIC = (TB - Tw)/(Ti - Tw)
+
+\subsection{Radiative transfer model and noise correction}
+% emission model, V, W, L, Ts, Ti; dTB; iterative correction (Kolbe et al. 2024)
+
+\subsection{Sensitivity of the brightness temperature to the ERA5 inputs}
+% RTM sweep (B1), SIC change per 1 sigma; WITHOUT the L study (-> Results)
+% wind and the other inputs scale linearly with SIC (water effects largest at c = 0)
+
+% ======================================================================
+\section{Data} %Mingming
+
+\subsection{ESMR swath data, February 1973}
+
+\subsection{ERA5 reanalysis}
+% reanalysis = summary of all observations that existed in 1973 -> argument and limit
+
+\subsection{Preprocessing and quality filters}
+% Kolbe filters Eq. 1-4; outer scan positions 1-4 and 75-78 are KEPT (Tonboe 2026-11-24)
+
+% ======================================================================
+\section{Methodology} %Mingming
+
+\subsection{Tie-point selection}
+% 5x5 box, pixel lsm = 0, <= 10 % land in the box; water sst > 272 K (near freezing point), |lat| > 55 deg
+
+\subsection{Uncorrected and corrected SIC}
+% iterative RTM correction, c clipped to 0..1 inside the RTM only, no 15 % limit; SIC shown unclipped
+
+\subsection{Uncertainty}
+% algorithm + resampling uncertainty (Kolbe et al. 2024, Eq. 17-19), 30 km grid
+
+\subsection{Evaluation}
+% std (and mean) of open-water SIC, exclusion test, angle bins, case-study selection
+
+% ======================================================================
+\section{Results}
+
+\subsection{Mean and STD for the open water SIC for corrected and uncorrected Tbs}
+% Task 1
+
+\subsection{Most important parameters for the correction} %sensitivity analysis
+% Task 2: exclusion test, data vs. RTM, L study (cluster-mean L vs. per-pixel L)
+
+\subsection{Incidence angle}
+% Task 3, including the outer scan positions
+
+\subsection{Uncertainty}
+% maps; higher over multiyear ice
+
+\subsection{Case studies}
+\subsubsection{A low-pressure system, 12 February 1973}
+\subsubsection{Low-pressure systems over the whole month}
+\subsubsection{Comparison with the NASA atlases (SP-459, SP-489)}
+
+\subsection{Recommendation for an ESMR correction strategy}
+% Task 4
+
+% ======================================================================
+\section{Discussion}
+
+\subsection{Geographical difference for the task 1 correction}
+% where the correction performs better
+
+\subsection{Geographical difference for the task 2 parameters}
+% discuss what parameters are important for the specific region/ hemispheres and due to what reasons
+% discuss interannual changes and seasonal changes related to the 1973 Feb (spatial and temporal changes about task 2)
+
+\subsection{Ice edge and multiyear ice}
+
+\subsection{Limitations}
+% ERA5 in 1973, cloud liquid L not corrected, one month only
+
+\subsection{Deviations from Kolbe et al. (2024)}
+% 272 K water tie point, outer scan positions kept, no 15 % limit
+
+% ======================================================================
+\section{Conclusion}
+% return to the objectives (Task 1-4), one paragraph each
+
+% ======================================================================
+\section*{References}
+
+\appendix
+\section{Source code}
+
+\end{document}

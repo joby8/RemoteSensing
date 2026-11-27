@@ -4,7 +4,7 @@
 
 ## What we did
 - Script: `src/matlab/b7_correction_map.m`, run time about 75 s for 1–27 Feb 1973 (28 Feb left out: only 1 orbit).
-- Per day, `correct_day.m` runs the A6b method (2 iterations) on **all** ocean pixels with |lat| ≥ 50°. The tie-point masks are the new ones from `tp_masks.m`: water siconc ≤ 0.01, ice 180 K < T_B < 274 K, lsm == 0.
+- Per day, `correct_day.m` runs the A6b method (2 iterations) on **all** ocean pixels with |lat| ≥ 50° and all 78 scan positions. Tie-point masks as A6b (state 2026-11-24: water siconc ≤ 0.01, SST > 272 K, |lat| > 55°; ice siconc > 0.8, 180 K < T_B < 274 K; lsm = 0 and ≤ 10 % land in the 5 × 5 box).
 - Per pixel:
   - SIC_u is computed with the day's uncorrected tie points.
   - SIC_c is computed with the corrected T_B and the corrected tie points.
@@ -14,52 +14,62 @@
 - Figure `output/B7_correction_map.png`: Arctic top, Antarctic bottom. Columns: mean ΔSIC, std of ΔSIC over the month, input with the largest mean share.
 - Numbers: `output/B7_regions.csv`, grouped by class (open water c = 0, ice edge 0 < c < 0.8, ice c ≥ 0.8) × latitude band and × sector. Grid: `output/B7_grid.mat`.
 
-## Results (1–27 Feb 1973, mean SIC in %)
+## Results (1–27 Feb 1973, mean SIC in %, state 2026-11-24, day-weighted, `B7_regions.csv`)
 
-**Open water: the correction removes a negative bias that grows towards the ice.**
+**Open water: the correction has both signs. It follows V, relative to the cold reference water.**
 
 | | lat band | SIC_u | SIC_c | ΔSIC | share V / W / Ts |
 |---|---|---|---|---|---|
-| Arctic | 50–60 | −2.3 | −1.4 | +0.9 | +1.0 / +0.7 / −0.6 |
-| Arctic | 60–70 | −1.9 | +1.2 | +3.0 | +3.4 / +0.4 / −0.6 |
-| Arctic | ≥ 70 | −2.8 | +2.4 | +5.2 | +5.7 / +1.1 / −1.3 |
-| Antarctic | 50–60 | −3.7 | −1.2 | +2.5 | +2.6 / +0.6 / −0.6 |
-| Antarctic | 60–70 | −7.1 | +1.4 | +8.5 | +8.0 / +2.5 / −1.6 |
-| Antarctic | ≥ 70 | −4.3 | +6.8 | +11.1 | +10.9 / +3.4 / −2.4 |
+| Arctic | 50–60 | −5.1 | −6.1 | −1.0 | −2.1 / +1.0 / −0.1 |
+| Arctic | 60–70 | −6.2 | −4.7 | +1.5 | +0.4 / +1.1 / −0.1 |
+| Arctic | ≥ 70 | −7.0 | −3.4 | +3.6 | +2.9 / +1.4 / −0.9 |
+| Antarctic | 50–60 | −2.3 | −7.1 | −4.8 | −4.4 / −1.1 / +0.6 |
+| Antarctic | 60–70 | −6.7 | −5.3 | +1.5 | +1.2 / +0.5 / −0.4 |
+| Antarctic | ≥ 70 | −7.3 | −2.2 | +5.2 | +4.5 / +1.9 / −1.2 |
 
-- The water tie point comes from the warm, moist water (SST > 278 K). Open water closer to the ice is colder and **drier** (lower V), so its T_B is low and its uncorrected SIC is negative (down to −7 % in the Antarctic 60–70° band).
-- The correction raises T_B there. **Water vapour V explains most of it**, wind adds 0.4–3.4 % and Ts works slightly against it (−0.6 to −2.4 %).
-- Largest change: the **Southern Ocean ring at 60–70° S** (+8.5 %) and the coastal water ≥ 70° S (+11 %).
-- At ≥ 70° S the correction **overshoots** (SIC −4.3 → +6.8 %). Our reading:
-  - this coastal water lies far from the reference water in V;
-  - it is also close to summer melt (meeting note 7).
-- Equatorward of about 55° (the outer ring of the maps) ΔSIC turns slightly negative: that water is moister than the reference.
-- **Wind dominates** in narrow bands, which we read as the storm tracks:
-  - Arctic: the North Pacific / Gulf of Alaska and the Labrador Sea / south of Greenland;
-  - Antarctic: the outer edge at about 50–55° S.
-- The month-long std of ΔSIC is largest at the outer edge (7–8 %, in both hemispheres), where storms change V and W from day to day. Std is 4–6 % in the Nordic Seas and Barents Sea.
+(Open water here = all ERA5 ocean pixels with c = 0, not only the tie-point cluster; the band means are therefore
+not 0. They include water that the tie-point mask excludes: 50–55°, SST ≤ 272 K, next to the coast.)
+
+- The water tie point (reference weather) is now **cold, high-latitude water** (SST > 272 K, |lat| > 55°).
+  - **Near the ice (≥ 70°, Antarctic coast, Arctic marginal seas)** the water is colder and drier than the reference,
+    T_B is low and SIC_u negative (−7 %). The correction raises it: +3.6 % (N), +5.2 % (S), mostly V, plus W.
+  - **Further out (50–60°)** the water is warmer and moister than the reference, so the correction lowers T_B and the
+    SIC: −1.0 % (N), **−4.8 % (S, the largest change of all open-water bands)**, again mostly V.
+  - The map shows this as a red ring around Antarctica (60–70° S, near the ice edge) and a blue outer ring
+    (50–55° S); in the Arctic red over the water close to the ice edge, blue over the open North Atlantic and North Pacific.
+- **The corrected SIC is not flat:** the mean stays −2 to −7 % in every band. The correction moves each band
+  toward the reference, but a bias remains that the RTM inputs do not explain (L, spill-over near coasts and ice, ERA5).
+- **Wind dominates** in narrow bands (right column of the map): North Pacific / Bering Sea and the North Atlantic
+  south of Greenland and Iceland; Antarctic in a broken band along the ice edge and near the Antarctic Peninsula. Elsewhere V dominates.
+- The month-long std of ΔSIC is largest at the outer edge of the maps (7–8 %, both hemispheres), where storms change V
+  and W from day to day; 2–4 % over the Arctic Ocean pack ice and the Antarctic coastal ice.
 
 **Ice: small correction, driven by ice temperature Ti.**
-- Central Arctic (≥ 70° N, c ≥ 0.8): ΔSIC +0.2 %, mean |ΔSIC| 2.4 %, std < 2 %.
-- Marginal Arctic ice at 50–60° N (Okhotsk, Bering, Baffin, Hudson): ΔSIC −5.3 %, of which −4.4 % comes from Ti. Here t2m is warmer than the ice-cluster mean, so Ti is warmer and the uncorrected SIC is too high.
-- Antarctic ice ≥ 70° S: ΔSIC +0.5 %, Ti +1.0 %.
-- Weddell Sea pack (Ti dominates, mean ΔSIC ≈ −1 … 0 %): the smallest correction of all regions (std < 2 %).
+- Central Arctic (≥ 70° N, c ≥ 0.8): ΔSIC +0.1 %, Ti +0.6 %.
+- Marginal Arctic ice at 50–60° N (Okhotsk, Bering, Baffin, Hudson): ΔSIC −5.3 %, of which −4.3 % is Ti; 60–70° N −2.5 %
+  (Ti −1.8 %). There t2m is warmer than the ice-cluster mean, so Ti is warmer and the uncorrected SIC is too high (106 %).
+- Antarctic ice ≥ 70° S: ΔSIC +0.8 % (Ti +0.9 %); 60–70° S −0.6 %. (50–60° S: −8.3 %, only ≈ 500 pixels.)
 
 **Ice edge (0 < c < 0.8):** a mix of the two.
-- Antarctic: ΔSIC +4 to +5 % (V +3.6 to +4.6 %).
-- Arctic: −3.5 to +1.7 %, with V and Ti partly cancelling (−3.6 before the preprocessing default of 2026-11-17).
+- Arctic: −2.8 % (50–60°, V −1.9) → −0.6 % → +2.0 % (≥ 70°, V +2.0).
+- Antarctic: −3.5 % (50–60°, V −3.0) → +2.3 % (60–70°) → +3.0 % (≥ 70°, V +2.5).
 
 ## For the report
-- Answer to Tonboe: **the correction is largest over open water near the ice edge and in the Southern Ocean**, mostly through water vapour. It is smallest over the consolidated pack ice, where Ti drives a correction of only a few %.
+- Answer to Tonboe: **over open water the correction is a few % SIC and has both signs**: positive over cold, dry water
+  near the ice, negative over warmer, moister water further out (largest −4.8 % at 50–60° S). Mostly water vapour;
+  wind in bands along the storm tracks and the ice edge. **Over consolidated pack ice it is smallest** (< 1 %), driven by Ti;
+  at the marginal Arctic ice Ti lowers the SIC by up to 5 %.
 - Discussion links:
-  - The water tie point stands for warm (SST > 278 K) water, so cold water near the ice gets the largest V correction.
-  - The overshoot at ≥ 70° S fits the Antarctic summer problem (meeting note 7): melt and humid air near the coast.
-  - Wind matters regionally (storm tracks) even though V dominates on average.
+  - The sign depends on the reference: the water tie point is cold high-latitude water (272 K), so everything warmer
+    is corrected down. With the 17 Nov masks (278 K) the reference was warm water and the correction was positive almost everywhere.
+  - Wind matters regionally (storm tracks), even though V dominates on average (link B1c: in the Arctic tie-point
+    cluster W even ranks first).
+  - The remaining negative bias of the corrected SIC outside the tie-point cluster → limitation (L, spill-over).
 - Figure: `output/B7_correction_map.png`, as is or with only the first and third columns for a narrower version.
 
-## Rerun 2026-11-20: every day has the same weight
-Before, all pixels of the month were pooled (days with more overpasses counted more). With equal day weights the regional mean ΔSIC changes by at most
-0.2 points (e.g. Arctic ice-edge band ≥ 70°: +1.73 → +1.85; Arctic Pacific open water +3.24 → +3.08). The tables above are from the pooled run and are
-unchanged at this precision except for these small shifts; `output/B7_regions.csv` has the new values. The maps look the same.
-
-> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).
+## History
+- 2026-11-17 (first version, SST > 278 K): open water ΔSIC positive everywhere (+0.9 to +11 %, largest at
+  60–70° S +8.5 % and ≥ 70° S +11 %), because the warm reference made all colder water look too "dry".
+- 2026-11-20: every day gets the same weight (before: pooled pixels); changes ≤ 0.2 points.
+- 2026-11-23 (273 K): already the pattern above (50–60° S −3.9 %); 2026-11-24 changes < 0.2 points except
+  Antarctic open water 50–60° S (−3.9 → −4.8 %) and the ice edge there (−3.0 → −3.5 %).

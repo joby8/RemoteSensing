@@ -9,8 +9,8 @@
 %      Daily cell mean = mean of the unclipped pixel SIC of that day; monthly mean = mean of the daily
 %      cell means (each day with data in the cell weighted equally), then clipped to 0..1. Cached per day.
 %   2. SP-459 map: docs/sp459/fig5-2a_feb1973.jpg (cut from the NTRS scan at 300 dpi).
-%      Georeference: polar stereographic, 0 deg up; affine fit to 129 points on the 55-70 S circles
-%      and 87 points on the 45-deg meridians, rms 1.6 px (~9 km). Each grid cell takes the median
+%      Georeference: polar stereographic, 0 deg up; affine fit to the printed 50/60/70 S circles and the 45-deg
+%      meridians (fit_grat in c2_feb1973_books.m, 376 points, rms 0.95 px = 5.3 km; until 2026-11-27: own fit, rms 1.6 px). Each grid cell takes the median
 %      colour of a 5x5 pixel window (removes the printed graticule lines) and is assigned to the
 %      nearest of the 23 legend colours or land (black). Ice = any class >= 16 %.
 %      Note: the "32 %" class is close to the "< 14 %" water colour; nearest-class matching keeps them apart.
@@ -69,7 +69,7 @@ landO = NL > N & N < 3;                                     % our land (ERA5) ce
 
 %% 2. SP-459 map -> ice / water / land per grid cell
 img = imread(fullfile('docs', 'sp459', 'fig5-2a_feb1973.jpg'));
-A = [2258.429 0.5917799; -0.11675 2296.727]; t = [825.0353; 833.3931];   % image px = t + A*[X; Y]
+A = [2259.9987 -0.2098; -0.8152 2296.9821]; t = [823.4905; 833.5406];   % image px = t + A*[X; Y] (C2 fit, 2026-11-27)
 Xt = U/(2*Re); Yt = -V/(2*Re);                                           % tan(colat/2)*[sin(lon); -cos(lon)]
 PX = t(1) + A(1,1)*Xt + A(1,2)*Yt; PY = t(2) + A(2,1)*Xt + A(2,2)*Yt;
 pal = [186 195 190; 116 86 78; 205 114 87; 208 140 121; 207 188 174; 206 209 194; 56 63 59; 71 77 67; ...
@@ -83,6 +83,12 @@ for j = 1:size(C, 1)
     d = sum((P - C(j, :)).^2, 2); b = d < dmin; dmin(b) = d(b); pc(b) = j;
 end
 pc = reshape(pc, size(img, 1), size(img, 2));
+% printed longitude labels (dark grey text 45W 45E 135W 135E, 50S) match near-black ice classes: inside these text boxes
+% [x1 x2 y1 y2] (scan px) every non-water pixel counts as line (same boxes as C2, 2026-11-27)
+tb = [180 320 200 265; 1350 1480 200 265; 210 360 1380 1445; 1330 1475 1380 1445; 25 115 380 480];
+for k = 1:size(tb, 1)
+    sub = pc(tb(k, 3):tb(k, 4), tb(k, 1):tb(k, 2)); sub(sub ~= 23) = 25; pc(tb(k, 3):tb(k, 4), tb(k, 1):tb(k, 2)) = sub;
+end
 % grid cell = majority of the non-line pixels in a 7x7 window around the cell centre
 cls = zeros(n);                                             % 0 outside, 1 ice, 2 water, 3 land
 use = LAT <= -50 & PX >= 4 & PY >= 4 & PX <= size(img, 2) - 3 & PY <= size(img, 1) - 3;

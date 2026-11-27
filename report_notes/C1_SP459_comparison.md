@@ -94,7 +94,7 @@ Numbers above (201.0 K, 3.86 × 10⁶ km², 95.7 %) are the **old** run; new:
 - Extent, common cells: ours **5.40 × 10⁶ km²** (was 5.39); both 4.74, only ours 0.66, only SP-459 1.16. Agreement **96.0 %** (unchanged).
 - Ice area (all cells ≥ 15 %, lat ≤ −50°): **3.45 × 10⁶ km²** (was 3.43). Per sector the extent changes by ≤ 0.02 × 10⁶ km².
 
-> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).
+> **Update 2026-11-23 / 24:** recomputed with the 23 Nov and 24 Nov masks (272 K, all 78 scan positions); changes ≤ 0.05 × 10⁶ km². **Current numbers = the last section "Labels and georeference (2026-11-27)"** (= `output/C1_sp459_extent.csv`).
 
 ## Fix 2026-11-24: no-data cells counted as open water
 - Bug: `min(max(SIC, 0), 1)` turned NaN (cells with < 3 pixels in the month, mostly at the coast) into 0 % SIC, so these cells were
@@ -105,3 +105,13 @@ Numbers above (201.0 K, 3.86 × 10⁶ km², 95.7 %) are the **old** run; new:
 - Per sector (SP-459 / ours): Weddell 1.54 / 1.66, Indian 0.69 / 0.55, Pacific 0.70 / 0.72, Ross 0.99 / 1.15, Bellingshausen-Amundsen 1.07 / 1.27.
   The large Indian and Bellingshausen-Amundsen gaps were mostly the bug.
 - Ice area (all cells, lat ≤ −50°) unchanged: 3.43 × 10⁶ km².
+
+## Labels and georeference (2026-11-27, same fixes as C2)
+- **Labels:** the printed longitude labels "45°W", "45°E", "135°W", "135°E" (dark grey text) were read as SP-459 ice at 50-52 S
+  ("only SP-459" spots at the four corners). Fixed text boxes in the scan: non-water pixels inside count as graticule line.
+- **Georeference:** the affine matrix is now the automatic fit of C2 (`fit_grat`, printed 50/60/70 S circles + 45° meridians,
+  376 points, **rms 0.95 px = 5.3 km**; before 1.6 px = 9 km, positions differ by 1-3 px).
+- Extent, common cells: SP-459 **5.00 → 4.92**, ours 5.35 → 5.36; both 4.73 → 4.69, only ours 0.62 → 0.66,
+  only SP-459 **0.27 → 0.22 × 10⁶ km²**. Agreement 98.0 % (unchanged); common area 44.41 × 10⁶ km².
+- Remaining "only SP-459" is mostly in the Indian sector (0.16): dark-grey printed coast read as ice and small spots at 55-60 S,
+  30-80 E. C2 handles the coast with its class-76 rule; C1 keeps the simpler method.

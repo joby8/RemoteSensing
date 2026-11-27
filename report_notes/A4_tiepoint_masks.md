@@ -9,34 +9,35 @@
 Select the pixels that define the open-water and the 100 % ice brightness temperature (tie points), separately for each hemisphere.
 
 ## What we did
-Applied on top of the A3 filters (scan positions 5–74, |lat| ≥ 50°):
+Applied on top of the A3 filters (**all 78 scan positions** since 2026-11-24, before: 5–74; |lat| ≥ 50°):
 
 | | Open water | Ice |
 |---|---|---|
 | ERA5 SIC | siconc ≤ 0.01 | siconc > 0.8 |
-| SST | **> 273 K** (23 Nov; 20 Nov: 275 K; before: 278 K) | – |
+| SST | **> 272 K** (24 Nov, Tonboe: near the freezing point of sea water; 23 Nov: 273 K; 20 Nov: 275 K; before: 278 K) | – |
 | T_B | 90 K < T_B < 180 K | **180 K** < T_B < 274 K |
 | ERA5 land fraction | lsm = 0 **and ≤ 10 % land in the 5 × 5 box** (box new 20 Nov) | same |
 | Latitude | **\|lat\| > 55°** (until 20 Nov: ≥ 50°) | \|lat\| ≥ 50° |
 
-History: first version (2026-11-13) used siconc = 0 (water), siconc ≥ 0.95 and 100 K < T_B (ice), no lsm cut. A6b (2026-11-13) switched the ice cluster to Table 2's siconc > 0.8. Meeting 2026-11-17: siconc ≤ 0.01 counts as ocean, ice T_B lower limit 180 K (clear-ocean pixels at ≈ 145 K had been counted as ice; 180 K = upper water limit, no overlap), coastal pixels out (lsm = 0). Meeting 2026-11-20: water SST > 275 K and |lat| > 55° (more and colder water pixels), both lsm = 0 and ≤ 10 % land in the 5 × 5 box (no tie points next to the coast); thresholds in `tp_opt.m`, the 17 Nov masks are `tp_opt('nov17')`. Why: see `A4b_tp_sweep.md`. 2026-11-23: SST > 273 K (A4d); a tie-point outlier test was tried and rejected (`A4e_tp_outliers.md`); 20 Nov masks = `tp_opt('nov20')`.
+History: first version (2026-11-13) used siconc = 0 (water), siconc ≥ 0.95 and 100 K < T_B (ice), no lsm cut. A6b (2026-11-13) switched the ice cluster to Table 2's siconc > 0.8. Meeting 2026-11-17: siconc ≤ 0.01 counts as ocean, ice T_B lower limit 180 K (clear-ocean pixels at ≈ 145 K had been counted as ice; 180 K = upper water limit, no overlap), coastal pixels out (lsm = 0). Meeting 2026-11-20: water SST > 275 K and |lat| > 55° (more and colder water pixels), both lsm = 0 and ≤ 10 % land in the 5 × 5 box (no tie points next to the coast); thresholds in `tp_opt.m`, the 17 Nov masks are `tp_opt('nov17')`. Why: see `A4b_tp_sweep.md`. 2026-11-23: SST > 273 K (A4d); a tie-point outlier test was tried and rejected (`A4e_tp_outliers.md`); 20 Nov masks = `tp_opt('nov20')`. 2026-11-24 (Tonboe): SST > 272 K and all 78 scan positions; 23 Nov masks = `tp_opt('nov23')`.
 
 Split into North (lat > 0) and South.
 
-## Result (orbit 1973-02-01 02:23, current masks)
+## Result (orbit 1973-02-01 02:23, masks of 2026-11-24)
 | Class | Hemisphere | n | mean T_B | std |
 |---|---|---|---|---|
-| water | N | 3 959 | 145.79 K | 6.46 K |
-| water | S | 5 143 | 139.67 K | 5.87 K |
-| ice | N | 4 416 | 229.52 K | 10.99 K |
-| ice | S | 1 226 | 210.01 K | 17.55 K |
+| water | N | 5 012 | 145.99 K | 7.00 K |
+| water | S | 8 764 | 141.56 K | 8.17 K |
+| ice | N | 4 500 | 228.75 K | 11.28 K |
+| ice | S | 1 030 | 211.00 K | 17.33 K |
 
-(First version: water N 3 996 / S 5 341, ice N 4 204 / S 631 pixels, ice T_B std 14.6 / 24.0 K.)
+Month (A6b, 1–27 Feb, mean per day): water N 23 443 / S 100 023 pixels, ice N 61 552 / S 7 901 pixels.
+(17 Nov masks for this orbit: water N 3 959 / S 5 143, ice N 4 416 / S 1 226. First version: water N 3 996 / S 5 341, ice N 4 204 / S 631 pixels, ice T_B std 14.6 / 24.0 K.)
 
 Water pixels sit in the Labrador Sea / North Atlantic and the Southern Ocean; ice pixels in the central Arctic and along the Antarctic coast.
 
 ## Decisions and reasons
-- **Water criteria = paper Table 2** (SST > 278 K, 90 < T_B < 180 K), with siconc ≤ 0.01 instead of = 0 (Tonboe 2026-11-17: 1 % SIC still counts as ocean). SST > 278 K keeps only water that is clearly ice-free (Tonboe: "water must be cold enough" – the only SST threshold in the paper is 278 K).
+- **Water criteria:** paper Table 2 uses SST > 278 K and 90 < T_B < 180 K. We keep the T_B range, use siconc ≤ 0.01 instead of = 0 (Tonboe 2026-11-17: 1 % SIC still counts as ocean) and **SST > 272 K** (Tonboe 2026-11-24). Reason for the report: 272 K is just above the freezing point of sea water (≈ 271.4 K at S = 35), so the water reference is as cold as the open water next to the ice, where the SIC matters (A4b/A4d). |lat| > 55° and the 5 × 5 land box keep the cluster away from warm low-latitude water and the coast.
 - **Ice: siconc > 0.8** (Table 2, used since A6b) and **T_B > 180 K** (Tonboe 2026-11-17, removes clear-ocean pixels). The 5×5-box mean > 0.8 of Table 2 was added later the same day (see section 5×5 box).
 - **Coastal pixels out (ERA5 lsm = 0)** for both clusters: land spill-over in the large ESMR footprint.
 - **5×5-box criterion applied since 2026-11-17** (distance from the ice edge, see section below).

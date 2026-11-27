@@ -24,7 +24,7 @@ tp = TP.N;
 %  closest to nadir, so the whole low lies inside the swath (12 Feb: 08:19 UTC, scan position 34).
 Q = nan(numel(O), 3);                            % [min msl, linear index, scan position]
 for k = 1:numel(O)
-    msl = double(ncread(fn{k}, 'msl'))' / 100;
+    msl = double(ncfast(fn{k}, 'msl'))' / 100;
     m = O(k).lat >= 55 & ~isnan(O(k).dtb) & O(k).siconc <= 0.01;
     if ~any(m(:)), continue, end
     mm = msl; mm(~m) = inf; [v, i] = min(mm(:)); [~, c] = ind2sub(size(mm), i);
@@ -32,7 +32,7 @@ for k = 1:numel(O)
 end
 cand = find(Q(:, 1) <= min(Q(:, 1)) + 2);
 [~, b] = min(abs(Q(cand, 3) - 39.5)); kb = cand(b); best = Q(kb, 1); ic = Q(kb, 2);
-o = O(kb); o.msl = double(ncread(fn{kb}, 'msl'))' / 100;
+o = O(kb); o.msl = double(ncfast(fn{kb}, 'msl'))' / 100;
 lat0 = o.lat(ic); lon0 = o.lon(ic); [r0, c0] = ind2sub(size(o.lat), ic);
 [~, nm] = fileparts(fn{kb});
 fprintf('orbit %s, core %.1f hPa at %.1f N %.1f E (line %d, scan position %d)\n', nm, best, lat0, lon0, r0, c0);

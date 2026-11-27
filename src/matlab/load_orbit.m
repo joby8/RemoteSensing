@@ -9,7 +9,7 @@ if nargin < 1 || isempty(f)
     files = dir(fullfile(root, 'ESMR_colocated_filtered', '*.nc'));
     f = fullfile(files(1).folder, files(1).name);
 end
-rd = @(n) double(ncread(f, n))';          % transpose: [78 x lines] -> [lines x 78]
+rd = @(n) double(ncfast(f, n))';         % ncfast = ncread without attribute overhead; transpose: [78 x lines] -> [lines x 78]
 o.tb      = rd('Brightness_temperature');
 o.tb_file = rd('brightness_temperature_filtered');  % DMI field: Eq. 1 + whole scan lines (rebuilt by preset 'dmilike', A3b)
 o.lat     = rd('Latitude');
@@ -24,7 +24,7 @@ o.Ts      = o.sst;                                     % SST [K]
 o.Ti      = 0.4 * o.t2m + 0.6 * 272;                   % Eq. 15 [K]
 o.lsm     = rd('lsm');                                % ERA5 land-sea fraction
 o.A       = zeros(size(o.tb, 1), 16);                  % analog housekeeping channels, one value per line
-for q = 0:15, o.A(:, q+1) = double(ncread(f, sprintf('Analog_%d', q))); end
+for q = 0:15, o.A(:, q+1) = double(ncfast(f, sprintf('Analog_%d', q))); end
 % Preprocessing (esmr_preprocess.m, settings in preproc_config.m): Kolbe et al. 2024 outlier filters + area masks.
 % o.tb_f = TB after the outlier filters (not masked by edge/lat/land), o.flag = step that removed the pixel
 % (0 kept, 1-4 Eq. 1-4, 5 analog, 6 edge, 7 latitude, 8 land), o.valid = usable pixels, o.analog = analog-test lines.

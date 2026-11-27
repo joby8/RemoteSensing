@@ -50,7 +50,7 @@ ex = logical(opts.extra);
 inp = {'V','W','L','Ts','Ti'};
 for k = 1:numel(fnames)
     o = load_orbit(fnames{k}, cfg);
-    o.L = double(ncread(fnames{k}, 'tcw'))' - o.V;
+    o.L = double(ncfast(fnames{k}, 'tcw'))' - o.V;
     [o.mw, o.mi] = tp_masks(o, o.valid, o.tb_f, o.lsm, opts.tp);   % masks 2026-11-17 (o.valid from esmr_preprocess)
     if ex, o.edge = edge_only(o, cfg); else, o.edge = false(size(o.valid)); end
     o.corr = o.valid | o.edge;                       % pixels we correct (o.valid already excludes land, cfg.land)

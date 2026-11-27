@@ -13,13 +13,13 @@ Source = raw `Brightness_temperature` (DMI's `brightness_temperature_filtered` i
 3. **Eq. 2, per pixel:** only the shifted pixels of short offset blocks (our version, see the update below).
 4. **Eq. 3 in 'line' mode with a ± 1-line buffer, no wrap-around.** It is tested on the raw T_B. A spike removes its line and the line on each side, because the neighbouring lines are degraded (A3b (d)).
 5. **Eq. 4:** 7 identical values along track.
-6. **Swath edges: drop scan positions 1–4 and 75–78.** The kept swath is **θ = ±55.67°**.
+6. **Swath edges: off since 2026-11-24** (`cfg.edge = []`, Tonboe: the outer 4 positions go into everything). All 78 positions are kept, **θ = ±63.86°**. Kolbe et al. (2024) drop positions 1–4 and 75–78 (θ = ±55.67°); preset `preproc_config('paper')` still does.
 7. **High latitudes only: |lat| ≥ 50°**, both hemispheres.
 8. **Land:** ERA5 SST missing.
 
 `o.flag` = first step that removed the pixel (0 kept, 5 analog, 1–4 Eq. 1–4, 6 edge, 7 latitude, 8 land); `o.valid = o.flag == 0`.
 
-## Result (orbit 1973-02-01 02:23, `a3_filter.m`, default 2026-11-17)
+## Result (orbit 1973-02-01 02:23, `a3_filter.m`, default of 2026-11-24)
 
 | Step (flag code) | removed | Pixels left | Share |
 | --- | --- | --- | --- |
@@ -29,16 +29,18 @@ Source = raw `Brightness_temperature` (DMI's `brightness_temperature_filtered` i
 | Eq. 2 (2) | 13 | 121 425 | 92.1 % |
 | Eq. 3 + line buffer (3) | 372 | 121 053 | 91.8 % |
 | Eq. 4 (4) | 0 | 121 053 | 91.8 % |
-| swath edge (6) | 12 222 | 108 831 | 82.5 % |
-| |lat| < 50° (7) | 56 126 | 52 705 | 40.0 % |
-| land (8) | 21 347 | 31 358 | 23.8 % |
+| swath edge (6, off) | 0 | 121 053 | 91.8 % |
+| |lat| < 50° (7) | 62 610 | 58 443 | 44.3 % |
+| land (8) | 23 447 | 34 996 | 26.5 % |
+
+(Default of 2026-11-17 with the edge cut: −12 222 at the edge, 52 705 after the latitude cut, 31 358 = 23.8 % at the end. Keeping the edges gives +12 % pixels.)
 
 (Before 2026-11-17, with the DMI field: 121 066 after "Eq. 1", 108 844 after the edge cut, 52 705 after the latitude cut; land was not counted as a separate step.)
 
 ## Decisions and reasons
 
 - ~~**Filtered field instead of own Eq. 1–4**~~ (until 2026-11-17): replaced by our own Eq. 1–4 on the raw T_B, which reproduce DMI's field when its line rules are added (A3b). A newer paper (Tellefsen et al. 2026) uses a less aggressive filter → mention as limitation/outlook.
-- **Swath edges:** the paper removes positions 1–4 and 75–78; large angles have long atmospheric path and footprint distortion (→ check in Task 3 whether more angles should go).
+- **Swath edges:** the paper removes positions 1–4 and 75–78 (long atmospheric path, footprint distortion). We keep them (Tonboe, meeting 2026-11-24): B2 shows the noise there is higher but still corrected, and Task 3 needs the full angle range. Deviation from Kolbe et al. (2024), state it in the report.
 - **|lat| ≥ 50°:** Tonboe: low latitudes are not of interest for sea ice and dropping them reduces the data volume. Note: Table 2 of the paper uses 32° N / −48° S; ours is stricter.
 
 ## For the report

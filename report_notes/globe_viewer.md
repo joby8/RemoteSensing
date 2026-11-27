@@ -10,7 +10,7 @@ Apple-style layout (system font, iOS colours, light/dark): globe with floating c
 
 ## What it shows
 - All orbits of each day in Feb 1973 on a rotatable 3D globe (drag, scroll to zoom, ←/→ for the day).
-- Colour modes: T_B, incidence angle θ, tie-point masks (`tp_masks.m`, 23 Nov: water siconc ≤ 0.01, SST > 273 K, |lat| > 55°, 90–180 K; ice siconc > 0.8, 180–274 K; both ERA5 lsm = 0 and ≤ 10 % land in the 5 × 5 box), **SIC raw**, **ΔT_B** (RTM correction per pixel) and **SIC corrected**.
+- Colour modes: T_B, incidence angle θ, tie-point masks (`tp_masks.m`, 24 Nov: water siconc ≤ 0.01, SST > 272 K, all 78 scan positions, |lat| > 55°, 90–180 K; ice siconc > 0.8, 180–274 K; both ERA5 lsm = 0 and ≤ 10 % land in the 5 × 5 box), **SIC raw**, **ΔT_B** (RTM correction per pixel) and **SIC corrected**.
 - Correction = A6b method (c_ice from ERA5, one iteration, L not corrected) applied to **all** valid ocean pixels via `src/matlab/correct_day.m`. Same tie points and std as `a6b_iterative.m` (checked for 5 Feb: identical).
 - Tie-point table per day: T_p,water, T_p,ice, std SIC water and ice, raw → corrected.
 - **Preprocessing slider** (steps 0–8, one per calculation in the paper's order: raw swath → analog filter → Eq. 1 → Eq. 2 → Eq. 3 → Eq. 4 → swath edges → |lat| ≥ 50° → ERA5 land; see the 2026-11-17 v2 section below), removed pixels coloured by step, with pixel counts per step.
@@ -141,3 +141,7 @@ The slider step "Eq. 1" showed whole red scan lines: the DMI field `brightness_t
   (Arctic | Antarctic, "now" with "± vs. before" below; green = better).
 - **No jumping:** after a click in the side panel the clicked row stays at the same place on the screen, even when
   a panel above it closes.
+
+## 2026-11-24: SST 272 K and all scan positions
+- Day files rebuilt with the 24 Nov masks (`globe_html.m`, part of `rerun_all.m`). The swath-edge step (6) of the
+  preprocessing slider no longer removes anything (`cfg.edge = []`). The monthly book view (`feb1973.js`) is rebuilt by C2.

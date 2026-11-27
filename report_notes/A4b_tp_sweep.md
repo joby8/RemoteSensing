@@ -81,11 +81,16 @@ are a little noisier. Ice side unchanged.
 **Decision (Jo, 2026-11-23): 273 K for both hemispheres** (Tonboe: as cold as possible). The small σ rise in the
 Arctic goes into the report.
 
-## Decision (2026-11-20): new default masks (SST updated 2026-11-23, see A4d)
+**Update 2026-11-24 (meeting with Tonboe): 272 K.** Reason: close to the freezing point of sea water (≈ 271.4 K
+at S = 35). Not part of this 4-day sweep; full month with 272 K and all 78 scan positions (`rerun_2026-11-24.md`):
+water pixels per day N 23 443, S 100 023; T_p,water corr N 142.65 K, S 136.53 K; σ water SIC corr N 6.76 %, S 8.04 %.
+(The σ rise vs. 23 Nov comes mostly from the outer scan positions, not from the SST limit.)
+
+## Decision (2026-11-20): new default masks (SST updated 2026-11-23 and 2026-11-24, see A4d)
 
 | | water | ice |
 |---|---|---|
-| ERA5 SST | > 273 K (A4d, 23 Nov; 20 Nov: 275 K; 17 Nov: 278 K) | – |
+| ERA5 SST | > 272 K (24 Nov, Tonboe; 23 Nov: 273 K, A4d; 20 Nov: 275 K; 17 Nov: 278 K) | – |
 | latitude | \|lat\| > 55° (new) | \|lat\| ≥ 50° (preprocessing) |
 | land | pixel lsm = 0 **and** ≤ 10 % land in the 5 × 5 box around the pixel (new) | same |
 

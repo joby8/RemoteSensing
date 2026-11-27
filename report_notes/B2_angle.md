@@ -1,66 +1,80 @@
 # B2 – Std of the SIC vs. incidence angle (Task 3)
 
-**Report section:** Results → Task 3; Discussion → angle cut-off (Task 4)
+**Report section:** Results → Task 3 (incidence angle); Discussion → outer scan positions (Task 4)
 **Code:** `src/matlab/b2_angle.m` (~80 s)
 **Output:** `output/B2_std_vs_angle.png` (main figure), `output/B2_mean_vs_angle.png` (extra), `output/B2_angle.csv` (per hemisphere, class and scan position: θ, n, mean and std of SIC, uncorrected and corrected; water and ice)
 **Figures: open water only, Arctic top / Antarctic bottom**, as paper Fig. 5 ("only ocean points which fulfill the ERA5 SIC and SST criteria"). The research question is about open water. The ice side is not plotted; it is kept in the csv and in one sentence below.
-**Status:** done 2026-11-16
+**Status:** done 2026-11-16; numbers updated 2026-11-27 (state 2026-11-24)
 
-## What we did
-- **Same method as A6b:** Table 2 clusters, |lat| ≥ 50°, c_ice from ERA5, reference values mixed by c_ice, L not corrected, iteration 2. 1–27 Feb; 28 Feb left out (1 orbit).
-- **Whole swath:**
-  - Tie points and reference weather come **only from scan positions 5–74**, as in A6b. Task 1 therefore stays unchanged; the check reproduces A6b to 0.0000 %.
-  - SIC and correction are then applied to **all 78 positions**.
-  - Positions 1–4 and 75–78 (|θ| > 55.7°) are shown dashed on a grey band. They are cut in the analysis.
+## What we did (state 2026-11-24)
+- **Same method as A6b:** current tie-point masks (`tp_opt.m`: water SST > 272 K, |lat| > 55°, 5 × 5 land box),
+  c_ice from ERA5, reference values mixed by c_ice, L not corrected, iteration 2. 1–27 Feb; 28 Feb left out (1 orbit).
+- **Whole swath everywhere** (Tonboe 2026-11-24): tie points, reference weather, SIC and correction use all 78
+  positions. The check against A6b is 0.0000 %.
+- Positions 1–4 and 75–78 (|θ| > 55.7°), which Kolbe et al. (2024) cut, are drawn dashed on a grey band
+  ("cut by Kolbe et al. 2024, kept here"); csv column `edge` = 1 for them.
 - **Std per scan position** = std of all pixels of the month at that position. The SIC is computed relative to the daily tie points.
-- At |θ| = 61.7° and 63.9° the RTM ice emissivity is extrapolated, because its table ends at 60°. This only matters for the dashed edge.
+- At |θ| = 61.7° and 63.9° the RTM ice emissivity is extrapolated, because its table ends at 60°. This only matters for the outer positions.
+- (Until 23 Nov the tie points came only from positions 5–74 and the edge was cut in all other steps.)
 
-## Result: std of SIC [%], no RTM → with RTM (pooled pixels)
-| |θ| | 0–20° | 20–40° | 40–50° | 50–55.7° | **edge 55.7–64° (cut)** |
+## Result: std of SIC [%], no RTM → with RTM (pooled pixels, 1–27 Feb)
+| |θ| | 0–20° | 20–40° | 40–50° | 50–55.7° | 55.7–64° (cut by Kolbe) |
 |---|---|---|---|---|---|
-| Arctic water | 9.9 → 7.8 | 10.2 → 7.9 | 11.3 → 8.5 | 12.6 → 9.3 | 14.8 → 11.1 |
-| Antarctic water | 13.2 → 10.5 | 13.9 → 10.7 | 15.1 → 11.2 | 17.2 → 12.5 | 20.8 → 15.0 |
+| Arctic water | 8.8 → 6.6 (−25 %) | 8.8 → 6.5 (−26 %) | 9.4 → 6.5 (−31 %) | 10.6 → 7.2 (−32 %) | 12.5 → 8.2 (−34 %) |
+| Antarctic water | 7.9 → 6.5 (−18 %) | 8.6 → 7.1 (−17 %) | 9.7 → 7.7 (−21 %) | 11.5 → 9.3 (−19 %) | 14.1 → 11.5 (−18 %) |
+| Arctic ice | 11.8 → 10.3 | 12.0 → 10.4 | 12.8 → 11.2 | 13.2 → 11.4 | 13.8 → 11.8 |
+| Antarctic ice | 22.5 → 22.3 | 22.8 → 22.6 | 22.8 → 22.5 | 22.9 → 22.2 | 24.1 → 23.0 |
 
-Ice side, from the csv and not plotted: Arctic 14.9 → 13.4 % at 0–20° and 15.7 → 13.5 % at the edge, so almost flat. Antarctic about 41 % at all angles.
+Inner swath (positions 5–74) vs. outer positions, corrected, pixel-weighted: water N 6.34 vs. 7.38 %, S 6.87 vs. 9.28 %;
+ice N 10.18 vs. 11.38 %, S 22.04 vs. 18.58 %.
 
 ## Interpretation
 - **Open water: the noise is flat up to about 40° and then rises towards the edge.**
-  - Arctic, corrected: 7.8 % at nadir, 9.3 % at 50–56°, 11.1 % at the cut edge (+42 %).
-  - Antarctic, corrected: 10.5 → 12.5 → 15.0 %.
+  - Uncorrected it rises from 8.8 to 12.5 % (Arctic) and from 7.9 to 14.1 % (Antarctic); the outermost position
+    reaches 13–14.5 %.
   - This matches the sweep (B1d): all water sensitivities grow with θ (longer path 1/cos θ, lower H-pol emissivity → more reflected sky).
 - **The correction helps at every angle, and most at large angles:**
-  - Near nadir (|θ| < 20°) it removes 21 % (Arctic) and 20 % (Antarctic).
-  - At 45–55.7° it removes 24–29 % (Arctic) and 25–30 % (Antarctic).
-  - This fits the sweep: the weather terms grow with θ, so there is more to correct at the edge.
-  - It still does not remove the rise towards the edge, because the uncorrected L and the remaining noise also grow with θ.
-- **Ice (not plotted): hardly any angle dependence** (Arctic 12.7–13.5 % corrected). This matches B1d: over ice only Ti matters, and it does not depend on θ. One sentence in the text is enough.
-- **The cut at 55.7° is justified.** The two outermost positions on each side are the noisiest of the whole swath (water up to 12 % Arctic / 16 % Antarctic, even after correction).
-- **Possible further cut (Task 4):** between 50° and 55.7° the corrected water noise is already about 20 % above nadir. A cut at about 50° would lower the noise further but cost about 8 % of the swath. This trade-off goes into Task 4.
-- **Left and right side are almost symmetric** for water. Single scan positions stand out (e.g. Antarctic −33° and +31°), and this is visible both before and after correction.
+  - Arctic: −25 % near nadir, −32 to −34 % beyond 50°. After correction the Arctic curve is almost flat
+    (6.5 % to 40°, 7.2 % at 50–56°, 8.2 % at the outer positions).
+  - Antarctic: −17 to −21 % at all angles; the rise towards the edge stays (6.5 → 9.3 → 11.5 %).
+  - This fits the sweep: the weather terms grow with θ, so there is more to correct at the edge. What remains
+    (uncorrected L, angle effects not in the RTM) also grows with θ.
+- **Ice: hardly any angle dependence** (Arctic 10.3–11.8 %, Antarctic 22–23 % corrected). This matches B1d: over
+  ice only Ti matters, and it does not depend on θ. One sentence in the text is enough.
+- **Keeping the outer positions (Tonboe 2026-11-24) is defensible:** after correction the Arctic outer positions
+  (8.2 %) are about as noisy as the uncorrected nadir (8.8 %). In the Antarctic they stay the noisiest part of the
+  swath (11.5 %). They add 8 of 78 positions (+11 % pixels) and raise the monthly water σ by 0.2 (N) / 0.7 (S) points
+  (`rerun_2026-11-24.md`).
+- **Task 4 trade-off:** an angle cut would lower the noise (Antarctic beyond 50°: 9–11.5 % vs. 6.5–7 % inside) but
+  costs swath. Our choice: keep all positions, state the higher noise at the edge.
+- **Left and right side are almost symmetric** in the std. Single positions stand out (e.g. Antarctic −33° and
+  +31°), before and after correction.
 
-## Extra: mean SIC vs. angle (`B2_mean_vs_angle.png`)
-- Water: within the inner swath the mean stays within ±3 %, but single scan positions are off by up to −6 % (−32°) and +7 % (+54°), in both hemispheres at the same positions.
-  - The correction does not change these offsets.
-  - So they are probably fixed per-position calibration offsets of ESMR, not weather. Not tested.
-- For the report: optional, as one sentence in the discussion ("angle-dependent offsets are not removed by the weather correction").
+## Mean SIC vs. angle (`B2_mean_vs_angle.png`)
+- The tie point is now the mean over the whole swath, so the inner swath has a small positive mean
+  (N +0.25 %, S +0.48 %) and the outer positions a negative one (N −2.5 %, S −3.7 %).
+- Within the inner swath single positions are off by up to −4.9 % (N, −32°) and +5.5 % (N) / +6.2 % (S) at +54°,
+  in both hemispheres at the same positions. The correction does not change these offsets → probably fixed
+  per-position calibration offsets of ESMR, not weather (not tested).
+- **Antarctic: left side falls steadily below −40°**, to −8 % at −55.7° and −16 % at the outermost left position;
+  the right side stays near +2…3 % up to +62°. The Arctic left edge reaches −9 %. So the outer left positions are
+  biased low (T_B too low), the right ones are not. The RTM correction (symmetric in |θ|) cannot remove this.
+- Tonboe (2026-11-24): keep the mean, it should be 0 → this figure shows where it is not.
+- For the report: one paragraph in Results (Task 3) plus Discussion ("angle- and side-dependent offsets are not
+  removed by the weather correction").
 
 ## For the report
-- Figure: `B2_std_vs_angle.png` (open water; Arctic top, Antarctic bottom; dashed = cut edge).
+- Figure: `B2_std_vs_angle.png` (open water; Arctic top, Antarctic bottom; grey/dashed = positions cut by Kolbe et al., kept here).
   - The blue area between the curves is the noise removed by the RTM correction. The reductions per angle band are given in the text, not in the figure.
   - The y axis does not start at 0, so the gap is easier to see. Paper Fig. 5 shows the std in K; we show % SIC, as Task 3 asks for the std of the SIC.
-- Caption idea: "Std of the SIC per scan position (1–27 Feb 1973), without and with RTM correction. Grey/dashed: swath edge (|θ| > 55.7°), not used in the analysis. Over open water the noise rises above ≈ 40°; the correction lowers it at all angles but does not remove the rise."
+- Caption idea: "Std of the open-water SIC per scan position (1–27 Feb 1973), without and with RTM correction.
+  Grey/dashed: positions 1–4 and 75–78 (|θ| > 55.7°), cut by Kolbe et al. (2024) and kept here. The noise rises
+  above ≈ 40°; the correction lowers it at all angles, most at large angles in the Arctic."
+- Optional second figure `B2_mean_vs_angle.png` for the side asymmetry.
 
-## Update 2026-11-17: rerun with the new tie-point masks (`tp_masks.m`, see A6b note)
-std of SIC [%], 1–27 Feb, pooled pixels, no RTM → with RTM:
-
-| | 0–20° | 20–40° | 40–50° | 50–56° | 56–64° (edge) |
-|---|---|---|---|---|---|
-| N water | 9.1 → 6.8 | 9.3 → 6.9 | 10.4 → 7.4 | 11.6 → 8.2 | 13.9 → 9.9 |
-| N ice | 12.1 → 10.4 | 12.3 → 10.6 | 13.2 → 11.5 | 13.7 → 11.9 | 14.7 → 12.5 |
-| S water | 11.0 → 8.9 | 11.6 → 9.1 | 12.6 → 9.6 | 14.5 → 10.8 | 17.5 → 13.0 |
-| S ice | 24.2 → 23.5 | 24.7 → 23.9 | 24.7 → 23.6 | 24.8 → 23.3 | 25.2 → 23.1 |
-
-Same shape as before: water noise flat to ~40°, then rises; ice almost flat.
-Rerun 2026-11-17 with the new preprocessing default (`preproc_config.m`; B2 uses it with `cfg.edge = []`, so all 78 positions are kept): only S ice changed by 0.1 point (0–20° and edge); the check against A6b is still 0.0000 %.
-
-> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).
+## History
+- 2026-11-16: first version, tie points from positions 5–74, edge cut in the analysis (old masks, Arctic water
+  corrected 7.8 % at nadir → 11.1 % at the edge; Antarctic 10.5 → 15.0 %).
+- 2026-11-17: new masks (`tp_masks.m`): N water 9.1 → 6.8 % at 0–20°, 13.9 → 9.9 % at the edge; S 11.0 → 8.9 %, 17.5 → 13.0 %.
+- 2026-11-23: 23 Nov masks (SST > 273 K): inner σ water corrected N 6.33, S 6.93 %; edge mean N −2.8, S −3.8 %.
+- 2026-11-24: all positions used for the tie points (this note).

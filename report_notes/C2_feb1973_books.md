@@ -13,7 +13,8 @@
   50-85 N and on the 45 deg meridians (darkest thin line, outlier rejection). **rms 0.64 px = 4.0 km** (about 1/7 cell). The scan is about 3.5 % stretched
   vertically; the search window starts wide (26 px, was 10 px) so that the fit finds this (fixed 2026-11-18: before, the printed parallels at the top and bottom
   were 9-15 px = 60-90 km outside our circles; the 195 points of the old fit lay mostly left and right). The map is rotated by 45 deg
-  (135E up); this is inside A. South: as C1, rms 1.6 px = 9 km.
+  (135E up); this is inside A. South: same automatic fit since 2026-11-27 (parallels 50/60/70 S, 45 deg meridians, start = C1 matrix):
+  **rms 0.95 px = 5.3 km** (376 points; C1 matrix: 1.6 px = 9 km, differs by 1-3 px). The printed parallels are every 5 deg, 50 S lies on the scan frame.
 - **Classification:** every pixel to the nearest swatch in CIE Lab. North swatches: legend first-year column (F_MY = 0), sampled in the legend crop, plus
   3 water and 5 land swatches sampled in the map and a black line swatch. Cell = majority of the non-line pixels in 5x5 (N) / 7x7 (S) pixels.
   Ice cell needs >= 3 ice neighbours (as C1). Ice = class >= 14 %. Classes: 22 ice classes of 4 %, lower bounds 14, 18, ..., 98 (midpoints 16, ..., 96, 99).
@@ -30,23 +31,27 @@
      (c) South: the class-76 coast rule (fix 3) now acts only within 2 cells of our land / no data. Before, it turned a 76 % band inside the
      Weddell Sea pack into land. Our ocean cells that the book calls land: N 1368 -> 0, S 99 -> 0. Left as gaps: our no-data coast cells
      (< 3 pixels in the month, N 669) and unreadable book cells (book land > 2 cells wider than ERA5, mostly fjords and the archipelago, N 1304).
+  6. South longitude labels (2026-11-27): the dark grey text "45°W", "45°E", "135°W", "135°E" (and "50°S" on the frame) matched the
+     near-black ice classes and was read as ice: 4 blobs, 118 cells at 50-52 S where our SIC is 0-1.5 % ("only book" spots at the four
+     corners). Fix: fixed text boxes in the scan, ice/land pixels inside -> line, water pixels stay. Arctic labels checked: no false ice
+     (all small book ice blobs there are real lake / coast ice that we also have). "February 1973" lies outside the read region.
   5. Bug (2026-11-24): `min(max(SICh, 0), 1)` turned NaN (cells with < 3 pixels, e.g. ice sheet interior, coast) into 0 % SIC, so these cells
      counted as our open water. Now NaN is kept ('includenan') and such cells are not common. Most of the old "only book" area was this:
      North 0.67 -> 0.05, South 0.57 -> 0.15 x 10^6 km2.
 - Common cells: book ocean + our ocean data, lat >= 50 N / <= -50 S (same limit in both hemispheres, = preprocessing |lat| >= 50; C1 used -52 before 2026-11-18). Our ice = mean SIC >= 15 %.
 
-## Results (common cells, 10^6 km2)
+## Results (common cells, 10^6 km2; Antarctic updated 2026-11-27: label fix 6 + automatic South georeference)
 | | Arctic (SP-489) | Antarctic (SP-459) |
 |---|---|---|
 | common area | 28.89 | 44.36 |
-| extent ours / book | 17.36 / 16.58 | 5.31 / 4.83 |
-| both ice / only ours / only book | 16.52 / 0.83 / 0.05 | 4.68 / 0.63 / 0.15 |
+| extent ours / book | 17.36 / 16.58 | 5.31 / 4.73 |
+| both ice / only ours / only book | 16.52 / 0.83 / 0.05 | 4.63 / 0.68 / 0.10 |
 | agreement (ice and water) | 96.9 % | 98.2 % |
 | ice area ours (SIC x A, ice cells) | 15.54 | 3.37 |
-| ice area book (class midpoints) | 13.75 | 2.35 |
+| ice area book (class midpoints) | 13.75 | 2.30 |
 | ice area book, Table 3-2 | - (none for Feb 1973) | 2.71 |
 | ice area ours, all cells in the hemisphere | 16.49 | 3.42 |
-| mean (ours - book midpoint), cells with ice in one of them | +10.3 | +18.9 |
+| mean (ours - book midpoint), cells with ice in one of them | +10.3 | +20.1 |
 | tie points water / ice (month mean) | 142.5 K / 226.1 K | 136.6 K / 211.9 K |
 
 Classes (`C2_feb1973_classes.csv`, `C2_conc_compare.png`): in both books our SIC rises with the class and lies above the 1:1 line from 30 % up.
@@ -100,3 +105,40 @@ more overpasses over a cell counted more). The results table above has the new n
 and area, agreement 94.6 / 97.3 % (was 94.6 / 97.2 %), mean difference to the book +10.0 / +13.1 (was +10.0 / +12.9). Cells with < 3 pixels in the month stay blank.
 
 > **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).
+
+## Presentation figures (2026-11-27)
+`src/matlab/c2b_prof_figures.m` (a few seconds; reads `output/C2_results.mat`, which `c2_feb1973_books.m` now saves) -> `output/C2b_*.png`:
+- `C2b_maps.png`: rows Arctic / Antarctic; columns: book scan re-projected onto our polar grid (same affine georeference as the
+  classification, 5 km pixels), book read from the colours, this work, agreement + both 15 % edges. Antarctic shown to 55 S.
+- `C2b_difference.png`: map of this work minus the book class midpoint and its histogram (cells with ice in at least one map).
+  Arctic: median +8.0, mean +10.3; Antarctic mean +20.1 percentage points (after the 2026-11-27 label fix). Arctic histogram has a second mode at +30..+40
+  (cells the book puts in the 50-60 % classes, mostly the violet/purple shades in the Kara/Laptev and Beaufort first-year ice).
+- `C2b_classes.png`: mean SIC of this work per book class with 1:1 line (open symbols: < 30 cells).
+- `C2b_summary.png`: extent, ice area (with SP-459 Table 3-2) and agreement, this work vs. book.
+Numbers unchanged against the table above.
+
+## Image-analysis view (2026-11-27)
+`src/matlab/c2c_image_analysis.m` (reads `output/C2_results.mat`; `c2_feb1973_books.m` now also saves the pixel classes `PC`, palettes and `rmsN`)
+-> `output/C2c_image_analysis.png` (rows Arctic / Antarctic: 1 scan + fitted graticule, 2 each pixel -> nearest legend colour (CIE Lab),
+3 colour distance Delta E to the matched colour, 4 the 30 km cell result drawn back into the scan geometry by the inverse affine; bottom:
+legend colours used) and `output/C2c_zoom.png` (same steps on a 171 x 171 px ice-edge window: 76N 32E, 68S 40W).
+Numbers (pixels inside the read region):
+
+| | SP-489 Arctic | SP-459 Antarctic |
+|---|---|---|
+| pixels marked as line / text | 8.8 % | 3.1 % |
+| median Delta E to matched legend colour (non-line) | 3.5 | 0.7 |
+| pixel category = its cell category (ice / water / land) | 98.8 % | 97.1 % |
+| ice pixel class within +-1 class of its cell | 89.5 % | 81.9 % |
+
+Delta E is large only on printed lines, coasts and class borders (the scan blurs neighbouring colours there). North class 26-30 % is not
+in the palette (fix 1); its strip colour is the mean of the neighbour classes (display only).
+
+## Arctic side by side (2026-11-27)
+`src/matlab/c2d_sp489_side_by_side.m` -> `output/C2_sp489_side_by_side.png`, the Arctic counterpart of `C1_sp459_side_by_side.png`:
+SP-489 scan left, our mean SIC right, painted in the SP-489 legend colours (first-year column) in the scan's own projection and
+frame (every scan pixel -> 30 km cell by the inverse affine fit). Class = lower-bound binning (14, 18, ..., 98 %); < 14 % = map water
+colour, ERA5 land = map land colour, no data and |lat| < 50 = white. Reading: north of 80 N our median SIC is 92 % (24 % of the cells >= 98 %),
+the book's median class there is 82-86 % - the same +10 points as in `C2b_classes.png` (book: first-year emissivity on multiyear ice,
+see Interpretation). Violet (>= 98 %) in our map is mostly the outer pack and the shelf seas.
+C2b/C2c/C2d are steps of `rerun_all.m` (same group as C2, after it).

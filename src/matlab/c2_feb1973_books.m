@@ -100,11 +100,15 @@ landMap  = [ptc(1100, 350); ptc(800, 950); ptc(1300, 700); ptc(300, 1250); ptc(1
 keepc = [1:3 5:nc];
 palN = [swN(keepc, :); swN(nc+1, :); waterMap; landMap; 8 8 8];     % ice classes, water (legend + map), land, line
 grpN = [keepc, repmat(nc + 1, 1, 4), repmat(nc + 2, 1, 5), nc + 3];  % group: 1..22 class, 23 water, 24 land, 25 line
-[AN, tN, rmsN] = fit_north(M);
+[AN, tN, rmsN] = fit_grat(M, 1, 2033/sqrt(2)*[1 1; -1 1], [768; 787], 50:5:85, 52:1:84, [3 3 size(M, 2) - 2 size(M, 1) - 2]);
 fprintf('North georeference: rms %.2f px = %.1f km (%d points)\n', rmsN.px, rmsN.km, rmsN.n);
 
 %% 2b. South: SP-459 (as C1). Palette order: >= 98, 96, ..., 16, < 14, land, lines
-A = {AN, [2258.429 0.5917799; -0.11675 2296.727]}; t = {tN, [825.0353; 833.3931]};
+% South: same automatic fit (2026-11-27; before: the fixed C1 matrix, which was about 1 % too narrow horizontally, so the
+% printed 50 S circle lay up to ~10 px = 55 km outside ours at the left/right edge). Start = C1 matrix.
+[AS, tS, rmsS] = fit_grat(img{2}, -1, [2258.429 0.5917799; -0.11675 2296.727], [825.0353; 833.3931], [50 60 70], 52:1:68, [3 3 size(img{2}, 2) - 2 size(img{2}, 1) - 2]);
+fprintf('South georeference: rms %.2f px = %.1f km (%d points)\n', rmsS.px, rmsS.km, rmsS.n);
+A = {AN, AS}; t = {tN, tS};
 palS = [186 195 190; 116 86 78; 205 114 87; 208 140 121; 207 188 174; 206 209 194; 56 63 59; 71 77 67; ...
         134 133 103; 184 182 143; 196 136 88; 211 159 87; 210 183 93; 214 221 177; 60 87 70; 62 129 94; ...
         71 160 126; 164 195 186; 57 91 101; 49 127 132; 36 170 174; 70 184 193; 170 205 201; 21 27 25];
@@ -131,6 +135,13 @@ for h = 1:2
         % swatches better than black; land counts only in blobs >= 5x5 px (~30 km), thinner land -> line
         lk = pc == nc + 2; op = conv2(double(conv2(double(lk), ones(5), 'same') == 25), ones(5), 'same') > 0;
         pc(lk & ~op) = nc + 3;
+    end
+    if h == 2   % printed longitude labels (dark grey text) match the near-black ice classes and were read as ice
+                % (118 cells at 50-52 S, 2026-11-27). Text boxes [x1 x2 y1 y2] in scan px: ice/land pixels -> line, water stays
+        tb = [180 320 200 265; 1350 1480 200 265; 210 360 1380 1445; 1330 1475 1380 1445; 25 115 380 480];   % 45W 45E 135W 135E 50S
+        for k = 1:size(tb, 1)
+            sub = pc(tb(k, 3):tb(k, 4), tb(k, 1):tb(k, 2)); sub(sub ~= nc + 1) = nc + 3; pc(tb(k, 3):tb(k, 4), tb(k, 1):tb(k, 2)) = sub;
+        end
     end
     PC{h} = pc;                    % 1..22 ice class, 23 water, 24 land, 25 line
     if h == 1, use = LATh{1} >= latlim(1) & PX >= 30 & PY >= 30 & PX <= 1497 & PY <= 1538;
@@ -240,6 +251,10 @@ for h = 1:2
     R(h).edge_book = edge_lines(ICEB(:,:,h), inv, g, h, Re);
     fprintf('%s: edge polylines ours %d, book %d\n', hname{h}, numel(R(h).edge_ours), numel(R(h).edge_book));
 end
+
+%% results for the presentation figures (c2b_prof_figures.m)
+save(fullfile('output', 'C2_results.mat'), 'SICh', 'CLS', 'BCL', 'ICEB', 'landO', 'LATh', 'LONh', 'g', 'n', 'Re', 'dx', ...
+    'AREA', 'MID', 'LO', 'nc', 'R', 'cls_tab', 'latlim', 'hname', 'A', 't', 'PC', 'pal', 'grp', 'rmsN', 'rmsS', 'L');
 
 %% figure 1: maps. rows Arctic / Antarctic; columns our SIC, book classified, agreement + both edges
 blue = hex2rgb_({'#cde2fb','#b7d3f6','#9ec5f4','#86b6ef','#6da7ec','#5598e7','#3987e5','#2a78d6','#256abf','#1c5cab','#184f95','#104281','#0d366b'});
@@ -424,28 +439,28 @@ while i < size(C, 2)
     end
 end
 end
-function [A, t, rms] = fit_north(M)
+function [A, t, rms] = fit_grat(M, sgn, A, t, lats, merlats, bb)
 % Affine georeference of the SP-489 map: image px = t + A*[tan(colat/2)sin(lon); -V/(2Re) = tan(colat/2)cos(lon)]
 % points: darkest thin line near the predicted position on the parallels 50..85 N (every 5 deg) and on the 8 meridians (45 deg)
 G = double(M(:,:,1))*0.299 + double(M(:,:,2))*0.587 + double(M(:,:,3))*0.114;
-s = 2033; A = s/sqrt(2)*[1 1; -1 1]; t = [768; 787];        % start: pole, 50 N circle at the frame, 0 deg lower right
+% sgn = +1 North (Y = tan(colat/2) cos(lon)), -1 South (Y = -tan(colat/2) cos(lon)); lats / merlats as |lat|; bb = usable scan box
 % (X,Y) = [tan sin; tan cos]; lon 0 -> Y = 1 -> image (+,+) lower right; lon 90 -> X = 1 -> upper right
-tanc = @(lat) tand((90 - lat)/2);
+tanc = @(lat) tand((90 - lat)/2);   % lat as |lat|
 for it = 1:12
     wd = max(26 - 2.5*it, 3.5); P = []; Q = [];   % wide start window: the scan is ~3.5 % stretched vertically
-    for lat = 50:5:85
+    for lat = lats
         for lon = 0:1.5:359
-            X = tanc(lat)*sind(lon); Y = tanc(lat)*cosd(lon); p = t + A*[X; Y];
-            d = A*[sind(lon); cosd(lon)]; d = d/norm(d);   % radial direction in the image (approx.)
-            [ok, pm] = findline(G, p, d, wd);
+            X = tanc(lat)*sind(lon); Y = sgn*tanc(lat)*cosd(lon); p = t + A*[X; Y];
+            d = A*[sind(lon); sgn*cosd(lon)]; d = d/norm(d);   % radial direction in the image (approx.)
+            [ok, pm] = findline(G, p, d, wd, bb);
             if ok, P(end+1, :) = [X Y]; Q(end+1, :) = pm'; end %#ok<AGROW>
         end
     end
     for lon = 0:45:315
-        for lat = 52:1:84
-            X = tanc(lat)*sind(lon); Y = tanc(lat)*cosd(lon); p = t + A*[X; Y];
-            e = A*[cosd(lon); -sind(lon)]; e = e/norm(e);  % perpendicular to the meridian line
-            [ok, pm] = findline(G, p, e, wd);
+        for lat = merlats
+            X = tanc(lat)*sind(lon); Y = sgn*tanc(lat)*cosd(lon); p = t + A*[X; Y];
+            e = A*[cosd(lon); -sgn*sind(lon)]; e = e/norm(e);  % perpendicular to the meridian line
+            [ok, pm] = findline(G, p, e, wd, bb);
             if ok, P(end+1, :) = [X Y]; Q(end+1, :) = pm'; end %#ok<AGROW>
         end
     end
@@ -458,9 +473,9 @@ for it = 1:12
 end
 rms.px = res; rms.km = res/(norm(A(:, 2))/(2*6371)); rms.n = nin;
 end
-function [ok, pm] = findline(G, p, d, wd)
+function [ok, pm] = findline(G, p, d, wd, bb)
 o = -wd:0.5:wd; xs = p(1) + o*d(1); ys = p(2) + o*d(2);
-if any(xs < 3 | ys < 3 | xs > size(G, 2) - 2 | ys > size(G, 1) - 2), ok = false; pm = []; return; end
+if any(xs < bb(1) | ys < bb(2) | xs > bb(3) | ys > bb(4)), ok = false; pm = []; return; end
 pr = interp2(G, xs, ys, 'linear'); [mn, im] = min(pr);
 ends = [mean(pr(1:3)) mean(pr(end-2:end))];
 ok = im > 3 && im < numel(o) - 2 && mn < min(ends) - 12;

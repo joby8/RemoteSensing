@@ -6,6 +6,30 @@
 **Figures and means:** 1–27 Feb; 28 Feb is left out (only 1 orbit). Since 2026-11-16 the figure and the pixel file use iteration 2 (before: the figure showed iteration 3, 0.1–0.4 % higher).
 **Status:** done 2026-11-13; replaces A6 as the main method (A6 = simple version with fixed c = 0/1, keep as comparison)
 
+## Current numbers (state 2026-11-24: water SST > 272 K, all 78 scan positions) – use these in the report
+Method as below, with the current masks (`tp_opt.m`): water siconc ≤ 0.01, SST > 272 K, |lat| > 55°, 90 < T_B < 180 K;
+ice siconc > 0.8 (pixel and 5 × 5 box), 180 < T_B < 274 K; both lsm = 0 and ≤ 10 % land in the 5 × 5 box; all 78
+scan positions; c clipped to 0..1 before each iteration, no 15 % limit. 1–27 Feb, mean of the daily values.
+
+| | iteration | water px/day | ice px/day | T_p,water u → c [K] | T_p,ice u → c [K] | σ water SIC u → c | σ ice SIC u → c | days improved water / ice |
+|---|---|---|---|---|---|---|---|---|
+| N | 1 | 23 443 | 61 552 | 142.83 → 142.79 | 225.51 → 225.73 | 9.40 → 7.02 % | 12.37 → 11.49 % | 27 / 26 |
+| N | **2** | | | 142.83 → **142.65** | 225.51 → **225.96** | 9.40 → **6.76 %** (−28 %) | 12.37 → **10.74 %** | 27 / 27 |
+| N | 3 | | | → 142.66 | → 225.93 | → 6.79 % | → 10.79 % | 27 / 27 |
+| S | 1 | 100 023 | 7 901 | 136.64 → 136.66 | 212.00 → 212.14 | 9.76 → 8.28 % | 22.85 → 22.87 % | 27 / 16 |
+| S | **2** | | | 136.64 → **136.53** | 212.00 → **212.22** | 9.76 → **8.04 %** (−18 %) | 22.85 → **22.54 %** | 27 / 20 |
+| S | 3 | | | → 136.55 | → 212.21 | → 8.07 % | → 22.57 % | 27 / 19 |
+
+- Ice–water contrast (corrected): N 83.3 K, S 75.7 K.
+- Convergence, mean |c_new − c_used| [% SIC], water / ice: iteration 1 N 2.7 / 5.4, S 3.1 / 8.7; iteration 2
+  N 0.16 / 0.40, S 0.19 / 0.25; iteration 3 ≤ 0.04. **Iteration 2 stays the final one**; iteration 3 is 0.03 points worse.
+- Mean water SIC is 0 by construction (tie point = cluster mean).
+- Compared with 23 Nov (273 K, positions 5–74): +11 % (N) / +29 % (S) water pixels, σ water corrected +0.2 (N) /
+  +0.7 (S) points, because the outer scan positions are the noisiest (B2). Details: `rerun_2026-11-24.md`.
+- **Report sentence (Task 1):** the RTM correction lowers the open-water SIC std from 9.4 to 6.8 % in the Arctic and
+  from 9.8 to 8.0 % in the Antarctic (iteration 2, 1–27 Feb 1973); the water std improves on every day.
+- Everything below this section is the history of the method (older masks, older numbers).
+
 ## Agreed in the feedback session (2026-11-13)
 - Tie points **per day**, north and south separately.
 - Tie-point selection as in **Table 2**, but keep our **|lat| ≥ 50°** cut.
@@ -16,7 +40,7 @@
 1. Clusters per day and hemisphere:
    - water: **siconc ≤ 0.01**, SST > 278 K, 90 < T_B < 180 K
    - ice: **siconc > 0.8**, **180** < T_B < 274 K
-   - both: |lat| ≥ 50°, scan positions 5–74, ERA5 **lsm = 0** (no coastal pixels)
+   - both: |lat| ≥ 50°, scan positions 5–74, ERA5 **lsm = 0** (no coastal pixels) (version of 13–17 Nov; current masks: see the section above)
    - Code: `src/matlab/tp_masks.m`. Until 2026-11-17: siconc = 0 / 100 K / no lsm cut (Table 2 as written); changed after the Tonboe meeting, see the update section at the end.
 2. **Iteration 1:** c_ice = ERA5 siconc of each pixel.
 3. **Reference values mixed by c_ice:** X_ref = (1 − c)·X̄_water + c·X̄_ice for V, W, L, Ts and Ti. The paper describes this as "c_ice is used as a ratio to mix the two tie-point values".
@@ -25,7 +49,7 @@
 4. Corrected tie points = cluster means of T_B + ΔT_B. Then the SIC of all cluster pixels (Eq. 16).
 5. **New c_ice** = that SIC, truncated to 0–1, values below 0.15 set to 0 (paper step 1). Then repeat from step 3.
 
-## Result (Feb 1973 without 28 Feb, mean of the daily std, iteration 2)
+## Result of 17 Nov (history; current numbers at the top)
 | | Water: std SIC before → after | Ice: std SIC before → after | Days improved (water / ice) |
 |---|---|---|---|
 | North | 9.6 → **7.05 %** (−27 %) | 12.5 → **10.9 %** | 27/27 / 27/27 |
@@ -109,4 +133,4 @@ The southern ice tie point was the weak point (contrast 59 K, ice std 40 %): wit
   - We start from ERA5 c (iteration 1) and iterate once more (iteration 2).
   - Question for Tonboe: `questions_2026-11-17.md`.
 
-> **Update 2026-11-23:** recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).
+> **Update 2026-11-23 / 2026-11-24:** current numbers are in the section at the top. Update 2026-11-23: recomputed with the 23 Nov masks (SST > 273 K, |lat| > 55°, 5 × 5 land box) and the new clipping (no 15 % filter). Numbers above are from 17 Nov; old → new values in `rerun_2026-11-23.md` (full table `output/rerun_compare.csv`).

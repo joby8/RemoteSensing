@@ -46,7 +46,8 @@ cfg.eq3 = struct('mode', 'line', 'thr', 150, 'pad', 1, 'wrap', false);   % defau
 % Eq. 4: win consecutive identical values along track (all win removed)
 cfg.eq4 = struct('on', true, 'win', 7);
 cfg.gap = 2.5;                 % data gap: centre distance of consecutive lines > gap x median (no differences across)
-cfg.edge = [1:4, 75:78];       % scan positions removed (paper)
+cfg.edge = [];                 % scan positions removed: none (Tonboe 2026-11-24: keep the outer positions);
+                               % paper: [1:4, 75:78] (preset 'paper')
 cfg.lat_min = 50;              % keep |lat| >= lat_min (meeting 2026-11-10; paper Table 2: 32 N / 48 S)
 cfg.land = 'sst';              % 'sst' = ERA5 SST missing, 'lsm' = ERA5 lsm > lsm_max, 'none'
 cfg.lsm_max = 0;
@@ -56,6 +57,7 @@ switch lower(cfg.name)
     case 'paper'
         cfg.analog.on = true; cfg.analog.mode = 'gradient';
         cfg.eq2.mode = 'line'; cfg.eq3.mode = 'pixel';
+        cfg.edge = [1:4, 75:78];
     case 'dmilike'
         cfg.analog = struct('on', true, 'thr', 10, 'mode', 'gradient', 'channels', 0:14, 'pad', 5);
         cfg.eq2.mode = 'off';

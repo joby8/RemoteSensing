@@ -29,3 +29,6 @@ output/globe/days/*
 # Large media
 *.mp3
 *.mp4
+
+# MATLAB run logs (rerun_all)
+logs/

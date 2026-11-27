@@ -26,7 +26,7 @@ for d = days(:)'
     for k = fi
         fn = fullfile(files(k).folder, files(k).name);
         o = load_orbit(fn);
-        o.L = double(ncread(fn, 'tcw'))' - o.V;
+        o.L = double(ncfast(fn, 'tcw'))' - o.V;
         o.th = o.theta; o.tb = o.tb_f; o.ci = o.siconc;
         [mw_, mi_] = tp_masks(o, o.valid, o.tb, o.lsm);   % o.valid: preprocessing (preproc_config.m)
         m = {mw_, mi_};

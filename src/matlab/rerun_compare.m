@@ -3,7 +3,8 @@
 %  new = output/*.csv (23 Nov masks: water SST > 273 K, |lat| > 55, lsm = 0 + 5x5 box land <= 10 %; c only clipped)
 %  Output: output/rerun_compare.csv (step, key, metric, old, new) and a printout.
 %  Run from the repo root: matlab -batch "addpath('src/matlab'); rerun_compare"
-A = fullfile('output', 'archive_nov17'); B = 'output';
+if ~exist('arch', 'var'), arch = 'archive_nov23'; end   % set arch = 'archive_nov17' for the 23 Nov comparison
+A = fullfile('output', arch); B = 'output';
 rd = @(d, f) readtable(fullfile(d, f), 'TextType', 'string', 'Delimiter', ',', 'VariableNamingRule', 'preserve');
 R = {};
 add = @(R, step, key, met, o, n) [R; {step, key, met, o, n}];
